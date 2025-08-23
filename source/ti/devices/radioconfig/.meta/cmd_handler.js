@@ -424,8 +424,8 @@ function create(phyDef, phyGroup, phyName) {
     function generateRfCmdCodeRCL(cmd) {
         const cmdName = cmd.name;
         const fields = Common.forceArray(CmdBuf[cmdName]);
-        const rclStructs = DeviceConfig.rcl_structs;
-        const rclCmdStruct = rclStructs.RCL_Command;
+        const rclStructDefs = DeviceConfig.rcl_struct_defs;
+        const rclCmdStruct = rclStructDefs.RCL_Command;
         const code = {
             parStructName: "",
             rfCmd: [],
@@ -470,13 +470,13 @@ function create(phyDef, phyGroup, phyName) {
                 }
                 else if (field.type === "RCL_Command") {
                     // Special processing
-                    for (const item of rclCmdStruct.field) {
+                    for (const item of rclCmdStruct.field_list) {
                         const type = item.type;
-                        if (type.includes("RCL_Command") && type in rclStructs) {
+                        if (type.includes("RCL_Command") && type in rclStructDefs) {
                             // Contains another RCL command
-                            const rclCommand = rclStructs[type].field;
-                            for (const cmdField of rclCommand) {
-                                str = processRclCommandField(cmdField, "common." + item.name, field);
+                            const rclCommandFields = rclStructDefs[type].field_list;
+                            for (const rclCommandField of rclCommandFields) {
+                                str = processRclCommandField(rclCommandField, "common." + item.name, field);
                                 code.rfCmd.push(str);
                             }
                         }

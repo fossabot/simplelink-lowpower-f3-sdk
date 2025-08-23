@@ -332,17 +332,24 @@ function moduleInstances(inst)
     // in source/ti/devices/.meta/DriverLib.syscfg.js
     // But now it's dependent on a module which breaks sysconfigs restrictions
     const dev2FlashSize = {
-        "CC2340R22RKP": 0x00040000,
-        "CC2340R2RGE": 0x00040000,
-        "CC2340R5RKP": 0x00080000,
-        "CC2340R53RKP": 0x00080000,
-        "CC2745R7RHAQ1": 0x000C0000 - hsm_fw_size,
-        "CC2755R105RHA": 0x00100000 - hsm_fw_size,
-        "CC2745R10RHAQ1": 0x00100000 - hsm_fw_size,
-        "CC2755P105RHA": 0x00100000 - hsm_fw_size,
-    };
+        "CC2340R2": 0x00040000,
+        "CC2340R5": 0x00080000,
+        "CC2745R7": 0x000C0000 - hsm_fw_size,
+        "CC2755R10": 0x00100000 - hsm_fw_size,
+        "CC2745R10": 0x00100000 - hsm_fw_size,
+        "CC2755P10": 0x00100000 - hsm_fw_size,
+    }
 
-    const flashSize = dev2FlashSize[system.deviceData.deviceId] != undefined ? dev2FlashSize[system.deviceData.deviceId] : 0x00040000;
+    // Iterate over dev2FlashSize keys as regex patterns and match against system.deviceData.deviceId
+    let matchedFlashSize = undefined;
+    for (const pattern in dev2FlashSize) {
+        const regex = new RegExp(pattern);
+        if (regex.test(system.deviceData.deviceId)) {
+            matchedFlashSize = dev2FlashSize[pattern];
+            break;
+        }
+    }
+    const flashSize = matchedFlashSize !== undefined ? matchedFlashSize : 0x00040000;
     const flashBase = 0x00000000;
     if (inst.deviceType.includes("gpd"))
     {
@@ -528,9 +535,9 @@ function getLibs(inst)
             lib_names.push("zb_core_gpd");
         }
 
-        lib_names.forEach((lib_name) => 
+        lib_names.forEach((lib_name) =>
         {
-            let lib_with_rev = inst.$static.deviceType.includes("gpd") ? lib_name: lib_name.replace("zb_", `zb_${inst.$static.zigbeeRevision}_`) 
+            let lib_with_rev = inst.$static.deviceType.includes("gpd") ? lib_name: lib_name.replace("zb_", `zb_${inst.$static.zigbeeRevision}_`)
             libs.push(`third_party/zigbee/libraries${lib_dir}/${lib_with_rev}/lib/${toolchain}/${GenLibs.getDeviceIsa()}/${lib_with_rev}.a`)
         });
     }
@@ -573,7 +580,7 @@ function getOpts(inst) {
     }
     else if((inst.$static.zigbeeRevision === "r23") && !(inst.$static.deviceType.includes("gpd")))
     {
-        
+
         result.push("-DZBOSS_REV23");
         result.push(`-I${sdkPath}/source/third_party/zigbee/zboss_r23/include`);
         result.push(`-I${sdkPath}/source/third_party/zigbee/zboss_r23/thirdparty/uECC`);

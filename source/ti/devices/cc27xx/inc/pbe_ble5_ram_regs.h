@@ -265,388 +265,391 @@
 #define PBE_BLE5_RAM_O_OPCFG                                         0x000000B6U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO0                                      0x000000B8U
+#define PBE_BLE5_RAM_O_OPDIR                                         0x000000B8U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL0                                      0x000000BAU
+#define PBE_BLE5_RAM_O_FL1INFO0                                      0x000000BCU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM0                                      0x000000BCU
+#define PBE_BLE5_RAM_O_FL1ADRL0                                      0x000000BEU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH0                                      0x000000BEU
+#define PBE_BLE5_RAM_O_FL1ADRM0                                      0x000000C0U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO1                                      0x000000C0U
+#define PBE_BLE5_RAM_O_FL1ADRH0                                      0x000000C2U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL1                                      0x000000C2U
+#define PBE_BLE5_RAM_O_FL1INFO1                                      0x000000C4U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM1                                      0x000000C4U
+#define PBE_BLE5_RAM_O_FL1ADRL1                                      0x000000C6U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH1                                      0x000000C6U
+#define PBE_BLE5_RAM_O_FL1ADRM1                                      0x000000C8U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO2                                      0x000000C8U
+#define PBE_BLE5_RAM_O_FL1ADRH1                                      0x000000CAU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL2                                      0x000000CAU
+#define PBE_BLE5_RAM_O_FL1INFO2                                      0x000000CCU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM2                                      0x000000CCU
+#define PBE_BLE5_RAM_O_FL1ADRL2                                      0x000000CEU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH2                                      0x000000CEU
+#define PBE_BLE5_RAM_O_FL1ADRM2                                      0x000000D0U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO3                                      0x000000D0U
+#define PBE_BLE5_RAM_O_FL1ADRH2                                      0x000000D2U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL3                                      0x000000D2U
+#define PBE_BLE5_RAM_O_FL1INFO3                                      0x000000D4U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM3                                      0x000000D4U
+#define PBE_BLE5_RAM_O_FL1ADRL3                                      0x000000D6U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH3                                      0x000000D6U
+#define PBE_BLE5_RAM_O_FL1ADRM3                                      0x000000D8U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO4                                      0x000000D8U
+#define PBE_BLE5_RAM_O_FL1ADRH3                                      0x000000DAU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL4                                      0x000000DAU
+#define PBE_BLE5_RAM_O_FL1INFO4                                      0x000000DCU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM4                                      0x000000DCU
+#define PBE_BLE5_RAM_O_FL1ADRL4                                      0x000000DEU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH4                                      0x000000DEU
+#define PBE_BLE5_RAM_O_FL1ADRM4                                      0x000000E0U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO5                                      0x000000E0U
+#define PBE_BLE5_RAM_O_FL1ADRH4                                      0x000000E2U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL5                                      0x000000E2U
+#define PBE_BLE5_RAM_O_FL1INFO5                                      0x000000E4U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM5                                      0x000000E4U
+#define PBE_BLE5_RAM_O_FL1ADRL5                                      0x000000E6U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH5                                      0x000000E6U
+#define PBE_BLE5_RAM_O_FL1ADRM5                                      0x000000E8U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO6                                      0x000000E8U
+#define PBE_BLE5_RAM_O_FL1ADRH5                                      0x000000EAU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL6                                      0x000000EAU
+#define PBE_BLE5_RAM_O_FL1INFO6                                      0x000000ECU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM6                                      0x000000ECU
+#define PBE_BLE5_RAM_O_FL1ADRL6                                      0x000000EEU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH6                                      0x000000EEU
+#define PBE_BLE5_RAM_O_FL1ADRM6                                      0x000000F0U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO7                                      0x000000F0U
+#define PBE_BLE5_RAM_O_FL1ADRH6                                      0x000000F2U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL7                                      0x000000F2U
+#define PBE_BLE5_RAM_O_FL1INFO7                                      0x000000F4U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM7                                      0x000000F4U
+#define PBE_BLE5_RAM_O_FL1ADRL7                                      0x000000F6U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH7                                      0x000000F6U
+#define PBE_BLE5_RAM_O_FL1ADRM7                                      0x000000F8U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO8                                      0x000000F8U
+#define PBE_BLE5_RAM_O_FL1ADRH7                                      0x000000FAU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL8                                      0x000000FAU
+#define PBE_BLE5_RAM_O_FL1INFO8                                      0x000000FCU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM8                                      0x000000FCU
+#define PBE_BLE5_RAM_O_FL1ADRL8                                      0x000000FEU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH8                                      0x000000FEU
+#define PBE_BLE5_RAM_O_FL1ADRM8                                      0x00000100U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO9                                      0x00000100U
+#define PBE_BLE5_RAM_O_FL1ADRH8                                      0x00000102U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL9                                      0x00000102U
+#define PBE_BLE5_RAM_O_FL1INFO9                                      0x00000104U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM9                                      0x00000104U
+#define PBE_BLE5_RAM_O_FL1ADRL9                                      0x00000106U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH9                                      0x00000106U
+#define PBE_BLE5_RAM_O_FL1ADRM9                                      0x00000108U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO10                                     0x00000108U
+#define PBE_BLE5_RAM_O_FL1ADRH9                                      0x0000010AU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL10                                     0x0000010AU
+#define PBE_BLE5_RAM_O_FL1INFO10                                     0x0000010CU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM10                                     0x0000010CU
+#define PBE_BLE5_RAM_O_FL1ADRL10                                     0x0000010EU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH10                                     0x0000010EU
+#define PBE_BLE5_RAM_O_FL1ADRM10                                     0x00000110U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO11                                     0x00000110U
+#define PBE_BLE5_RAM_O_FL1ADRH10                                     0x00000112U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL11                                     0x00000112U
+#define PBE_BLE5_RAM_O_FL1INFO11                                     0x00000114U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM11                                     0x00000114U
+#define PBE_BLE5_RAM_O_FL1ADRL11                                     0x00000116U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH11                                     0x00000116U
+#define PBE_BLE5_RAM_O_FL1ADRM11                                     0x00000118U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO12                                     0x00000118U
+#define PBE_BLE5_RAM_O_FL1ADRH11                                     0x0000011AU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL12                                     0x0000011AU
+#define PBE_BLE5_RAM_O_FL1INFO12                                     0x0000011CU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM12                                     0x0000011CU
+#define PBE_BLE5_RAM_O_FL1ADRL12                                     0x0000011EU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH12                                     0x0000011EU
+#define PBE_BLE5_RAM_O_FL1ADRM12                                     0x00000120U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO13                                     0x00000120U
+#define PBE_BLE5_RAM_O_FL1ADRH12                                     0x00000122U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL13                                     0x00000122U
+#define PBE_BLE5_RAM_O_FL1INFO13                                     0x00000124U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM13                                     0x00000124U
+#define PBE_BLE5_RAM_O_FL1ADRL13                                     0x00000126U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH13                                     0x00000126U
+#define PBE_BLE5_RAM_O_FL1ADRM13                                     0x00000128U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO14                                     0x00000128U
+#define PBE_BLE5_RAM_O_FL1ADRH13                                     0x0000012AU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL14                                     0x0000012AU
+#define PBE_BLE5_RAM_O_FL1INFO14                                     0x0000012CU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM14                                     0x0000012CU
+#define PBE_BLE5_RAM_O_FL1ADRL14                                     0x0000012EU
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH14                                     0x0000012EU
+#define PBE_BLE5_RAM_O_FL1ADRM14                                     0x00000130U
 
 // 
-#define PBE_BLE5_RAM_O_FL1INFO15                                     0x00000130U
+#define PBE_BLE5_RAM_O_FL1ADRH14                                     0x00000132U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRL15                                     0x00000132U
+#define PBE_BLE5_RAM_O_FL1INFO15                                     0x00000134U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRM15                                     0x00000134U
+#define PBE_BLE5_RAM_O_FL1ADRL15                                     0x00000136U
 
 // 
-#define PBE_BLE5_RAM_O_FL1ADRH15                                     0x00000136U
+#define PBE_BLE5_RAM_O_FL1ADRM15                                     0x00000138U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO0                                      0x00000138U
+#define PBE_BLE5_RAM_O_FL1ADRH15                                     0x0000013AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL0                                      0x0000013AU
+#define PBE_BLE5_RAM_O_FL2INFO0                                      0x0000013CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM0                                      0x0000013CU
+#define PBE_BLE5_RAM_O_FL2ADRL0                                      0x0000013EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH0                                      0x0000013EU
+#define PBE_BLE5_RAM_O_FL2ADRM0                                      0x00000140U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO1                                      0x00000140U
+#define PBE_BLE5_RAM_O_FL2ADRH0                                      0x00000142U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL1                                      0x00000142U
+#define PBE_BLE5_RAM_O_FL2INFO1                                      0x00000144U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM1                                      0x00000144U
+#define PBE_BLE5_RAM_O_FL2ADRL1                                      0x00000146U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH1                                      0x00000146U
+#define PBE_BLE5_RAM_O_FL2ADRM1                                      0x00000148U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO2                                      0x00000148U
+#define PBE_BLE5_RAM_O_FL2ADRH1                                      0x0000014AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL2                                      0x0000014AU
+#define PBE_BLE5_RAM_O_FL2INFO2                                      0x0000014CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM2                                      0x0000014CU
+#define PBE_BLE5_RAM_O_FL2ADRL2                                      0x0000014EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH2                                      0x0000014EU
+#define PBE_BLE5_RAM_O_FL2ADRM2                                      0x00000150U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO3                                      0x00000150U
+#define PBE_BLE5_RAM_O_FL2ADRH2                                      0x00000152U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL3                                      0x00000152U
+#define PBE_BLE5_RAM_O_FL2INFO3                                      0x00000154U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM3                                      0x00000154U
+#define PBE_BLE5_RAM_O_FL2ADRL3                                      0x00000156U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH3                                      0x00000156U
+#define PBE_BLE5_RAM_O_FL2ADRM3                                      0x00000158U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO4                                      0x00000158U
+#define PBE_BLE5_RAM_O_FL2ADRH3                                      0x0000015AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL4                                      0x0000015AU
+#define PBE_BLE5_RAM_O_FL2INFO4                                      0x0000015CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM4                                      0x0000015CU
+#define PBE_BLE5_RAM_O_FL2ADRL4                                      0x0000015EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH4                                      0x0000015EU
+#define PBE_BLE5_RAM_O_FL2ADRM4                                      0x00000160U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO5                                      0x00000160U
+#define PBE_BLE5_RAM_O_FL2ADRH4                                      0x00000162U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL5                                      0x00000162U
+#define PBE_BLE5_RAM_O_FL2INFO5                                      0x00000164U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM5                                      0x00000164U
+#define PBE_BLE5_RAM_O_FL2ADRL5                                      0x00000166U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH5                                      0x00000166U
+#define PBE_BLE5_RAM_O_FL2ADRM5                                      0x00000168U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO6                                      0x00000168U
+#define PBE_BLE5_RAM_O_FL2ADRH5                                      0x0000016AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL6                                      0x0000016AU
+#define PBE_BLE5_RAM_O_FL2INFO6                                      0x0000016CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM6                                      0x0000016CU
+#define PBE_BLE5_RAM_O_FL2ADRL6                                      0x0000016EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH6                                      0x0000016EU
+#define PBE_BLE5_RAM_O_FL2ADRM6                                      0x00000170U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO7                                      0x00000170U
+#define PBE_BLE5_RAM_O_FL2ADRH6                                      0x00000172U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL7                                      0x00000172U
+#define PBE_BLE5_RAM_O_FL2INFO7                                      0x00000174U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM7                                      0x00000174U
+#define PBE_BLE5_RAM_O_FL2ADRL7                                      0x00000176U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH7                                      0x00000176U
+#define PBE_BLE5_RAM_O_FL2ADRM7                                      0x00000178U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO8                                      0x00000178U
+#define PBE_BLE5_RAM_O_FL2ADRH7                                      0x0000017AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL8                                      0x0000017AU
+#define PBE_BLE5_RAM_O_FL2INFO8                                      0x0000017CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM8                                      0x0000017CU
+#define PBE_BLE5_RAM_O_FL2ADRL8                                      0x0000017EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH8                                      0x0000017EU
+#define PBE_BLE5_RAM_O_FL2ADRM8                                      0x00000180U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO9                                      0x00000180U
+#define PBE_BLE5_RAM_O_FL2ADRH8                                      0x00000182U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL9                                      0x00000182U
+#define PBE_BLE5_RAM_O_FL2INFO9                                      0x00000184U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM9                                      0x00000184U
+#define PBE_BLE5_RAM_O_FL2ADRL9                                      0x00000186U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH9                                      0x00000186U
+#define PBE_BLE5_RAM_O_FL2ADRM9                                      0x00000188U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO10                                     0x00000188U
+#define PBE_BLE5_RAM_O_FL2ADRH9                                      0x0000018AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL10                                     0x0000018AU
+#define PBE_BLE5_RAM_O_FL2INFO10                                     0x0000018CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM10                                     0x0000018CU
+#define PBE_BLE5_RAM_O_FL2ADRL10                                     0x0000018EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH10                                     0x0000018EU
+#define PBE_BLE5_RAM_O_FL2ADRM10                                     0x00000190U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO11                                     0x00000190U
+#define PBE_BLE5_RAM_O_FL2ADRH10                                     0x00000192U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL11                                     0x00000192U
+#define PBE_BLE5_RAM_O_FL2INFO11                                     0x00000194U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM11                                     0x00000194U
+#define PBE_BLE5_RAM_O_FL2ADRL11                                     0x00000196U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH11                                     0x00000196U
+#define PBE_BLE5_RAM_O_FL2ADRM11                                     0x00000198U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO12                                     0x00000198U
+#define PBE_BLE5_RAM_O_FL2ADRH11                                     0x0000019AU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL12                                     0x0000019AU
+#define PBE_BLE5_RAM_O_FL2INFO12                                     0x0000019CU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM12                                     0x0000019CU
+#define PBE_BLE5_RAM_O_FL2ADRL12                                     0x0000019EU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH12                                     0x0000019EU
+#define PBE_BLE5_RAM_O_FL2ADRM12                                     0x000001A0U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO13                                     0x000001A0U
+#define PBE_BLE5_RAM_O_FL2ADRH12                                     0x000001A2U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL13                                     0x000001A2U
+#define PBE_BLE5_RAM_O_FL2INFO13                                     0x000001A4U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM13                                     0x000001A4U
+#define PBE_BLE5_RAM_O_FL2ADRL13                                     0x000001A6U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH13                                     0x000001A6U
+#define PBE_BLE5_RAM_O_FL2ADRM13                                     0x000001A8U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO14                                     0x000001A8U
+#define PBE_BLE5_RAM_O_FL2ADRH13                                     0x000001AAU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL14                                     0x000001AAU
+#define PBE_BLE5_RAM_O_FL2INFO14                                     0x000001ACU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM14                                     0x000001ACU
+#define PBE_BLE5_RAM_O_FL2ADRL14                                     0x000001AEU
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH14                                     0x000001AEU
+#define PBE_BLE5_RAM_O_FL2ADRM14                                     0x000001B0U
 
 // 
-#define PBE_BLE5_RAM_O_FL2INFO15                                     0x000001B0U
+#define PBE_BLE5_RAM_O_FL2ADRH14                                     0x000001B2U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRL15                                     0x000001B2U
+#define PBE_BLE5_RAM_O_FL2INFO15                                     0x000001B4U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRM15                                     0x000001B4U
+#define PBE_BLE5_RAM_O_FL2ADRL15                                     0x000001B6U
 
 // 
-#define PBE_BLE5_RAM_O_FL2ADRH15                                     0x000001B6U
+#define PBE_BLE5_RAM_O_FL2ADRM15                                     0x000001B8U
+
+// 
+#define PBE_BLE5_RAM_O_FL2ADRH15                                     0x000001BAU
 
 //******************************************************************************
 // Register: PHY
@@ -1903,6 +1906,18 @@
 #define PBE_BLE5_RAM_OPCFG_RFINTERVAL_S                                       0U
 #define PBE_BLE5_RAM_OPCFG_RFINTERVAL_DIS                                0x0000U
 #define PBE_BLE5_RAM_OPCFG_RFINTERVAL_EN                                 0x0001U
+
+//******************************************************************************
+// Register: OPDIR
+//******************************************************************************
+// Field: [0:0] txrx
+//
+// Initial direction of operation
+#define PBE_BLE5_RAM_OPDIR_TXRX                                          0x0001U
+#define PBE_BLE5_RAM_OPDIR_TXRX_M                                        0x0001U
+#define PBE_BLE5_RAM_OPDIR_TXRX_S                                             0U
+#define PBE_BLE5_RAM_OPDIR_TXRX_RX                                       0x0000U
+#define PBE_BLE5_RAM_OPDIR_TXRX_TX                                       0x0001U
 
 //******************************************************************************
 // Register: FL1INFO0

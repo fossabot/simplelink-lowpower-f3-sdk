@@ -37,13 +37,15 @@
  */
 const RCL       = args[0];
 const rclStatic = RCL.$static;
-
+let rclGpio = system.getScript("/ti/drivers/rcl/rclgpio.syscfg.js");
+let board = system.deviceData.board;
 %%}
-% if(rclStatic.lrfGpio){
 
 /*
  *  ======== RCL ========
 */
+% if(rclStatic.lrfGpio){
+
 #include <ti/drivers/rcl/RCL_Gpio.h>
 % if (rclStatic.coexEnabled && rclStatic.coexRuntimeChangeable){
 #include <ti/drivers/rcl/LRF.h>
@@ -51,4 +53,23 @@ extern LRF_CoexConfiguration lrfCoexConfiguration;
 %}
 
 %}
-%
+
+%if (rclGpio.shouldGenerateRegulatoryOptions() == true ) {
+%%{
+let srfs8_util = system.getScript("/ti/devices/radioconfig/config/rcl_common/srfs8_util_cc27xx.js");
+let rclRegDomainUtil = srfs8_util.create();
+const regulatoryDomainConstants = rclRegDomainUtil.genRegulatoryDomainConstants().slice(1);
+const pad = 5;
+%%}
+/* Supported regulatory domains */
+#define RCL_REGULATORY_DOMAIN_NONE     0x00
+%for (var i = 0; i < regulatoryDomainConstants.length; i++)
+%{
+#define `regulatoryDomainConstants[i].replace(",","".padEnd(pad))`
+%}
+
+% if (rclStatic.regulatoryDomainRuntimeChangeable){
+/* Bit mask to maintain regulatory domain selection */
+extern uint8_t rclRegulatoryMask;
+%}
+%}

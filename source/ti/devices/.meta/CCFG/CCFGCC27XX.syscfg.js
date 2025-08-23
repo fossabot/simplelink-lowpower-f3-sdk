@@ -1839,11 +1839,6 @@ function validate(inst, validation) {
         checkPrivateKey(inst, validation);
     }
 
-    if (inst.debugAuthorization == "Require debug authentication") {
-        Common.logError(validation, inst, "debugAuthorization",
-            "Public Key based authentication is not implemented");
-    }
-
     if (inst.hfxtCapArrayQ1 > MAX_CAP_ARRAY) {
         Common.logError(validation, inst, "hfxtCapArrayQ1",
             "Must be less than 0x" + (MAX_CAP_ARRAY + 1).toString(16));

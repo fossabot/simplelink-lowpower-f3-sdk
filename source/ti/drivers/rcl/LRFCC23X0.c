@@ -105,6 +105,24 @@
 #define LRF_CC27XX_HIGH_PA_MODE                                          ((uint16_t)0x3)
 #define LRF_CC27XX_RETRIEVE_PA_MODE_FROM_RAW_VALUE(txPowerRawValue)      (((uint16_t)(txPowerRawValue) >> 11) & 0x3)
 
+/* Set the LRFDRFE_O_SPARE5[13] bit to enable RTRIM Tx temperature compensation */
+#define LRF_CC27XX_RFE_SPARE5_RTRIM_TX_COMP_BITMASK                      ((uint32_t)(0x1 << 13U))
+
+/* Convert from 4-bit sign-magnitude to 8-bit signed (two's complement) */
+#define LRF_TRIM_SIGN_MAG_TO_SIGNED(x) (int8_t)(((x & 0x8) ? -(x & 0x7) : (x & 0x7)))
+
+/* Defined thresholds for VDDS compensation */
+#define LRF_TxPower_Use_Vdds_Comp                                        ((LRF_TxPowerTable_Index){.fraction = 0, .dBm = 18})
+#define LRF_CC27XX_VDDS_THRESHOLD_0                                      ((uint16_t)2850)
+#define LRF_CC27XX_VDDS_THRESHOLD_1                                      ((uint16_t)3150)
+#define LRF_CC27XX_VDDS_THRESHOLD_2                                      ((uint16_t)3450)
+
+/* Factors needed for temperature coefficient compensation calculations */
+#define LRF_CC27XX_SCALE_TEMP_COEFF 1024
+#define LRF_CC27XX_NOM_TEMP_FACTOR 16 /* Resolution in FCFG field is 16 degrees/LSB, covering a range from -96 C to 112 C */
+#define LRF_TxPower_Min_Temp_Coeff_Comp                                  ((LRF_TxPowerTable_Index){.fraction = 0, .dBm = 4})
+#define LRF_TxPower_Max_Temp_Coeff_Comp                                  ((LRF_TxPowerTable_Index){.fraction = 0, .dBm = 20})
+
 static uint32_t LRF_findPllMBase(uint32_t frequency);
 static uint32_t countLeadingZeros(uint16_t value);
 static uint32_t LRF_findCalM(uint32_t frequency, uint32_t prediv);
@@ -168,6 +186,10 @@ const LRF_CoexConfiguration lrfCoexConfiguration __attribute__((weak)) =
     .ieeeTSync = RCL_SCHEDULER_SYSTIM_US(140),
     .ieeeCorrMask = 0x03,
 };
+
+/* Regulatory mask to use if no other configuration is provided through SysConfig or other file.
+ * This default configuration disables the use of power limitation tables. */
+const uint8_t rclRegulatoryMask __attribute__((weak)) = 0x00;
 
 /* Bit mask indicating which bits in LRFDPBE_GPOCTRL register are written
  * This is the configuration supposed to not change during runtime and allowed
@@ -393,8 +415,14 @@ static void LRF_setTemperatureTrim(const LRF_TrimDef *trimDef)
 #define LRF_RTRIM_LOW_TEMP_ADJ_FACTOR 1U
 /* Adjustment per step of RTRIM at highest temperature */
 #define LRF_RTRIM_HIGH_TEMP_ADJ_FACTOR 1U
+
+#ifdef DeviceFamily_CC27XX
+/* Maximum allowed value (saturation value) for RTRIM. For CC27XX devices saturate at the maximum allowed value in FCFG. Ref. RCL-1071 */
+#define LRF_DEFAULT_RTRIM_MAX 15U
+#else
 /* Maximum allowed value (saturation value) for RTRIM, except if RTRIM value in FCFG is above this level */
 #define LRF_DEFAULT_RTRIM_MAX 12U
+#endif
 
 /* Number of shifts in temperature compensation for fields in lrfdrfeExtTrim0 */
 #define LRF_EXTTRIM0_TEMPERATURE_SCALE_EXP 7
@@ -549,9 +577,17 @@ static void LRF_temperatureCompensateTrim(const LRF_TrimDef *trimDef)
     {
         rtrim = minRtrim;
     }
-
+#if defined(DeviceFamily_CC23X0R5) || defined(DeviceFamily_CC23X0R22) || defined(DeviceFamily_CC2340R53)
     /* Write into register */
     HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) | (rtrim << LRFDRFE_DCO_TAILRESTRIM_S);
+#elif defined(DeviceFamily_CC27XX)
+    /* RTRIM Tx Compensation might be required depending on the selected Tx output power. For now, initialize RAM registers to default values. */
+    HWREGH_WRITE_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIMTXCMP) = 0;
+    /* Write rtrim into RAM register instead of the usual register (LRFDRFE:DCO.TAILRESTRIM) */
+    HWREGH_WRITE_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIM) = (rtrim << RFE_COMMON_RAM_RTRIM_VAL_S);
+    /* Signal the LRF to use the default RTRIM value. This might change based on the programmed Tx output power */
+    HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE5) = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE5) & ~(LRF_CC27XX_RFE_SPARE5_RTRIM_TX_COMP_BITMASK);
+#endif
 
     /* Get RSSI offset from FCFG */
     int32_t rssiOffset = trimDef->trim4.rssiOffset;
@@ -1669,10 +1705,67 @@ void LRF_programTemperatureCompensatedTxPower(void)
 {
     LRF_TxPowerTable_Entry txPowerEntry = lrfPhyState.currentTxPower;
     uint8_t tempCoeff = txPowerEntry.tempCoeff;
+    int32_t temperature = hal_get_temperature();
+#ifdef DeviceFamily_CC27XX
+    if (rclFeatureControl.enableTxOutputPowerCompensation)
+    {
+        LRF_SwParam *swParam = (LRF_SwParam *) swParamList;
+
+        /* Determine if temperature compensation of RTRIM is needed to ensure proper PA pulling for higher output powers */
+        int8_t tempThreshold = swParam->trimDef->trim11.rtrimTxComp.thr;
+        uint8_t rtrimAdjustment = swParam->trimDef->trim11.rtrimTxComp.fields.val;
+
+        uint32_t minRtrim = HWREGH_READ_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIMMIN);
+        uint32_t rtrim = ((HWREGH_READ_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIM) & RFE_COMMON_RAM_RTRIM_VAL_M) >> RFE_COMMON_RAM_RTRIM_VAL_S);
+
+        /* Measure temperature and determine if RTRIM Tx compensation is needed */
+        if (((uint8_t) tempThreshold != 0xFF) && (rtrimAdjustment != 0xF) && (LRF_CC27XX_RETRIEVE_PA_MODE_FROM_RAW_VALUE(txPowerEntry.value.rawValue) == LRF_CC27XX_HIGH_PA_MODE))
+        {
+            /* Read RTRIMCMPCMP from FCFG, add the value to the rtrim value, and write the result to RFERAM:RTRIMTXCMP */
+            /* Trim value is given in 4-bit sign-magnitude, convert to signed 8-bit (twos-complement) before adding */
+            int8_t convertedRtrimAdjustment = LRF_TRIM_SIGN_MAG_TO_SIGNED(rtrimAdjustment);
+            int32_t adjustedRtrim = (int32_t) rtrim + (int32_t) convertedRtrimAdjustment;
+
+            /* Saturate to take care of potential overflows and underflows */
+            if (adjustedRtrim > LRF_DEFAULT_RTRIM_MAX)
+            {
+                adjustedRtrim = LRF_DEFAULT_RTRIM_MAX;
+            }
+            if (adjustedRtrim < minRtrim)
+            {
+                adjustedRtrim = minRtrim;
+            }
+
+            /* Write adjusted value to RFERAM:RTRIMTXCMP */
+            HWREGH_WRITE_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIMTXCMP) = ((uint32_t) (adjustedRtrim) << RFE_COMMON_RAM_RTRIMTXCMP_VAL_S);
+
+            /*
+            * Use measured temperature, compare with threshold in FCFG and determine if compensation is needed. If compensation is
+            * needed, use LRFDRFE_O_SPARE5[13] to signal the LRF that the value in RFE_COMMON_RAM_O_RTRIMTXCMP should be used. Otherwise,
+            * use the value in RFE_COMMON_RAM_O_RTRIM.
+            */
+            if (temperature <= tempThreshold)
+            {
+                /* Signal LRF about the need for RTRIM temperature compensation */
+                txPowerEntry.value.rtrimTxCompCtl = 1;
+            }
+            else
+            {
+                /* Do not apply compensation */
+                txPowerEntry.value.rtrimTxCompCtl = 0;
+            }
+        }
+        else
+        {
+            /* Do not apply compensation */
+            txPowerEntry.value.rtrimTxCompCtl = 0;
+        }
+    }
+#endif
+
     if (tempCoeff != 0)
     {
         int32_t ib = txPowerEntry.value.ib;
-        int32_t temperature = hal_get_temperature();
         /* Linear adjustment of IB field as a function of temperature, scaled
          * by the coefficient for the given setting */
         ib += ((temperature - LRF_TXPOWER_REFERENCE_TEMPERATURE) * (int32_t) tempCoeff)
@@ -1710,12 +1803,118 @@ void LRF_programTemperatureCompensatedTxPower(void)
     HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE5) = txPowerEntry.value.rawValue;
 }
 
-LRF_TxPowerResult LRF_programTxPower(LRF_TxPowerTable_Index powerLevel)
+LRF_TxPowerResult LRF_programTxPower(LRF_TxPowerTable_Index powerLevel, uint32_t rfFreq)
 {
     if (powerLevel.rawValue != LRF_TxPower_None.rawValue)
     {
         LRF_SwParam *swParam = (LRF_SwParam *) swParamList;
-        LRF_TxPowerTable_Entry txPowerEntry = LRF_TxPowerTable_findValue(swParam->txPowerTable, powerLevel);
+        LRF_TxPowerTable_Index adjustedTxPowerLevel = powerLevel;
+
+#ifdef DeviceFamily_CC27XX
+        if (powerLevel.rawValue != LRF_TxPower_Use_Raw.rawValue)
+        {
+            /* Perform frequency specific output power limiting */
+            if ((swParam->txPowerTable != NULL) && (swParam->txPowerTable->numEntries > 0))
+            {
+                /* Handle special input argument - return highest possible tx power. */
+                if (powerLevel.rawValue == LRF_TxPower_Use_Max.rawValue)
+                {
+                    adjustedTxPowerLevel = swParam->txPowerTable[swParam->txPowerTable->numEntries - 1].powerTable->power;
+                }
+                if ((rclRegulatoryMask != 0) && (rfFreq != LRF_TXPOWER_BYPASS_FREQUENCY_BACKOFF) && (swParam->txPowerLimitTable != NULL) && (swParam->txPowerLimitTable->numEntries > 0))
+                {
+                    /*
+                    * Iterate over all entries in the power limit table. If the current frequency is within the range of the entry
+                    * and the regulatory domain mask matches, adjust the power level if necessary.
+                    */
+                    uint16_t scaledRfFreq = rfFreq / swParam->txPowerLimitTable->freqDiv;
+
+                    for (uint8_t i = 0; i < swParam->txPowerLimitTable->numEntries; i++)
+                    {
+                        if (scaledRfFreq >= swParam->txPowerLimitTable->limitTable[i].minFreq &&
+                            scaledRfFreq < swParam->txPowerLimitTable->limitTable[i].maxFreq &&
+                            (rclRegulatoryMask & swParam->txPowerLimitTable->limitTable[i].regulatoryMask) != 0)
+                        {
+                            /*
+                                * If the power level of the current entry is lower than the current power level, then adjust the
+                                * power level.
+                                */
+                            if (swParam->txPowerLimitTable->limitTable[i].maxTxPower.rawValue < adjustedTxPowerLevel.rawValue)
+                            {
+                                adjustedTxPowerLevel.rawValue = swParam->txPowerLimitTable->limitTable[i].maxTxPower.rawValue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            /* Consider additional Tx Output power compensation that might be needed by CC27..P.. devices */
+            if (rclFeatureControl.enableTxOutputPowerCompensation)
+            {
+                /* Perform VDDS compensation. Use BATMON to measure VDDS voltage and determine if output Tx power needs to be compensated */
+                if (adjustedTxPowerLevel.rawValue >= LRF_TxPower_Use_Vdds_Comp.rawValue)
+                {
+                    uint16_t vdds = hal_get_vdds_voltage();
+
+                    if ((vdds <= LRF_CC27XX_VDDS_THRESHOLD_0) && (swParam->trimDef->trim11.vddsComp.fields.r0 != 0xF))
+                    {
+                        adjustedTxPowerLevel.dBm += LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.vddsComp.fields.r0);
+                    }
+                    else if ((vdds <= LRF_CC27XX_VDDS_THRESHOLD_1) && (swParam->trimDef->trim11.vddsComp.fields.r1 != 0xF))
+                    {
+                        adjustedTxPowerLevel.dBm += LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.vddsComp.fields.r1);
+                    }
+                    else if ((vdds <= LRF_CC27XX_VDDS_THRESHOLD_2) && (swParam->trimDef->trim11.vddsComp.fields.r2 != 0xF))
+                    {
+                        adjustedTxPowerLevel.dBm += LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.vddsComp.fields.r2);
+                    }
+                    else if ((vdds > LRF_CC27XX_VDDS_THRESHOLD_2) && (swParam->trimDef->trim11.vddsComp.fields.r3 != 0xF))
+                    {
+                        adjustedTxPowerLevel.dBm += LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.vddsComp.fields.r3);
+                    }
+                    else
+                    {
+                        /* Do nothing */
+                    }
+                }
+
+                /* Perform temperature coefficient compensation by measuring temperature and checking for valid FCFG values  */
+                if (swParam->trimDef->trim11.tempCoeffComp.value != 0xFFFF)
+                {
+                    int32_t temperature = hal_get_temperature();
+                    int32_t tempCoeffCompFactor = 0;
+
+                    /* FCFG field corresponding to nomTmp needs to be converted from 4-bit sign-magnitude to a signed 8-bit representation */
+                    int32_t convNomTmp = (int32_t) (LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.tempCoeffComp.fields.nomTmp)) * LRF_CC27XX_NOM_TEMP_FACTOR;
+                    uint8_t powerThreshold = LRF_TxPower_Max_Temp_Coeff_Comp.dBm - (uint8_t) swParam->trimDef->trim11.tempCoeffComp.fields.nomIdx;
+
+                    /* Temp coefficient compensation only applies to power levels below the calculated power threshold and above 4 dBm */
+                    if ((adjustedTxPowerLevel.dBm < powerThreshold) && (adjustedTxPowerLevel.dBm > LRF_TxPower_Min_Temp_Coeff_Comp.dBm))
+                    {
+                        int32_t tempDiff = temperature - convNomTmp;
+                        uint16_t powerDiff = (powerThreshold - adjustedTxPowerLevel.dBm);
+                        if (temperature > convNomTmp)
+                        {
+                            tempCoeffCompFactor = ((int32_t) powerDiff * tempDiff * ((int32_t) LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.tempCoeffComp.fields.highCmp))) / LRF_CC27XX_SCALE_TEMP_COEFF;
+                        }
+                        else
+                        {
+                            tempCoeffCompFactor = ((int32_t) powerDiff * tempDiff * ((int32_t) LRF_TRIM_SIGN_MAG_TO_SIGNED(swParam->trimDef->trim11.tempCoeffComp.fields.lowCmp))) / LRF_CC27XX_SCALE_TEMP_COEFF;
+                        }
+
+                        adjustedTxPowerLevel.dBm += (int8_t) tempCoeffCompFactor;
+
+                        /* Limit the compensation to 4 dBm. This is to account for non-linearities in the PA table */
+                        if (adjustedTxPowerLevel.dBm < LRF_TxPower_Min_Temp_Coeff_Comp.dBm)
+                        {
+                            adjustedTxPowerLevel.dBm = LRF_TxPower_Min_Temp_Coeff_Comp.dBm;
+                        }
+                    }
+                }
+            }
+        }
+#endif //DeviceFamily_CC27XX
+        LRF_TxPowerTable_Entry txPowerEntry = LRF_TxPowerTable_findValue(swParam->txPowerTable, adjustedTxPowerLevel);
         if (txPowerEntry.value.rawValue != LRF_TxPowerTable_INVALID_VALUE.rawValue)
         {
             lrfPhyState.currentTxPower = txPowerEntry;

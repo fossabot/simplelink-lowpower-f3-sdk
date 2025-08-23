@@ -59,6 +59,7 @@ const mod = args[0];
 %   const symNames = CodeExportHandler.getSymNames(ceConfig, phy);
 `phyHeader(phyHandler)`
 %   const featureCode = phyHandler.generatePhyFeatureCode(ceConfig.phyAbbr);
+%   const constantDefsCode = phyHandler.generateConstantDefsCode();
 %   const registerFieldDefines = phyHandler.generateRegisterFieldDefines(ceConfig, inst);
 %   const cmdCode = phyHandler.generateRfCommandCode("H", symNames, ceConfig);
 %   const dataCode = phyHandler.generateDataStructCode("H", symNames, ceConfig);
@@ -67,6 +68,7 @@ const mod = args[0];
 // PHY features
 `featureCode`
 %   }
+`constantDefsCode`
 `cmdCode`
 `registerFieldDefines`
 // LRF data structures

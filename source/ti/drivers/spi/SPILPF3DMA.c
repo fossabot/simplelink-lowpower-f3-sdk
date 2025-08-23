@@ -141,7 +141,7 @@ static bool isSPIbusy(uint32_t baseAddr);
     /*
      * DMA arbitration selection for TX channel
      * This is a workaround for a DMA errata documented at:
-     * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+     * https://www.ti.com/lit/pdf/swrz161
      */
     #define UDMA_ARB_TX UDMA_ARB_2
 #else
@@ -339,7 +339,7 @@ int_fast16_t SPILPF3DMA_control(SPI_Handle handle, uint_fast16_t cmd, void *arg)
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
                 /*
                  * This is a workaround for a DMA errata documented at:
-                 * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+                 * https://www.ti.com/lit/pdf/swrz161
                  */
                 uDMAEnableChannelAttribute(hwAttrs->txChannelBitMask, UDMA_ATTR_USEBURST);
 #endif
@@ -490,7 +490,7 @@ static void SPILPF3DMA_hwiFxn(uintptr_t arg)
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
                     /*
                      * This is a workaround for a DMA errata documented at:
-                     * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+                     * https://www.ti.com/lit/pdf/swrz161
                      */
                     uDMAEnableChannelAttribute(hwAttrs->txChannelBitMask, UDMA_ATTR_USEBURST);
 #endif
@@ -556,7 +556,7 @@ static void SPILPF3DMA_hwiFxn(uintptr_t arg)
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
                         /*
                          * This is a workaround for a DMA errata documented at:
-                         * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+                         * https://www.ti.com/lit/pdf/swrz161
                          */
                         uDMAEnableChannelAttribute(hwAttrs->txChannelBitMask, UDMA_ATTR_USEBURST);
 #endif
@@ -1475,7 +1475,7 @@ static inline void primeTransfer(SPI_Handle handle)
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
             /*
              * This is a workaround for a DMA errata documented at:
-             * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+             * https://www.ti.com/lit/pdf/swrz161
              */
             uDMAEnableChannelAttribute(hwAttrs->txChannelBitMask, UDMA_ATTR_USEBURST);
 #endif
@@ -1806,11 +1806,11 @@ static bool configSPI(uint32_t baseAddr,
     ratio = (freq / 2) / (2 * bitRate);
 
     /*
-     * Set TX FIFO <= 1/4 empty, and RX FIFO >= 1/2 full (default).
+     * Set TX FIFO <= 3/4 empty, and RX FIFO >= 1/2 full (default).
      * This is a workaround for a DMA errata documented at:
-     * https://confluence.itg.ti.com/display/LPRF/UDMA_01
+     * https://www.ti.com/lit/pdf/swrz161
      */
-    HWREG(baseAddr + SPI_O_IFLS) = SPI_IFLS_TXSEL_LVL_1_4 | SPI_IFLS_RXSEL_LVL_1_2;
+    HWREG(baseAddr + SPI_O_IFLS) = SPI_IFLS_TXSEL_LVL_3_4 | SPI_IFLS_RXSEL_LVL_1_2;
 #else
     ratio = freq / (2 * bitRate);
 #endif

@@ -165,6 +165,92 @@
           ]
         }
       ],
+      "tx_power_limit_tables": {
+        "ble_1_mbps": {
+          "name": "ble_1_mbps",
+          "freq_div": "1000000",
+          "entry": [
+            {
+              "regulatory_domain": "etsi",
+              "min_freq": "2401",
+              "max_freq": "2403",
+              "max_tx_power": "15.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2401",
+              "max_freq": "2403",
+              "max_tx_power": "16.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2475",
+              "max_freq": "2477",
+              "max_tx_power": "15.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2477",
+              "max_freq": "2479",
+              "max_tx_power": "14.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2479",
+              "max_freq": "2481",
+              "max_tx_power": "10.0"
+            }
+          ]
+        },
+        "ble_2_mbps": {
+          "name": "ble_2_mbps",
+          "freq_div": "1000000",
+          "entry": [
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2473",
+              "max_freq": "2475",
+              "max_tx_power": "17.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2475",
+              "max_freq": "2477",
+              "max_tx_power": "16.0"
+            },
+            {
+              "regulatory_domain": "miit",
+              "min_freq": "2477",
+              "max_freq": "2479",
+              "max_tx_power": "13.0"
+            }
+          ]
+        },
+        "ieee_802_15_4_250_kbps_oqpsk": {
+          "name": "ieee_802_15_4_250_kbps_oqpsk",
+          "freq_div": "500000",
+          "entry": [
+            {
+              "regulatory_domain": "fcc",
+              "min_freq": "2472.5",
+              "max_freq": "2477.5",
+              "max_tx_power": "19"
+            },
+            {
+              "regulatory_domain": "etsi",
+              "min_freq": "2477.5",
+              "max_freq": "2482.5",
+              "max_tx_power": "16"
+            },
+            {
+              "regulatory_domain": "fcc",
+              "min_freq": "2477.5",
+              "max_freq": "2482.5",
+              "max_tx_power": "6"
+            }
+          ]
+        }
+      },
       "fb24g": "fb2400",
       "fe24g": "IS"
     }

@@ -175,6 +175,20 @@
           "hidden": true
         },
         {
+          "name": "txPowerLimitTable1Mbps",
+          "displayName": "LRF txPowerLimitTable1Mbps",
+          "default": "LRF_txPowerLimitTable1Mbps",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "name": "txPowerLimitTable2Mbps",
+          "displayName": "LRF txPowerLimitTable2Mbps",
+          "default": "LRF_txPowerLimitTable2Mbps",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
           "name": "config",
           "displayName": "LRF config",
           "default": "LRF_config",
@@ -192,6 +206,13 @@
           "name": "swConfig",
           "displayName": "LRF swConfig",
           "default": "LRF_swConfig",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "name": "txPowerLimitTable",
+          "displayName": "LRF txPowerLimitTable",
+          "default": "LRF_txPowerLimitTable",
           "readOnly": true,
           "hidden": true
         }
@@ -240,15 +261,18 @@
       "swConfig1Mbps": "LRF_swConfig1Mbps",
       "swConfig2Mbps": "LRF_swConfig2Mbps",
       "txPowerTable": "LRF_txPowerTable",
+      "txPowerLimitTable1Mbps": "LRF_txPowerLimitTable1Mbps",
+      "txPowerLimitTable2Mbps": "LRF_txPowerLimitTable2Mbps",
       "config": "LRF_config",
       "cfg_segment_list": "LRF_regConfigList"
     },
     "ieee_15_4": {},
     "prop": {
       "swConfig": "LRF_swConfig",
+      "txPowerTable": "LRF_txPowerTable",
       "config": "LRF_config",
       "cfg_segment_list": "LRF_regConfigList",
-      "txPowerTable": "LRF_txPowerTable"
+      "txPowerLimitTable": "LRF_txPowerLimitTable"
     }
   }
 }

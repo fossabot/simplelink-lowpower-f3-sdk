@@ -401,7 +401,7 @@ RCL_Events RCL_Handler_Ieee_RxTx(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Eve
             /* Program frequency word */
             LRF_programFrequency(ieeeCmd->rfFrequency, startTx);
 
-            if (LRF_programTxPower(ieeeCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(ieeeCmd->txPower, ieeeCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -1667,7 +1667,7 @@ RCL_Events RCL_Handler_Ieee_TxTest(RCL_Command *cmd, LRF_Events lrfEvents, RCL_E
             /* End status not determined */
             ieeeHandlerState.common.endStatus = RCL_CommandStatus_Active;
 
-            if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(txCmd->txPower, txCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -2136,7 +2136,7 @@ RCL_IEEE_UpdateResult RCL_IEEE_updateTxPower(RCL_CmdIeeeRxTx *cmd, RCL_Command_T
     if (cmd->common.status == RCL_CommandStatus_Active)
     {
         /* Update current TX power value */
-        if (LRF_programTxPower(newTxPower) != TxPowerResult_Ok)
+        if (LRF_programTxPower(newTxPower, cmd->rfFrequency) != TxPowerResult_Ok)
         {
             /* Update failed */
             result = RCL_IEEE_UpdateParamError;

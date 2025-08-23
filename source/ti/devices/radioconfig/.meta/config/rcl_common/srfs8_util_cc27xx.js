@@ -95,8 +95,8 @@ function create(phyGroup) {
         var ib                 = (value >> 2) & 0x3F;
         var gain               = (value >> 8) & 0x07;
         var mode               = (value >> 11) & 0x03;
-        // The pa20dBmEsdCtl field is initialized to zero by default.
-        // RCL dynamically sets this field based on the mode and VDDS values.
+        // The pa20dBmEsdCtl and rtrimTxCompCtl fields are initialized to zero by default.
+        // RCL dynamically sets these fields based on the mode and VDDS values.
         var noIfampRfLdoBypass = (value >> 15) & 0x01;
         return "{ .power = { .fraction = " + txPowerFract +
                ", .dBm = " + txPowerInt +
@@ -105,10 +105,43 @@ function create(phyGroup) {
                ", .ib = " + ib +
                ", .gain = " + gain +
                ", .mode = " + mode +
-               ", .reserved = 0" +
+               ", .rtrimTxCompCtl = 0" +
                ", .pa20dBmEsdCtl = 0" +
                ", .noIfampRfLdoBypass = " + noIfampRfLdoBypass +
                " } }";
+    }
+
+    function convTxPowerLimitTableEntryToBinary(regulatoryDomainNameList, minFreq, maxFreq, maxTxPower) {
+        var entryData = [];
+        entryData[0] = (minFreq >> 0) & 0xFF;
+        entryData[1] = (minFreq >> 8) & 0xFF;
+        entryData[2] = (maxFreq >> 0) & 0xFF;
+        entryData[3] = (maxFreq >> 8) & 0xFF;
+        entryData[4] = getRegulatoryDomainMask(regulatoryDomainNameList);
+        entryData[5] = Math.floor(maxTxPower * 2);
+        return entryData;
+    }
+
+    function convTxPowerLimitTableEntryToString(regulatoryDomainNameList, minFreq, maxFreq, maxTxPower) {
+        var regulatoryMask     = getRegulatoryDomainMask(regulatoryDomainNameList);
+        var maxTxPowerInt      = Math.floor(maxTxPower * 2) >> 1;
+        var maxTxPowerFract    = Math.floor(maxTxPower * 2) & 1;
+        return "{ .minFreq = " + minFreq + ", .maxFreq = " + maxFreq + ", .regulatoryMask = 0x" + hexString(regulatoryMask, 2) + ", .maxTxPower = { .fraction = " + maxTxPowerFract + ", .dBm = " + maxTxPowerInt + " } }"
+    }
+
+    function genRegulatoryDomainConstants() {
+        var constantDefList = [];
+
+        // Add header comment
+        constantDefList[0] = "Regulatory domains (for channel specific TX output power limitation)";
+
+        // Add constants
+        var n = constantDefList.length;
+        constantDefList[n++] = "RCL_REGULATORY_DOMAIN_ETSI,0x" + hexString(getRegulatoryDomainMask("etsi"), 2);
+        constantDefList[n++] = "RCL_REGULATORY_DOMAIN_FCC,0x" +  hexString(getRegulatoryDomainMask("fcc"), 2);
+        constantDefList[n++] = "RCL_REGULATORY_DOMAIN_MIIT,0x" + hexString(getRegulatoryDomainMask("miit"), 2);
+
+        return constantDefList;
     }
 
     function getFrequencyWithOffset() {
@@ -121,6 +154,24 @@ function create(phyGroup) {
 
     function getPpFrequency154() {
         return convIeee802154ChannelToFreq(getPhyProperty("ieee802154Channel"));
+    }
+
+    function getRegulatoryDomainMask(name) {
+        var nameList = String(name).split(",");
+        var mask = 0x00;
+        if (nameList.indexOf("etsi") >= 0) {
+            mask |= 0x01;
+        }
+        if (nameList.indexOf("fcc") >= 0) {
+            mask |= 0x02;
+        }
+        if (nameList.indexOf("miit") >= 0) {
+            mask |= 0x04;
+        }
+        if (nameList.indexOf("all") >= 0) {
+            mask |= 0xFF;
+        }
+        return mask
     }
 
     function packetTxGenView() {
@@ -144,11 +195,20 @@ function create(phyGroup) {
         sections[n++] = "Extended header;" + byteString(packetData.slice(2, 2 + 1)) + ";" + byteString(packetData.slice(3, 3 + 1)) + ";" +
                         byteString(packetData.slice(4, 4 + 6)) + ";" + byteString(packetData.slice(10, 10 + 2));
 
+        // Constrain displayed payload to 100 bytes
+        var payloadSuffix = "";
+        var maxPayloadLength = 100;
+        var payloadLength = packetData.length - 12;
+        if (payloadLength > maxPayloadLength) {
+            payloadSuffix = " + " + (payloadLength - maxPayloadLength) + " byte(s)"
+            payloadLength = maxPayloadLength;
+        }
+
         // Add payload
         if (getTestProperty("seqNumberEnable") == 0) {
-            sections[n++] = "Advertising data;%" + byteString(packetData.slice(12));
+            sections[n++] = "Advertising data;%" + byteString(packetData.slice(12, 12 + payloadLength)) + payloadSuffix;
         } else {
-            sections[n++] = "Advertising data;Seq.;%" + byteString(packetData.slice(14));
+            sections[n++] = "Advertising data;Seq.;%" + byteString(packetData.slice(12 + 2, 12 + payloadLength)) + payloadSuffix;
         }
 
         // Add CRC
@@ -294,9 +354,13 @@ function create(phyGroup) {
         convIeee802154ChannelToFreq: convIeee802154ChannelToFreq,
         convPaTableSettingToBinary: convPaTableSettingToBinary,
         convPaTableSettingToString: convPaTableSettingToString,
+        convTxPowerLimitTableEntryToBinary: convTxPowerLimitTableEntryToBinary,
+        convTxPowerLimitTableEntryToString: convTxPowerLimitTableEntryToString,
+        genRegulatoryDomainConstants: genRegulatoryDomainConstants,
         getFrequencyWithOffset: getFrequencyWithOffset,
         getPpFrequencyBle: getPpFrequencyBle,
         getPpFrequency154: getPpFrequency154,
+        getRegulatoryDomainMask: getRegulatoryDomainMask,
         packetTxGenView: packetTxGenView,
         packetTxGenView: packetTxGenView,
         packetTxGenView: packetTxGenView,

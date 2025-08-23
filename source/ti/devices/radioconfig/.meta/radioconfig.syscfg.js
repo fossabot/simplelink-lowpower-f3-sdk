@@ -292,19 +292,19 @@ function getPaUsage(inst) {
 
     let fb = 2400; // For BLE and IEEE 802.15.4
     let paHi = "20";
-    let paTable = RfDesign.getPaTable("2400", false);
+    let paTable = RfDesign.getPaTableEntries("2400", false);
 
     if ("freqBand" in inst) {
         fb = parseInt(inst.freqBand);
         if (fb < 1000) {
-            paTable = RfDesign.getPaTable(fb, false);
+            paTable = RfDesign.getPaTableEntries(fb, false);
         }
     }
     let pa = RfDesign.getPaTableSuffix(paTable);
 
     const hasHighPA = rfMod.pa20 !== "none";
     if (hasHighPA) {
-        paTable = RfDesign.getPaTable(fb, true);
+        paTable = RfDesign.getPaTableEntries(fb, true);
     }
     const useHighPA = hasHighPA && "highPA" in inst && inst.highPA;
 

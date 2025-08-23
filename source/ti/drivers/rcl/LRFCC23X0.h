@@ -56,7 +56,7 @@ typedef union
         uint16_t ib: 6;
         uint16_t gain: 3;
         uint16_t mode: 2;
-        uint16_t reserved: 1;
+        uint16_t rtrimTxCompCtl: 1;
         uint16_t pa20dBmEsdCtl: 1;
         uint16_t noIfampRfLdoBypass: 1;
     };
@@ -203,6 +203,26 @@ typedef struct {
     LRF_TxPowerTable_Entry powerTable[];
 } LRF_TxPowerTable;
 
+/**
+ * @brief Single entry of the Tx power limit table.
+ */
+typedef struct {
+    uint16_t minFreq;                        /*!< Start of frequency range */
+    uint16_t maxFreq;                        /*!< End of frequency range. Single frequency specified by maxFreq = minFreq */
+    uint8_t regulatoryMask;                  /*!< Regulatory domain mask */
+    LRF_TxPowerTable_Index maxTxPower;       /*!< Max power level for frequency in range [minFreq,maxFreq] */
+} LRF_TxPowerLimitTable_Entry;
+
+/**
+ * @brief Tx power limit table, containing frequency dependent power limits for specific
+ * regulatory domain
+ */
+typedef struct {
+    uint32_t numEntries;                             /*!< Number of entries in the table*/
+    uint32_t freqDiv;                                /*!< Frequency divisor. Used to determine the prefix of the frequency in the table */
+    LRF_TxPowerLimitTable_Entry limitTable[];        /*!< Table with frequency specific power limits */
+} LRF_TxPowerLimitTable;
+
 typedef struct LRF_TxShape_s {
     struct {
         uint32_t      scale    :17;
@@ -226,6 +246,41 @@ typedef struct {
 typedef struct {
     uint32_t word[2];
 } LRF_DoubleWord;
+
+#ifdef DeviceFamily_CC27XX
+typedef struct {
+    union {
+        struct {
+            uint16_t r0     : 4;
+            uint16_t r1     : 4;
+            uint16_t r2     : 4;
+            uint16_t r3     : 4;
+        } fields;
+        uint16_t value;
+    };
+} LRF_Trim_vddsComp;
+typedef struct {
+    int8_t thr;
+    union {
+        struct {
+            uint8_t val     : 4;
+            uint8_t spare   : 4;
+        } fields;
+        uint8_t value;
+    };
+} LRF_Trim_rtrimTxComp;
+typedef struct {
+    union {
+        struct {
+            uint16_t lowCmp  : 4;
+            uint16_t highCmp : 4;
+            uint16_t nomTmp  : 4;
+            uint16_t nomIdx  : 4;
+        } fields;
+        uint16_t value;
+    };
+} LRF_Trim_tempCoeffComp;
+#endif //DeviceFamily_CC27XX
 
 typedef union {
     struct {
@@ -466,6 +521,18 @@ typedef union {
     uint32_t data;
 } LRF_Trim4;
 
+#ifdef DeviceFamily_CC27XX
+typedef union {
+    struct {
+        LRF_Trim_vddsComp vddsComp;
+        uint16_t reserved;
+        LRF_Trim_rtrimTxComp rtrimTxComp;
+        LRF_Trim_tempCoeffComp tempCoeffComp;
+    };
+    uint32_t data;
+} LRF_Trim11;
+#endif //DeviceFamily_CC27XX
+
 /* This definition is used instead of the definition from hw_fcfg.h to accommodate implementation
    and cut parameters not relevant to LRF */
 typedef struct {
@@ -478,6 +545,10 @@ typedef struct {
     LRF_Trim_Variant    trimVariant[LRF_TRIM_NUM_VARIANTS];
     LRF_Trim3           trim3;
     LRF_Trim4           trim4;
+#ifdef DeviceFamily_CC27XX
+    uint32_t            reserved1[15];
+    LRF_Trim11          trim11;
+#endif //DeviceFamily_CC27XX
 } LRF_TrimDef;
 
 /**
@@ -497,9 +568,10 @@ typedef struct LRF_SwConfig_s {
  *  @brief Software defined PHY parameter list
  */
 typedef struct LRF_SwParam_s {
-    const LRF_SwConfig      *swConfig;          /*!< Software defined parameters. */
-    const LRF_TxPowerTable  *txPowerTable;      /*!< TX power table */
-    const LRF_TrimDef       *trimDef;           /*!< Trim definitions. NULL: Do not apply trim. */
+    const LRF_SwConfig          *swConfig;          /*!< Software defined parameters. */
+    const LRF_TxPowerLimitTable *txPowerLimitTable; /*!< TX power limit table */
+    const LRF_TxPowerTable      *txPowerTable;      /*!< TX power table */
+    const LRF_TrimDef           *trimDef;           /*!< Trim definitions. NULL: Do not apply trim. */
 } LRF_SwParam;
 
 /**
@@ -523,8 +595,9 @@ typedef struct LRF_Config_s {
 #define TOPSM_RAM_SZ            0x00001000U /* 4 KB */
 #define MAX_REG_CONFIG_LEN      1024U        /* 1024 entries, using 4 KB */
 
-#define LRF_TXPOWER_REFERENCE_TEMPERATURE 25    /*!< Reference temperature for TX power, degrees C */
-#define LRF_TXPOWER_TEMPERATURE_SCALING  0x100 /*!< Scaling factor for TX power temperature coefficients */
+#define LRF_TXPOWER_REFERENCE_TEMPERATURE      25          /*!< Reference temperature for TX power, degrees C */
+#define LRF_TXPOWER_TEMPERATURE_SCALING        0x100       /*!< Scaling factor for TX power temperature coefficients */
+#define LRF_TXPOWER_BYPASS_FREQUENCY_BACKOFF   0xFFFFFFFF  /*!< Special value to indicate that no frequency specific back-off should be applied */
 
 extern const LRF_TxShape LRF_shapeBaseGfsk05;
 extern const LRF_TxShape LRF_shapeBaseGfsk067;
@@ -565,11 +638,12 @@ void LRF_programTemperatureCompensatedTxPower(void);
  *
  *  @param  powerLevel maximum allowed power level in dBm, or special value
  *      (%LRF_TxPower_Use_Min, %LRF_TxPower_Use_Max, %LRF_TxPower_Use_Raw, or %LRF_TxPower_None)
+ *  @param  rfFreq Radio frequency in Hz for which the maximum Tx power is calculated
  *
  *  @return TxPowerResult_Ok on success; TxPowerResult_Error if no valid settings were found
  *
  */
-LRF_TxPowerResult LRF_programTxPower(LRF_TxPowerTable_Index powerLevel);
+LRF_TxPowerResult LRF_programTxPower(LRF_TxPowerTable_Index powerLevel, uint32_t rfFreq);
 
 /**
  * @brief Reads maximum RSSI from register

@@ -40,7 +40,7 @@
 #include <stdint.h>
 
 /* Length of binary image. */
-#define LRF_RFE_BINARY_COHERENT_PLL_NOPLL_LENGTH 858 
+#define LRF_RFE_BINARY_COHERENT_PLL_NOPLL_LENGTH 864 
 
 /* Declaration of raw binary. */
 extern const uint32_t LRF_RFE_binary_coherent_pll_nopll[LRF_RFE_BINARY_COHERENT_PLL_NOPLL_LENGTH];

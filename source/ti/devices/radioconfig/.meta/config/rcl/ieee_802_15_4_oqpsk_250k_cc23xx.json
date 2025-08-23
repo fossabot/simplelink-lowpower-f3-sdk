@@ -942,6 +942,10 @@
             "value": "LRF_swConfig"
           },
           {
+            "name": "txPowerLimitTable",
+            "value": "0"
+          },
+          {
             "name": "txPowerTable",
             "value": "LRF_txPowerTable"
           },
@@ -1367,6 +1371,18 @@
         ]
       }
     ],
+    "script": [
+      {
+        "role": "conv_pa_table_setting_to_string",
+        "call": "convPaTableSettingToString(txPower, value, isHighPa)",
+        "#text": "./conv_pa_table_setting_to_string.js"
+      },
+      {
+        "role": "conv_pa_table_setting_to_binary",
+        "call": "convPaTableSettingToBinary(txPower, value, isHighPa)",
+        "#text": "./conv_pa_table_setting_to_binary.js"
+      }
+    ],
     "header_file": [
       {
         "type": "common",
@@ -1415,6 +1431,15 @@
         "mceImage": "mce_image",
         "regConfigList": "cfg_segment_list"
       }
+    },
+    "rcl_struct_rf_design_deps": {
+      "pa_table": [
+        {
+          "struct_instance": "LRF_txPowerTable",
+          "field_name": "powerTable",
+          "curr_table_size": 0
+        }
+      ]
     }
   }
 }

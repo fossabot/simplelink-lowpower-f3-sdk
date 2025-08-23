@@ -479,7 +479,7 @@ function validate(rfinst, validation) {
 function getTxPowerOptions(freq, highPA = false) {
     const ret = [];
 
-    const paList = getPaTable(freq, highPA);
+    const paList = getPaTableEntries(freq, highPA);
     _.each(paList, (pv) => {
         const item = {};
         item.name = pv._text;
@@ -490,13 +490,13 @@ function getTxPowerOptions(freq, highPA = false) {
 }
 
 /**
- *  ======== getPaTable ========
+ *  ======== getPaTableEntries ========
  *  Get a PA table by frequency and PA state (high, default)
  *
  *  @param freq - selected frequency (kHz)
  *  @param highPA - set if using high PA table
  */
-function getPaTable(freq, highPA) {
+function getPaTableEntries(freq, highPA) {
     const fb = getFrequencyBandByFreq(freq, highPA);
     if (fb === null) {
         return null; // CurrentDesign.paDefault;
@@ -513,6 +513,34 @@ function getPaTable(freq, highPA) {
     }
 
     return fb.paTable;
+}
+
+/**
+ *  ======== getTxPowerLimitTableEntries ========
+ *  Returns the TX output power limitation table entries with matching table name.
+ *
+ *  @param tableName - The table name, for example "ble_1_mbps"
+ */
+function getTxPowerLimitTableEntries(tableName) {
+    if ("tx_power_limit_tables" in CurrentDesign) {
+        return CurrentDesign.tx_power_limit_tables[tableName].entry;
+    } else {
+        return [];
+    }
+}
+
+/**
+ *  ======== getTxPowerLimitTableFreqDiv ========
+ *  Returns the TX output power limitation table frequency divider with matching table name.
+ *
+ *  @param tableName - The table name, for example "ble_1_mbps"
+ */
+function getTxPowerLimitTableFreqDiv(tableName) {
+    if ("tx_power_limit_tables" in CurrentDesign) {
+        return CurrentDesign.tx_power_limit_tables[tableName].freq_div;
+    } else {
+        return 1;
+    }
 }
 
 /**
@@ -957,7 +985,7 @@ function getPaTableSuffix(paTable) {
  *  @param highPa - if generating symbols for High PA
 */
 function getPaTableInfo(target, highPa) {
-    const paTable = getPaTable(target.max, highPa);
+    const paTable = getPaTableEntries(target.max, highPa);
     if (paTable === null || paTable.length === 0) {
         // No PA table
         return null;
@@ -1050,7 +1078,7 @@ function modifyPaName(paOrig) {
  */
 function getTxPowerValueByDbm(freqStr, highPA, dbm) {
     const freq = parseFloat(freqStr);
-    const paList = getPaTable(freq, highPA);
+    const paList = getPaTableEntries(freq, highPA);
 
     for (const i in paList) {
         const pa = paList[i];
@@ -1108,7 +1136,7 @@ function getTxPowerValueDefault(freqStr, highPA) {
     let ret;
 
     // Pick settings according to PA
-    const paList = getPaTable(freq, highPA);
+    const paList = getPaTableEntries(freq, highPA);
     const pa = paList[0];
 
     if ("TxHighPa" in pa) {
@@ -1200,7 +1228,9 @@ const module = {
     getFrequencyBandByFreq: getFrequencyBandByFreq,
     getHighPaAssociation: getHighPaAssociation,
     getFrontEnd: getFrontEnd,
-    getPaTable: getPaTable,
+    getPaTableEntries: getPaTableEntries,
+    getTxPowerLimitTableEntries: getTxPowerLimitTableEntries,
+    getTxPowerLimitTableFreqDiv: getTxPowerLimitTableFreqDiv,
     genPaTableName: genPaTableName,
     getPaTableSuffix: getPaTableSuffix,
     getTxPowerOptions: getTxPowerOptions,

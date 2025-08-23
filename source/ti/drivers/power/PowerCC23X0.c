@@ -1523,8 +1523,27 @@ static void PowerCC23X0_oscillatorISR(uintptr_t arg)
         /* Max out IREF */
         CKMDSetTargetIrefTrim(HFXT_TARGET_IREF_MAX);
 
-        /* Start up the HFXT using the workaround for the HFXT amplitude control ADC
-         * bias point
+        /* If a HFXT fault or trackrefloss has occurred, the HFXT is
+         * restarted.
+         * When the HFXT is started, a "disallow standby" constraint is set, and
+         * it is released when the HFXT has started (when getting the AMPSETTLED
+         * signal). However, if an HFXT fault occurs while waiting for
+         * AMPSETTLED, then the HFXT will be re-started setting a new constraint
+         * without releasing the previous one. The constraint will end up
+         * getting set twice but only released once (assuming the AMPSETTLED
+         * signal is generated after the re-start).
+         * To prevent this asymmetry, add a check to release the constraint if
+         * the system is still waiting for the AMPSETTLED signal before
+         * restarting the HFXT.
+         */
+        if (((maskedStatus & CKMD_MIS_AMPSETTLED_M) == 0U) &&
+            ((HWREG(CKMD_BASE + CKMD_O_IMASK) & CKMD_IMASK_AMPSETTLED_M) == CKMD_IMASK_AMPSETTLED_M))
+        {
+            Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
+        }
+
+        /* Start up the HFXT using the workaround for the HFXT amplitude control
+         * ADC bias point.
          */
         PowerCC23X0_startHFXT();
 

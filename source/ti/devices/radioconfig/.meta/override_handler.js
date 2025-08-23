@@ -204,7 +204,7 @@ function getStructNames(symName) {
  */
 function updateTxPowerOverride(txPower, freq, highPA) {
     // Find override for actual TxPower setting
-    const paList = RfDesign.getPaTable(freq, highPA);
+    const paList = RfDesign.getPaTableEntries(freq, highPA);
     VddrBoost = false;
 
     _.each(paList, (pv) => {

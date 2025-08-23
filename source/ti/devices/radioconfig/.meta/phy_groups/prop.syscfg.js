@@ -590,7 +590,7 @@ function validate(inst, validation) {
 
     const prop24 = BAND_24G;
     const highPA = highPaSupport && !prop24 ? inst.highPA : false;
-    const paSetting = RfDesign.getPaTable(freq, highPA);
+    const paSetting = RfDesign.getPaTableEntries(freq, highPA);
 
     if (paSetting !== null) {
         // Valid range, check if characterized
@@ -772,7 +772,7 @@ function validate(inst, validation) {
  * @param highPA - True if using high PA
  */
 function validateTxPower(txPower, freq, highPA) {
-    const paTable = RfDesign.getPaTable(freq, highPA);
+    const paTable = RfDesign.getPaTableEntries(freq, highPA);
     let vddr = false;
     _.forEach(paTable, (values) => {
         if (values._text === txPower) {

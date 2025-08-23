@@ -211,6 +211,7 @@ static bool RCL_Handler_BLE5_updateAuxPtr(RCL_AuxPtrInfo *auxPtr, uint32_t packe
 static void RCL_Handler_BLE5_readAuxPtrFromRxBuffer(uint32_t *data32, RCL_AuxPtrInfo *auxPtrInfo);
 static void RCL_Handler_BLE5_updateBackoffParams(RCL_CtxScanInit * ctx, uint16_t endCause);
 static int8_t RCL_Handler_BLE5_checkExtHdrField(uint8_t extHdrFlags, uint8_t fieldMask);
+static void RCL_Handler_BLE5_setRfOperation(bool isNextOperationTx);
 
 
 
@@ -498,10 +499,6 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
         ble5HandlerState.adv.switchPhy = false; /* Default */
 
         RCL_CommandStatus status = RCL_Handler_BLE5_setPhy(cmd->phyFeatures);
-        if (LRF_programTxPower(advCmd->txPower) != TxPowerResult_Ok)
-        {
-            status = RCL_CommandStatus_Error_Param;
-        }
 
         if (status == RCL_CommandStatus_Active)
         {
@@ -960,6 +957,11 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
             }
+            else if (LRF_programTxPower(advCmd->txPower, rfFreq) != TxPowerResult_Ok)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
             else
             {
                 /* Program frequency word */
@@ -1053,6 +1055,8 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                     {
                         LRF_enableHwInterrupt(LRF_EventOpDone.value | LRF_EventOpError.value);
                     }
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
 
                     /* Post cmd */
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_adv: Starting advertiser on channel %1d", curChannel);
@@ -1088,6 +1092,11 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
             channel = ble5HandlerState.common.auxPtrInfo.chIndex;
             rfFreq = RCL_Handler_BLE5_findRfFreq(channel);
             if (rfFreq == 0)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
+            else if (LRF_programTxPower(advCmd->txPower, rfFreq) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -1416,7 +1425,8 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                         }
 
                         LRF_waitForTopsmReady();
-
+                         /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(true);
                         /* Post cmd */
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_adv: Starting extended advertiser on channel %1d", channel);
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_ADV;
@@ -1494,11 +1504,6 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
         ble5HandlerState.common.endStatus = RCL_CommandStatus_Finished;
 
         RCL_CommandStatus status = RCL_Handler_BLE5_setPhy(cmd->phyFeatures);
-
-        if (LRF_programTxPower(auxAdvCmd->txPower) != TxPowerResult_Ok)
-        {
-            status = RCL_CommandStatus_Error_Param;
-        }
 
         if (status == RCL_CommandStatus_Active)
         {
@@ -1883,6 +1888,11 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
             }
+            else if (LRF_programTxPower(auxAdvCmd->txPower, rfFreq) != TxPowerResult_Ok)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
             else
             {
                 /* Program frequency word */
@@ -1944,6 +1954,8 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
                     {
                         LRF_enableHwInterrupt(LRF_EventOpDone.value | LRF_EventOpError.value);
                     }
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
 
                     /* Post cmd */
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_aux_adv: Starting extended advertiser on channel %1d", channel);
@@ -1971,6 +1983,13 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
             }
             else
             {
+                /* New channel might require a different Tx power */
+                if (LRF_programTxPower(auxAdvCmd->txPower, rfFreq) != TxPowerResult_Ok)
+                {
+                    cmd->status = RCL_CommandStatus_Error_Param;
+                    rclEvents.lastCmdDone = 1;
+                }
+
                 /* Program frequency word */
                 LRF_programFrequency(rfFreq, true);
                 LRF_enable();
@@ -2076,6 +2095,9 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
                         /* Deallocate TX FIFO. Writing to FCMD is safe because PBE is finished, ref. RCL-367 */
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_FCMD) = (LRFDPBE_FCMD_DATA_TXFIFO_DEALLOC >> LRFDPBE_FCMD_DATA_S);
 
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(true);
+
                         /* Post cmd */
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_aux_adv: Starting extended advertiser on channel %1d", channel);
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_ADV;
@@ -2151,10 +2173,6 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
         ble5HandlerState.common.endStatus = RCL_CommandStatus_Finished;
 
         RCL_CommandStatus status = RCL_Handler_BLE5_setPhy(cmd->phyFeatures);
-        if (LRF_programTxPower(perAdvCmd->txPower) != TxPowerResult_Ok)
-        {
-            status = RCL_CommandStatus_Error_Param;
-        }
 
         if (status == RCL_CommandStatus_Active)
         {
@@ -2324,6 +2342,11 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
             }
+            else if (LRF_programTxPower(perAdvCmd->txPower, rfFreq) != TxPowerResult_Ok)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
             else
             {
                 /* Program frequency word */
@@ -2373,6 +2396,9 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
                     /* Enable interrupts */
                     LRF_enableHwInterrupt(LRF_EventOpDone.value | LRF_EventOpError.value);
 
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
+
                     /* Post cmd */
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_periodicAdv: Starting periodic advertising on channel %1d (access address %08X)", channel, perAdvCmd->ctx->accessAddress);
                     LRF_waitForTopsmReady();
@@ -2392,6 +2418,11 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
 
             rfFreq = RCL_Handler_BLE5_findRfFreq(channel);
             if (rfFreq == 0)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
+            else if (LRF_programTxPower(perAdvCmd->txPower, rfFreq) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -2471,6 +2502,9 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
 
                         /* Deallocate TX FIFO. Writing to FCMD is safe because PBE is finished, ref. RCL-367 */
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_FCMD) = (LRFDPBE_FCMD_DATA_TXFIFO_DEALLOC >> LRFDPBE_FCMD_DATA_S);
+
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(true);
 
                         /* Post cmd */
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_periodicAdv: Sending AuxChain on channel %1d (access address %08X)", channel, perAdvCmd->ctx->accessAddress);
@@ -2579,7 +2613,7 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -2899,6 +2933,8 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
 
                     if (ble5HandlerState.scanInit.initiator)
                     {
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(false);
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_scan_init: Starting initiator");
                         LRF_waitForTopsmReady();
                         RCL_Profiling_eventHook(RCL_ProfilingEvent_PreprocStop);
@@ -2939,6 +2975,8 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
                     }
                     else
                     {
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(false);
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_scan_init: Starting scanner");
                         LRF_waitForTopsmReady();
                         RCL_Profiling_eventHook(RCL_ProfilingEvent_PreprocStop);
@@ -3143,6 +3181,8 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
                         {
                             if (!(rclSchedulerState.hardStopInfo.apiStopEnabled || rclSchedulerState.gracefulStopInfo.apiStopEnabled))
                             {
+                                /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                                RCL_Handler_BLE5_setRfOperation(false);
                                 Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_scan_init: Restarting scanner");
                                 /* Reset TXFIFO - needed due to LPRF_PHY-511 */
                                 /* Writing to FCMD is safe because PBE is finished, ref. RCL-367 */
@@ -3388,12 +3428,20 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
             RCL_Ble5Channel nextChannel = (RCL_Ble5Channel) ble5HandlerState.common.auxPtrInfo.chIndex;
             rfFreq = RCL_Handler_BLE5_findRfFreq(nextChannel);
 
+            /* New channel requires new Tx output power programming */
+            RCL_Command_TxPower txPower = (ble5HandlerState.scanInit.initiator) ? initCmd->txPower : scanCmd->txPower;
+
             if ((maxAuxPtrWaitTime != 0) && (maxAuxPtrWaitTime < auxOffsetUs))
             {
                 cmd->status = RCL_CommandStatus_MaxAuxWaitTimeExceeded;
                 rclEvents.lastCmdDone = 1;
             }
             else if (rfFreq == 0)
+            {
+                cmd->status = RCL_CommandStatus_Error_Param;
+                rclEvents.lastCmdDone = 1;
+            }
+            else if (LRF_programTxPower(txPower, rfFreq) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -3535,11 +3583,15 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
 
                     if (!ble5HandlerState.scanInit.initiator) /* Scanner */
                     {
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(false);
                         /* Post cmd */
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_SCAN;
                     }
                     else /* Initiator */
                     {
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(false);
                         /* Post cmd */
                         HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_INITIATOR;
 
@@ -3639,7 +3691,7 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -3722,6 +3774,11 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
                     /* The PAwR scanner can receive AUX_CONNECT_REQ like an advertiser and enter a connection state. */
                     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_ADVCFG) = PBE_BLE5_RAM_ADVCFG_CONNECTABLE_M;
 
+                    /* [WORKAROUND] RCL-1062: Explicitly reset the Tx FIFO to resolve an issue where the PAwR Scanner fails to enter Tx payload
+                     * due to lack of Tx FIFO capacity after running approximately 200 periodic events.
+                     */
+                    HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_FCMD) = (LRFDPBE_FCMD_DATA_TXFIFO_RESET >> LRFDPBE_FCMD_DATA_S);
+
                     /* Enter the AUX_CONNECT_RSP for PAwR scanner */
                     if (RCL_Handler_BLE5_updateTxBuffers(&perScanCmd->ctx->txBuffers, 1, NULL, false) == 0)
                     {
@@ -3782,9 +3839,13 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
                                                                                 LRF_EventRxNok.value | LRF_EventRxBufFull.value,
                                                                                 fifoCfg, ble5HandlerState.common.activeUpdate));
 
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(false);
+
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_periodicScan: Starting periodic scanner");
                     LRF_waitForTopsmReady();
                     RCL_Profiling_eventHook(RCL_ProfilingEvent_PreprocStop);
+
                     /* Post cmd */
                     HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_SCAN;
                 }
@@ -4139,6 +4200,10 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
                                                                                 LRF_EventRxOk.value | LRF_EventRxIgnored.value |
                                                                                 LRF_EventRxNok.value | LRF_EventRxBufFull.value,
                                                                                 fifoCfg, ble5HandlerState.common.activeUpdate));
+
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(false);
+
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_periodicScan: Following AuxPointer on channel: %d", nextChannel);
                     LRF_waitForTopsmReady();
 
@@ -4209,7 +4274,7 @@ RCL_Events RCL_Handler_BLE5_conn(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Eve
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(connCmd->txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(connCmd->txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -4286,6 +4351,8 @@ RCL_Events RCL_Handler_BLE5_conn(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Eve
                         /* Set timeout */
                         HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_FIRSTRXTIMEOUT) = relRxTimeoutTime;
 
+                        /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                        RCL_Handler_BLE5_setRfOperation(false);
                         Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_conn: Starting peripheral");
                         LRF_waitForTopsmReady();
                         RCL_Profiling_eventHook(RCL_ProfilingEvent_PreprocStop);
@@ -4295,6 +4362,8 @@ RCL_Events RCL_Handler_BLE5_conn(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Eve
                 }
                 else
                 {
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_conn: Starting central");
                     LRF_waitForTopsmReady();
                     RCL_Profiling_eventHook(RCL_ProfilingEvent_PreprocStop);
@@ -4551,7 +4620,7 @@ RCL_Events RCL_Handler_BLE5_dtmTx(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Ev
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(txCmd->txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -4691,6 +4760,8 @@ RCL_Events RCL_Handler_BLE5_dtmTx(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Ev
                         uint16_t whitenInit = RCL_Handler_BLE5_findWhitenInit(channel);
                         HWREG_WRITE_LRF(LRFDPBE32_BASE + LRFDPBE32_O_MDMSYNCA) = DTM_ACCESS_ADDRESS ^ (whitenInit << 24);
                     }
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
                     Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_BLE5_dtmTx: Starting DTM TX");
                     LRF_waitForTopsmReady();
                     /* Post cmd */
@@ -4857,6 +4928,8 @@ RCL_Events RCL_Handler_BLE5_genericRx(RCL_Command *cmd, LRF_Events lrfEvents, RC
                                                                                 LRF_EventRxOk.value | LRF_EventRxIgnored.value |
                                                                                 LRF_EventRxNok.value | LRF_EventRxBufFull.value,
                                                                                 fifoCfg, ble5HandlerState.common.activeUpdate));
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(false);
 
                     Log_printf(LogModule_RCL, Log_INFO, "RCL_Handler_BLE5_genericRx: Starting generic RX");
                     LRF_waitForTopsmReady();
@@ -4937,7 +5010,6 @@ RCL_Events RCL_Handler_BLE5_genericRx(RCL_Command *cmd, LRF_Events lrfEvents, RC
         }
         if (rclEventsIn.timerStart != 0)
         {
-            Log_printf(LogModule_RCL, Log_INFO, "RCL_Handler_BLE5_genericRx: Generic RX started");
             rclEvents.cmdStarted = 1;
         }
         if (lrfEvents.opDone != 0 || lrfEvents.opError != 0)
@@ -5048,6 +5120,8 @@ RCL_Events RCL_Handler_BLE5_ChannelAssessment(RCL_Command *cmd, LRF_Events lrfEv
                 {
                     LRF_enableHwInterrupt(LRF_EventOpDone.value | LRF_EventOpError.value | LRF_EventRfesoft0.value);
                     LRF_waitForTopsmReady();
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(false);
                     /* Post cmd */
                     HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE5_REGDEF_API_OP_RXRAW;
                 }
@@ -5194,7 +5268,7 @@ RCL_Events RCL_Handler_BLE5_genericTx(RCL_Command *cmd, LRF_Events lrfEvents, RC
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(txCmd->txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -5235,6 +5309,8 @@ RCL_Events RCL_Handler_BLE5_genericTx(RCL_Command *cmd, LRF_Events lrfEvents, RC
                     {
                         HWREG_WRITE_LRF(LRFDPBE32_BASE + LRFDPBE32_O_MDMSYNCA) = accessAddress ^ (whitenInit << 24);
                     }
+                    /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                    RCL_Handler_BLE5_setRfOperation(true);
                     Log_printf(LogModule_RCL, Log_INFO, "RCL_Handler_BLE5_genericTx: Starting generic TX");
                     LRF_waitForTopsmReady();
                     /* Post cmd */
@@ -5322,7 +5398,7 @@ RCL_Events RCL_Handler_Ble5_txTest(RCL_Command *cmd, LRF_Events lrfEvents, RCL_E
         {
             status = RCL_CommandStatus_Error_Param;
         }
-        else if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+        else if (LRF_programTxPower(txCmd->txPower, rfFreq) != TxPowerResult_Ok)
         {
             status = RCL_CommandStatus_Error_Param;
         }
@@ -5389,6 +5465,9 @@ RCL_Events RCL_Handler_Ble5_txTest(RCL_Command *cmd, LRF_Events lrfEvents, RCL_E
             {
                 /* Enable interrupts */
                 LRF_enableHwInterrupt(LRF_EventOpDone.value | LRF_EventOpError.value);
+
+                /* The PBE needs to know the RF operation before the command is posted. Coex register also be initialized */
+                RCL_Handler_BLE5_setRfOperation(true);
 
                 /* Post cmd */
                 Log_printf(LogModule_RCL, Log_VERBOSE, "RCL_Handler_Ble5_txTest: Starting BLE5 infinite TX");
@@ -6827,4 +6906,13 @@ static bool RCL_Handler_BLE5_updateAuxPtr(RCL_AuxPtrInfo *auxPtr, uint32_t packe
     *auxPtr->auxOffsetHighFifoPtr = auxOffsetHigh | (auxPtr->auxPhy << 5);
 
     return status;
+}
+
+/*
+ *  ======== RCL_Handler_BLE5_setRfOperation ========
+ */
+static void RCL_Handler_BLE5_setRfOperation(bool isNextOperationTx)
+{
+    /* Always write correct Rf operation because PBE is still relying on this register field even when coex is disabled */
+    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_OPDIR) = (isNextOperationTx ? 1 : 0) << PBE_BLE5_RAM_OPDIR_TXRX_S;
 }

@@ -45,6 +45,7 @@ typedef struct {
     bool enableTemperatureMonitoring;
 #ifdef DeviceFamily_CC27XX
     bool enablePaEsdProtection;
+    bool enableTxOutputPowerCompensation;
 #endif
 } RCL_FeatureControl;
 

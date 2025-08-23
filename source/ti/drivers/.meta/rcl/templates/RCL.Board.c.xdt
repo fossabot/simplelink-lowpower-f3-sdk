@@ -150,6 +150,13 @@ function findCoexConfig()
     return coexConfig;
 }
 
+/* This function generates the appropriate bitmask depending on the supported regulatory domain list  */
+function generateRegulatoryMask() {
+    const { regulatoryDomainMask: selection } = rclStatic;
+    const regulatoryDomains = selection.map(element => `RCL_REGULATORY_DOMAIN_${element.toUpperCase()}`);
+    return regulatoryDomains.length > 0 ? regulatoryDomains.join(' | ') : 'RCL_REGULATORY_DOMAIN_NONE';
+}
+
 %%}
 
 %if (board !== undefined && board.name.match(/CC27..P../)) {
@@ -161,7 +168,21 @@ const RCL_FeatureControl rclFeatureControl =
 {
     .enableTemperatureMonitoring = true,
     .enablePaEsdProtection = true,
+    .enableTxOutputPowerCompensation = true,
 };
+%}
+%if (board !== undefined && board.name.match(/CC27/)) {
+/*
+ * =========================== RCL Regulatory Domain Configuration ===========================
+ */
+
+% let regulatoryMask = generateRegulatoryMask();
+%if (!rclStatic.regulatoryDomainRuntimeChangeable){
+const uint8_t rclRegulatoryMask = `regulatoryMask`;
+%}
+%if (rclStatic.regulatoryDomainRuntimeChangeable){
+uint8_t rclRegulatoryMask = `regulatoryMask`;
+%}
 %}
 
 %if (rclStatic.pbeGpoMask != 0) {

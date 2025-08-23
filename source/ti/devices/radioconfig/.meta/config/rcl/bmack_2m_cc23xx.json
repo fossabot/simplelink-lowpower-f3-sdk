@@ -815,6 +815,10 @@
             "value": "LRF_swConfig2Mbps"
           },
           {
+            "name": "txPowerLimitTable",
+            "value": "0"
+          },
+          {
             "name": "txPowerTable",
             "value": "LRF_txPowerTable"
           },
@@ -1073,7 +1077,7 @@
           "0x67A04520, 0xA0E095EF, 0x97B3C0B3, 0x72269127, 0xB3AE7100, 0xA4D5B087, 0x6788C243, 0x44E92200,",
           "0x65666072, 0x65BE79D0, 0xC5F0A3E6, 0xB3E66934, 0xB0E565C4, 0x7100B125, 0x225080A0, 0xA79045D2,",
           "0xB790737B, 0x73147210, 0x7313720F, 0xB099B083, 0xA280B261, 0x8910A282, 0x414D2210, 0xB2A0B282,",
-          "0x3D803160, 0xB8A791C0, 0x92C088D0, 0x6781A0E5, 0xC261B263, 0x22F36791, 0x67A0455C, 0xB3AEA0E0,",
+          "0x3D803160, 0xB8A791C0, 0x92C088D0, 0x6781A0E5, 0x6791C261, 0x455B22F3, 0xB26367A0, 0xB3AEA0E0,",
           "0x7226B087, 0xC2A3A4D5, 0x22006788, 0x6072452F, 0xA214B021, 0x84D3B215, 0x0443C1F4, 0x12021613,",
           "0x22531204, 0x89704179, 0x880297F0, 0x89901A82, 0x880497F0, 0x89801A84, 0x880097F0, 0x14021A80,",
           "0x97F089A0, 0x1A808800, 0x83A01404, 0x419122C0, 0x39101020, 0x10401402, 0x14043910, 0x45982253,",
@@ -1178,7 +1182,7 @@
           "0x81603181, 0x39803180, 0x91610001, 0x989FB180, 0x14F98229, 0x22008190, 0x22104064, 0x613C44FE,",
           "0x6667CFD0, 0xA06EA200, 0xB083A063, 0x06F08280, 0xC0111002, 0xC0103001, 0x18021801, 0x00213182,",
           "0x925126C1, 0xB003B023, 0xB063B083, 0xB064B084, 0x80417100, 0x45282201, 0xB084B083, 0x22108190,",
-          "0x22404064, 0x88614516, 0x87519741, 0x98711891, 0x6116B1E1, 0xA180A183, 0xA003A200, 0xC7F0A063,",
+          "0x22304064, 0x88614516, 0x87519741, 0x98711891, 0x6116B1E1, 0xA180A183, 0xA003A200, 0xC7F0A063,",
           "0x70009870, 0x6538A180, 0x88958229, 0xD4001459, 0x60CB6936, 0x39428262, 0x624306F2, 0x80418290,",
           "0x45282201, 0x97448864, 0x18958755, 0x81919875, 0x44FE2211, 0x8041693D, 0x45282201, 0x97448864,",
           "0x1CC58755, 0x18954930, 0x81909875, 0x41492210, 0x721860FE, 0x82627216, 0x06F23942, 0xB1836643,",
@@ -1274,6 +1278,18 @@
         ]
       }
     ],
+    "script": [
+      {
+        "role": "conv_pa_table_setting_to_string",
+        "call": "convPaTableSettingToString(txPower, value, isHighPa)",
+        "#text": "./conv_pa_table_setting_to_string.js"
+      },
+      {
+        "role": "conv_pa_table_setting_to_binary",
+        "call": "convPaTableSettingToBinary(txPower, value, isHighPa)",
+        "#text": "./conv_pa_table_setting_to_binary.js"
+      }
+    ],
     "header_file": [
       {
         "type": "common",
@@ -1337,6 +1353,15 @@
         "mceImage": "mce_image",
         "regConfigList": "cfg_segment_list"
       }
+    },
+    "rcl_struct_rf_design_deps": {
+      "pa_table": [
+        {
+          "struct_instance": "LRF_txPowerTable",
+          "field_name": "powerTable",
+          "curr_table_size": 0
+        }
+      ]
     }
   }
 }

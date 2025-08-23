@@ -171,6 +171,24 @@ let signalList = [
     }
 ]
 
+let regulatoryDomainList = [
+    {
+        name: "ETSI",
+        displayName: Docs.powerLimitation.rclRegulatoryDomainOptions.etsi.displayName,
+        description: Docs.powerLimitation.rclRegulatoryDomainOptions.etsi.description
+    },
+    {
+        name: "FCC",
+        displayName: Docs.powerLimitation.rclRegulatoryDomainOptions.fcc.displayName,
+        description: Docs.powerLimitation.rclRegulatoryDomainOptions.fcc.description,
+    },
+    {
+        name: "MIIT",
+        displayName: Docs.powerLimitation.rclRegulatoryDomainOptions.miit.displayName,
+        description: Docs.powerLimitation.rclRegulatoryDomainOptions.miit.description,
+    },
+]
+
 /* This maps each use case to their signals */
 let useCaseMap = {
     debugSignals: ["RFEGPO0","RFEGPO1"]
@@ -197,7 +215,7 @@ const coexLevelOptions = [
     }
 ];
 
-/*Only enable FPGA use case when using FPGA board*/
+/* Only enable FPGA use case when using FPGA board */
 let board = system.deviceData.board;
 let isFPGA = false;
 let useCaseOptions = [
@@ -420,6 +438,35 @@ let config = [
     }
 ];
 
+/* Add Power limitation options for CC27XX boards */
+if (board != undefined && board.name.match(/CC27/)) {
+    config.push({
+        name: "powerLimitation",
+        displayName: Docs.powerLimitation.outputPowerLimitation.displayName,
+        longDescription: Docs.powerLimitation.outputPowerLimitation.longDescription,
+        collapsed: false,
+        config: [
+          {
+            name: "regulatoryDomainMask",
+            displayName: Docs.powerLimitation.rclRegulatoryDomain.displayName,
+            description: Docs.powerLimitation.rclRegulatoryDomain.description,
+            longDescription: Docs.powerLimitation.rclRegulatoryDomain.longDescription,
+            hidden: false,
+            default: ["ETSI"],
+            minSelections: 0,
+            options: getAvailableRegulatoryDomains,
+          },
+          {
+            name: "regulatoryDomainRuntimeChangeable",
+            displayName: Docs.powerLimitation.runtimeChangeable.displayName,
+            description: Docs.powerLimitation.runtimeChangeable.description,
+            longDescription: Docs.powerLimitation.runtimeChangeable.longDescription,
+            hidden: false,
+            default: true,
+          }
+        ]
+      });
+}
 /*
  *******************************************************************************
  Status Functions
@@ -480,6 +527,11 @@ function resetDefaultValue(inst, config){
 function getAvailableSignals(inst)
 {
     return signalList.slice(0);
+}
+
+function getAvailableRegulatoryDomains(inst)
+{
+    return regulatoryDomainList.slice(0);
 }
 
 /*  ======== getCoexPinInfo ========
@@ -806,6 +858,19 @@ function updateConfigValue(inst, ui, config, value){
     }
  }
 
+ function shouldGenerateRegulatoryOptions()
+ {
+    let device = "";
+    if ("device" in system.deviceData){
+        device = system.deviceData.device;
+    }
+    if (device.match(/CC27/)){
+        return true;
+    }
+    else {
+        return false;
+    }
+ }
  /*!
  *  ======== allowedInputPins ========
  *  Filter out pins that do not support LRFD input
@@ -1149,5 +1214,7 @@ function extend(base) {
 exports = {
     /* required function, called by generic RCL module */
     extend: extend,
-    signalList: signalList
+    signalList: signalList,
+    regulatoryDomainList: regulatoryDomainList,
+    shouldGenerateRegulatoryOptions:shouldGenerateRegulatoryOptions
 };

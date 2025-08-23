@@ -183,8 +183,8 @@ function create(phyGroup, phyID, first) {
     // Create command handler
     const cmdHandler = CmdHandler.get(PhyDef, phyGroup, phyID);
 
-    // Populate the PA table
-    initPaTable();
+    // Handle RCL data structure field dependencies on the selected RF design
+    handleRclStructRfDesignDeps();
 
     // RF parameter cache (PHY properties)
     const RfParamCache = {};
@@ -300,13 +300,45 @@ function create(phyGroup, phyID, first) {
         const fileData = system.getScript(ConfigPath + file);
         return _.cloneDeep(fileData.phy_def);
     }
+    
 
-    function evalPhyDefScript(script) {
+    /**
+     *  ======== enumPhyDefScriptRole ========
+     *  Finds the script(s) with the specified role the PHY definition
+     *
+     *  @param phyDefScripts - The "script" array in the PHY definition to search
+     *  @param role - Wanted script role
+     *  @returns Array of scripts with matching role
+     */
+    function enumPhyDefScriptRole(phyDefScripts, role) {
+        let scripts = [];
+        for (const script of phyDefScripts) {
+            if (script.role == role) {
+                scripts.push(script);
+            }
+        }
+        return scripts;
+    }
+
+
+    /**
+     *  ======== evalPhyDefScript ========
+     *  Evaluates the specified PHY definition script
+     *
+     *  @param script - The script to be evaluated
+     *  @param modifiedCall - Optional modified version of the script's "call" attribute
+     *  @returns Script return value
+     */
+    function evalPhyDefScript(script, modifiedCall = "") {
         let scriptCode;
 
         if ("call" in script) {
             // Call to function
-            scriptCode = "UtilHandle." + script.call;
+            if (modifiedCall.length > 0) {
+                scriptCode = "UtilHandle." + modifiedCall;
+            } else {
+                scriptCode = "UtilHandle." + script.call;
+            }
         }
         else {
             // In-line script
@@ -707,23 +739,31 @@ function create(phyGroup, phyID, first) {
         // Add software parameter structures if applicable
         if ("rcl_struct" in regItem) {
             const featureStructs = featureData.struct;
-            for (const data of Common.forceArray(regItem.rcl_struct)) {
+            for (const rcl_struct of Common.forceArray(regItem.rcl_struct)) {
                 let features;
-                if ("feature_filter" in data) {
-                    features = data.feature_filter.split(",");
+                if ("feature_filter" in rcl_struct) {
+                    features = rcl_struct.feature_filter.split(",");
                 }
                 else {
                     features = ["Combined"];
                 }
 
+                // Store the field value by applicable feature(s)
+                const struct_def = DeviceConfig.rcl_struct_defs[rcl_struct.name];
                 for (const feature of features) {
-                    for (const field of data.rcl_struct_field) {
-                        const name = field.name;
-                        if (!(name in featureStructs)) {
-                            // eslint-disable-next-line max-len
-                            featureStructs[name] = {class: "struct", value: {}, isCommon: feature === "common" || feature === "Combined"};
+                    for (const field of rcl_struct.rcl_struct_field) {
+                        const field_def = struct_def.field_map[field.name];
+                        if (!(field.name in featureStructs)) {
+                            featureStructs[field.name] = {
+                                class: "struct",
+                                struct_name: rcl_struct.name,
+                                struct_instance: rcl_struct.instance,
+                                value: {},
+                                bitPos: field_def.bit_pos,
+                                isCommon: feature === "common" || feature === "Combined"
+                            };
                         }
-                        featureStructs[name].value[feature] = field.value;
+                        featureStructs[field.name].value[feature] = field.value;
                     }
                 }
             }
@@ -742,17 +782,16 @@ function create(phyGroup, phyID, first) {
      */
     function createRawRegions(segments, featureData) {
         const nFeatures = Math.log2(segments.length);
-        let structPos = 0;
         const entries = {...featureData.register, ...featureData.struct};
         const commonSegment = segments[segments.length - 1];
 
-        for (const [regPath, featData] of Object.entries(entries)) {
+        for (const [fieldPath, featData] of Object.entries(entries)) {
             const addr = featData.addr;
             const trim = featData.trim;
             const mask = featData.mask;
 
             // eslint-disable-next-line no-unused-vars
-            const [modName, regName, _] = regPath.split(".");
+            const [modName, regName, _] = fieldPath.split(".");
 
             // Create array indexed by values; content is an array of features
             const valLookup = {};
@@ -817,15 +856,16 @@ function create(phyGroup, phyID, first) {
                         trim: trim,
                         mask: mask
                     };
-                    commonSegment.register[regPath] = reg;
+                    commonSegment.register[fieldPath] = reg;
                     addRegisterToRegion(commonSegment.regions, reg, modName, regName);
                 }
                 else {
                     // Data struct region
+                    const fieldBitPos = DeviceConfig.rcl_struct_defs[featData.struct_name].field_map[fieldPath].bit_pos
                     const data = {
-                        name: regPath,
+                        name: fieldPath,
                         value: value,
-                        bytePos: structPos
+                        bytePos: fieldBitPos / 8
                     };
                     commonSegment.rcl_struct.push(data);
                 }
@@ -845,15 +885,16 @@ function create(phyGroup, phyID, first) {
                                     trim: trim,
                                     mask: mask
                                 };
-                                segment.register[regPath] = reg;
+                                segment.register[fieldPath] = reg;
                                 addRegisterToRegion(segment.regions, reg, modName, regName);
                             }
                             else {
                                 // Data struct region
+                                const fieldBitPos = DeviceConfig.rcl_struct_defs[featData.struct_name].field_map[fieldPath].bit_pos
                                 const data = {
-                                    name: regPath,
+                                    name: fieldPath,
                                     value: value,
-                                    bytePos: structPos
+                                    bytePos: fieldBitPos / 8
                                 };
                                 segment.rcl_struct.push(data);
                             }
@@ -861,9 +902,6 @@ function create(phyGroup, phyID, first) {
                         }
                     }
                 }
-            }
-            if (featData.class === "struct") {
-                structPos += 4;
             }
         }
     }
@@ -1768,23 +1806,46 @@ function create(phyGroup, phyID, first) {
      *  ======== getRclStructFieldArraySize ========
      *  Get the size of an array in a struct field.
      *
-     *  @param fieldData - field name (e.g. LRF_shapeBaseGfsk067.coeff)
+     *  @param fieldPath - field path (e.g. LRF_shapeBaseGfsk067.coeff)
      *  @returns the size of the array
      */
     // eslint-disable-next-line no-unused-vars
-    function getRclStructFieldArraySize(fieldData) {
-        
-        // Hack: The PA table size depends on the current RF design selection, so re-initialize the
-        // txPowerTable field before calculating the size of that field
-        initPaTable();
-        
-        const structData = PhyDef.rcl_structs;
-        const [struct, field] = fieldData.split(".");
-        const data = structData[struct][field].split(",");
+    function getRclStructFieldArraySize(fieldPath) {
+        const [structInstance, fieldName] = fieldPath.split(".");
 
-        return data.length;
+        // Look up RF design dependencies first
+        if ("pa_table" in PhyDef.rcl_struct_rf_design_deps) {
+            for (const dep of PhyDef.rcl_struct_rf_design_deps.pa_table) {
+                if ((dep.struct_instance == structInstance) && (dep.field_name == fieldName)) {
+                    return dep.curr_table_size;
+                }
+            }
+        }
+        if ("tx_power_limit_table" in PhyDef.rcl_struct_rf_design_deps) {
+            for (const dep of PhyDef.rcl_struct_rf_design_deps.tx_power_limit_table) {
+                if ((dep.struct_instance == structInstance) && (dep.field_name == fieldName)) {
+                    return dep.curr_table_size;
+                }
+            }
+        }
+
+        // If not RF design dependent, just find the current array size
+        const data = PhyDef.rcl_structs[structInstance][fieldName].split(",");
+        return data.length
     }
-    
+
+    /**
+     *  ======== getTxPowerLimitTableFreqDiv ========
+     *  Get the frequency divider value for the specified TX output power limitation table.
+     *
+     *  @param tableName - table name (e.g. "ble_1_mbps")
+     *  @returns the size of the array
+     */
+    // eslint-disable-next-line no-unused-vars
+    function getTxPowerLimitTableFreqDiv(tableName) {
+        return RfDesign.getTxPowerLimitTableFreqDiv(tableName);
+    }
+
     /**
      *  ======== getBoardRfDesignNames ========
      *  Get the size of an array in a struct field.
@@ -1814,48 +1875,162 @@ function create(phyGroup, phyID, first) {
     }
 
     /**
-     *  ======== initPaTable ========
-     *  Initialize the PA table in the PHY definition (LRF_TxPowerTable struct).
+     *  ======== handleRclStructRfDesignDeps ========
+     *  Handles RCL data structure field dependencies on RF design selection:
+     *  - Caches the current size of the current PA table, if any
+     *  - Caches the current size of each current TX output power limitation table, if any
      */
-    function initPaTable() {
-        if ("LRF_txPowerTable" in PhyDef.rcl_structs) {
-            // Get PA table (dBm values)
-            const paTable = [];
-            const paList = RfDesign.getPaTable(FreqBand, false);
-            for (const pa of paList) {
-                paTable.push(pa._text);
+    function handleRclStructRfDesignDeps() {
+
+        // If there are PA table dependencies
+        if ("pa_table" in PhyDef.rcl_struct_rf_design_deps) {
+            for (var dep of PhyDef.rcl_struct_rf_design_deps.pa_table) {
+
+                // Store the current table size
+                dep.curr_table_size = RfDesign.getPaTableEntries(FreqBand, false).length
             }
-            // Apply to PHY definition, needed for calculating length
-            PhyDef.rcl_structs.LRF_txPowerTable.powerTable = paTable.toString();
+        }
+
+        // For each TX output power limitation table 
+        if ("tx_power_limit_table" in PhyDef.rcl_struct_rf_design_deps) {
+            for (var dep of PhyDef.rcl_struct_rf_design_deps.tx_power_limit_table) {
+
+                // Store the current table size
+                dep.curr_table_size = RfDesign.getTxPowerLimitTableEntries(dep.table_name).length
+            }
         }
     }
+
 
     /**
-     *  ======== generatePaTable ========
+     *  ======== generatePaTableEntriesCode ========
      *  Generate the PA table code
      *
-     *  @returns The generated string
+     *  @returns The generated code
      */
-    function generatePaTable() {
-        let paList = RfDesign.getPaTable(FreqBand, false);
-        if (paList.length === 0) {
-            return "";
-        }
+    function generatePaTableEntriesCode() {
 
+        // Add opening brace
         const indent8 = "".padStart(8);
-        let code = "{\n";
+        let code = "{";
 
-        // Get PA table (dBm values)
-        const paToString = UtilHandle.convPaTableSettingToString;
-        paList = paList.reverse();
-        const last = paList.pop();
-        for (const pa of paList) {
-            code += indent8 + paToString(pa._text, pa.Value) + ",\n";
+        // Find the script for the role
+        if ("script" in PhyDef) {
+            const script = enumPhyDefScriptRole(Common.forceArray(PhyDef.script), "conv_pa_table_setting_to_string")[0];
+
+            // Get the table entries, in reverse order (ascending TX power)
+            let entries = RfDesign.getPaTableEntries(FreqBand, false).reverse();
+
+            // For each table entry ...
+            for (const entry of entries) {
+
+                // Generate code
+                let modifiedCall = script.call;
+                modifiedCall = modifiedCall.replace("txPower", entry._text);
+                modifiedCall = modifiedCall.replace("value", entry.Value);
+                modifiedCall = modifiedCall.replace("isHighPa", "0");
+                code += "\n" + indent8 + evalPhyDefScript(script, modifiedCall) + ",";
+            }
+
+            // Remove the last trailing comma
+            if (entries.length > 0) {
+                code = code.slice(0, -1);
+            }
         }
-        code += indent8 + paToString(last._text, last.Value) + "\n";
 
-        return code + "    }";
+        // Add closing brace
+        return code + "\n    }";
     }
+
+
+    /**
+     *  ======== generateTxPowerLimitTableEntriesCode ========
+     *  Generate the specified TX output power limitation table code
+     *
+     *  @returns The generated code
+     */
+    function generateTxPowerLimitTableEntriesCode(tableName) {
+
+        // Get the table entries and frequency divider
+        let entries = RfDesign.getTxPowerLimitTableEntries(tableName);
+        let freqDiv = RfDesign.getTxPowerLimitTableFreqDiv(tableName);
+
+        // Add opening brace
+        const indent8 = "".padStart(8);
+        let code = "{";
+
+        // Find the script for the role
+        if ("script" in PhyDef) {
+            const script = enumPhyDefScriptRole(Common.forceArray(PhyDef.script), "conv_tx_power_limit_table_entry_to_string")[0];
+
+            // If there are any entries ...
+            if (entries.length > 0) {
+
+                // For each table entry ...
+                for (const entry of entries) {
+
+                    // Generate code
+                    let modifiedCall = script.call;
+                    modifiedCall = modifiedCall.replace("regulatoryDomainNameList", "\"" + entry.regulatory_domain + "\"");
+                    modifiedCall = modifiedCall.replace("minFreq", (entry.min_freq * 1e6) / freqDiv);
+                    modifiedCall = modifiedCall.replace("maxFreq", (entry.max_freq * 1e6) / freqDiv);
+                    modifiedCall = modifiedCall.replace("maxTxPower", entry.max_tx_power);
+                    code += "\n" + indent8 + evalPhyDefScript(script, modifiedCall) + ",";
+                }
+
+                // Remove the comma after the last entry
+                code = code.slice(0, -1);
+            }
+        }
+
+        // Add closing brace
+        return code + "\n    }";
+    }
+
+
+    /**
+     *  ======== generateConstantDefsCode ========
+     *  Generates constant definition list code
+     *
+     *  @returns The generated code
+     */
+    function generateConstantDefsCode() {
+        let code = "";
+
+        // Find the scripts for the role
+        if ("script" in PhyDef) {
+            const scripts = enumPhyDefScriptRole(Common.forceArray(PhyDef.script), "gen_constant_def_list");
+
+            // If there are any ...
+            if (scripts.length > 0) {
+
+                // Have one empty line before each section
+                code += "\n";
+                
+                // For each script ...
+                for (const script of scripts) {
+
+                    // Call it
+                    let lines = evalPhyDefScript(script);
+
+                    // First item is the code block comment
+                    code += "// " + lines.shift() + "\n";
+
+                    // Then each item is the DEFINE,VALUE
+                    for (const line of lines) {
+                        let [symbol, value] = line.split(",");
+                        code += `#define ${symbol.padEnd(45)} ${value}\n`;
+                    }
+                }
+
+                // Remove the last new-line
+                code = code.slice(0, -1);
+            }
+        }
+
+        return code;
+    }
+
 
     /**
      *  ======== generateRegConfigCode ========
@@ -1895,7 +2070,7 @@ function create(phyGroup, phyID, first) {
                 const structCount = segment.rcl_struct.length;
                 if (structCount > 0) {
                     // Generate region header
-                    const bytePos = segment.rcl_struct[0].bytePos;
+                    const bytePos = segment.rcl_struct[0].bytePos; // TODO: MOVE INTO LOOP TO ALLOW GAPS
                     const hdr = (0xA000 + structCount - 1) | (bytePos << 16);
                     const hdrComment = `  Data structure 32-bit region `
                         + `(start byte position = ${bytePos}, count = ${structCount})`;
@@ -2248,6 +2423,10 @@ ${symNameCode}
         const structData = PhyDef.rcl_structs;
         const phyAbbr = ceConfig.phyAbbr && ceConfig.symGenMethod === "Legacy";
 
+        // Data structure fields may depend on RF design data (PA table, TX output power limitation
+        // tables), so ensure that what we'll need is up-to-date before proceeding (table sizes) 
+        handleRclStructRfDesignDeps();
+
         // Iterate structs in PHY definition
         for (const [symID, item] of Object.entries(structData)) {
             const typeName = item.attr.type;
@@ -2265,7 +2444,16 @@ ${symNameCode}
                 sym += postfix;
             }
 
-            const isPaTable = item.attr.info === "pa_table";
+            let isPaTable = false;
+            let isTxPowerLimitTable = false;
+            let tableName = null;
+            if (item.attr.info != null) {
+                isPaTable = (item.attr.info == "pa_table");
+                isTxPowerLimitTable = item.attr.info.startsWith("tx_power_limit_table:");
+                if (isTxPowerLimitTable) {
+                    tableName = item.attr.info.split(":")[1];
+                }
+            }
 
             // Skip generation of PA table for all but first PHY
             if (isPaTable) {
@@ -2282,23 +2470,22 @@ ${symNameCode}
             // Source file
             else {
                 // Get struct type information
-                const structInfo = DeviceConfig.rcl_structs[typeName];
+                const struct_def = DeviceConfig.rcl_struct_defs[typeName];
 
                 code += `// ${typeName} data structure\n`;
                 code += `const ${typeName} ${sym} = {\n`;
 
                 // Iterate members
-                const last = structInfo.field.length - 1;
+                const last = struct_def.field_list.length - 1;
                 let i = 0;
 
-                for (const field of structInfo.field) {
+                for (const field of struct_def.field_list) {
                     const isArray = field.name.includes("[]");
                     const name = field.name.replace("[]", "");
                     const type = field.type;
                     const phydefInst = item[name];
 
                     let value = 0;
-                    let prefix = ""; // Typecast etc.
 
                     if (typeof (phydefInst) !== "object") {
                         // Pointer to another struct?
@@ -2306,21 +2493,17 @@ ${symNameCode}
                             if (type === "LRF_TOPsmImage*") {
                                 const info = findFwInfo(phydefInst);
                                 value = info.variable;
-                                prefix = "(const LRF_TOPsmImage*) ";
                             }
                             else {
                                 const id = phydefInst.replace("LRF_", "");
-
                                 if (id in symNames) {
                                     value = symNames[id];
                                 }
                                 else {
                                     value = name;
                                 }
-                                prefix = "&";
                             }
-                        }
-                        else if (isArray) {
+                        } else if (isArray) {
                             if (type === "uint8_t") {
                                 // Assume byte array
                                 const values = phydefInst.split(",");
@@ -2331,23 +2514,32 @@ ${symNameCode}
                                     value += " " + hex + ",";
                                 }
                                 value += " " + lastVal + "}";
-                            }
-                            else if (isPaTable) {
-                                value = generatePaTable();
+                            
+                            // Handle PA table
+                            } else if (isPaTable) {
+                                value = generatePaTableEntriesCode();
                                 Common.paTableDone = true;
+                            
+                            // Handle TX output power limit table
+                            } else if (isTxPowerLimitTable) {
+                                value = generateTxPowerLimitTableEntriesCode(tableName);
                             }
                         }
                         else {
                             // Discrete value
-                            if (!type.includes("int")) {
-                                prefix = `(${type}) `;
-                            }
                             value = phydefInst;
                         }
                     }
                     else if ("script" in phydefInst) {
                         // Value calculated by script
                         value = evalPhyDefScript(phydefInst.script);
+
+                        // The value may refer to another data structure instance, so apply code export
+                        // configuration for symbol suffix or manually entered symbol name, if applicable
+                        const symId = String(value).replace("LRF_", "");
+                        if (symId in symNames) {
+                            value = symNames[symId];
+                        }
                     }
 
                     // Convert to HEX if applicable
@@ -2356,8 +2548,21 @@ ${symNameCode}
                         value = int2hex(value, (width + 3) / 4);
                     }
 
+                    // Find the prefix for the value (type-cast etc.)
+                    let valuePrefix = "";
+                    if (Common.isCName(value) && (type === "LRF_TOPsmImage*")) {
+                        // Type-cast for pointer to TOPsm image (excluding null-pointer)
+                        valuePrefix = "(const LRF_TOPsmImage*) ";
+                    } else if (Common.isCName(value) && type.endsWith("*")) {
+                        // Address-of operator for pointer to another data structure
+                        valuePrefix = "&";
+                    } else if (!isArray && !(type.startsWith("uint") || type.startsWith("int"))) {
+                        // Type-cast for numeric value with non-integer type (enum, null-pointer etc.)
+                        valuePrefix = `(${type}) `;
+                    }
+
                     // Add code
-                    code += `    .${name} = ${prefix}${value}`;
+                    code += `    .${name} = ${valuePrefix}${value}`;
                     if (i < last) {
                         code += ",\n";
                     }
@@ -2965,6 +3170,7 @@ ${symNameCode}
         // Code export for header file
         getIncludeFiles: getIncludeFiles,
         generatePhyFeatureCode: generatePhyFeatureCode,
+        generateConstantDefsCode: generateConstantDefsCode,
         generateRegisterFieldDefines: generateRegisterFieldDefines,
         generateRegisterSummary: generateRegisterSummary,
         // Code export for C file

@@ -87,65 +87,71 @@
 // Minimum RTRIM Value
 #define RFE_COMMON_RAM_O_RTRIMMIN                                    0x00000822U
 
+// RTRIM without temp comp, note all other bits need to be zero
+#define RFE_COMMON_RAM_O_RTRIM                                       0x00000824U
+
+// RTRIM with temp comp, note all other bits need to be zero
+#define RFE_COMMON_RAM_O_RTRIMTXCMP                                  0x00000826U
+
 // Divider Initial Control
-#define RFE_COMMON_RAM_O_DIVI                                        0x00000824U
+#define RFE_COMMON_RAM_O_DIVI                                        0x00000828U
 
 // Divider Final Control
-#define RFE_COMMON_RAM_O_DIVF                                        0x00000826U
+#define RFE_COMMON_RAM_O_DIVF                                        0x0000082AU
 
 // Divider LDO Initial Control
-#define RFE_COMMON_RAM_O_DIVLDOI                                     0x00000828U
+#define RFE_COMMON_RAM_O_DIVLDOI                                     0x0000082CU
 
 // Divider LDO Final Control
-#define RFE_COMMON_RAM_O_DIVLDOF                                     0x0000082AU
+#define RFE_COMMON_RAM_O_DIVLDOF                                     0x0000082EU
 
 // 
-#define RFE_COMMON_RAM_O_DIVLDOIOFF                                  0x0000082CU
+#define RFE_COMMON_RAM_O_DIVLDOIOFF                                  0x00000830U
 
 // ALO Power Up LDO Settling Time
-#define RFE_COMMON_RAM_O_LDOSETTLE                                   0x0000082EU
+#define RFE_COMMON_RAM_O_LDOSETTLE                                   0x00000832U
 
 // Charge Injection Settling Time
-#define RFE_COMMON_RAM_O_CHRGSETTLE                                  0x00000830U
+#define RFE_COMMON_RAM_O_CHRGSETTLE                                  0x00000834U
 
 // DCOLDO Settling Time
-#define RFE_COMMON_RAM_O_DCOSETTLE                                   0x00000832U
+#define RFE_COMMON_RAM_O_DCOSETTLE                                   0x00000836U
 
 // 
-#define RFE_COMMON_RAM_O_IFAMPRFLDOTX                                0x00000834U
+#define RFE_COMMON_RAM_O_IFAMPRFLDOTX                                0x00000838U
 
 // 
-#define RFE_COMMON_RAM_O_IFAMPRFLDODEFAULT                           0x00000836U
+#define RFE_COMMON_RAM_O_IFAMPRFLDODEFAULT                           0x0000083AU
 
-// Loop Filter Pre-Lock Ki 
-#define RFE_COMMON_RAM_O_LFKIBL                                      0x00000838U
+// Loop Filter Pre-Lock Ki
+#define RFE_COMMON_RAM_O_LFKIBL                                      0x0000083CU
 
 // Loop Filter Pre-Lock Kp
-#define RFE_COMMON_RAM_O_LFKPBL                                      0x0000083AU
+#define RFE_COMMON_RAM_O_LFKPBL                                      0x0000083EU
 
 // Phy specific RSSI offset
-#define RFE_COMMON_RAM_O_PHYRSSIOFFSET                               0x0000083CU
+#define RFE_COMMON_RAM_O_PHYRSSIOFFSET                               0x00000840U
 
 // Shadow register for SPARE0
-#define RFE_COMMON_RAM_O_SPARE0SHADOW                                0x0000083EU
+#define RFE_COMMON_RAM_O_SPARE0SHADOW                                0x00000842U
 
 // Shadow register for SPARE1
-#define RFE_COMMON_RAM_O_SPARE1SHADOW                                0x00000840U
+#define RFE_COMMON_RAM_O_SPARE1SHADOW                                0x00000844U
 
 // AGC type information
-#define RFE_COMMON_RAM_O_AGCINFO                                     0x00000842U
+#define RFE_COMMON_RAM_O_AGCINFO                                     0x00000846U
 
 // COEX GRANT pin information
-#define RFE_COMMON_RAM_O_GRANTPIN                                    0x00000844U
+#define RFE_COMMON_RAM_O_GRANTPIN                                    0x00000848U
 
 // PA Trim for Mode 0 and Mode 1
-#define RFE_COMMON_RAM_O_PATRIM01                                    0x00000846U
+#define RFE_COMMON_RAM_O_PATRIM01                                    0x0000084AU
 
 // PA Trim for Mode 2 and Mode 3
-#define RFE_COMMON_RAM_O_PATRIM23                                    0x00000848U
+#define RFE_COMMON_RAM_O_PATRIM23                                    0x0000084CU
 
 // Estimated 2^24/(KDCO)
-#define RFE_COMMON_RAM_O_IKT                                         0x0000084AU
+#define RFE_COMMON_RAM_O_IKT                                         0x0000084EU
 
 //******************************************************************************
 // Register: SYNTHCTL
@@ -397,6 +403,26 @@
 #define RFE_COMMON_RAM_RTRIMMIN_VAL_W                                         4U
 #define RFE_COMMON_RAM_RTRIMMIN_VAL_M                                    0x000FU
 #define RFE_COMMON_RAM_RTRIMMIN_VAL_S                                         0U
+
+//******************************************************************************
+// Register: RTRIM
+//******************************************************************************
+// Field: [6:3] val
+//
+// RTRIM value to use before temp comp
+#define RFE_COMMON_RAM_RTRIM_VAL_W                                            4U
+#define RFE_COMMON_RAM_RTRIM_VAL_M                                       0x0078U
+#define RFE_COMMON_RAM_RTRIM_VAL_S                                            3U
+
+//******************************************************************************
+// Register: RTRIMTXCMP
+//******************************************************************************
+// Field: [6:3] val
+//
+// RTRIM if CMDPAR1[0] = 1 AND SPARE5[13] = 1 when we start calibration. Used for temp compensation of RTRIM for TX
+#define RFE_COMMON_RAM_RTRIMTXCMP_VAL_W                                       4U
+#define RFE_COMMON_RAM_RTRIMTXCMP_VAL_M                                  0x0078U
+#define RFE_COMMON_RAM_RTRIMTXCMP_VAL_S                                       3U
 
 //******************************************************************************
 // Register: DIVI
@@ -705,7 +731,7 @@
 //******************************************************************************
 // Field: [9:0] val
 //
-// Value. Delay  = (VAL+1)/24 (us). 
+// Value. Delay  = (VAL+1)/24 (us).
 #define RFE_COMMON_RAM_CHRGSETTLE_VAL_W                                      10U
 #define RFE_COMMON_RAM_CHRGSETTLE_VAL_M                                  0x03FFU
 #define RFE_COMMON_RAM_CHRGSETTLE_VAL_S                                       0U
@@ -833,14 +859,14 @@
 //******************************************************************************
 // Field: [12:8] val1
 //
-// PA Trim for Mode 1 
+// PA Trim for Mode 1
 #define RFE_COMMON_RAM_PATRIM01_VAL1_W                                        5U
 #define RFE_COMMON_RAM_PATRIM01_VAL1_M                                   0x1F00U
 #define RFE_COMMON_RAM_PATRIM01_VAL1_S                                        8U
 
 // Field: [4:0] val0
 //
-// PA Trim for Mode 0 
+// PA Trim for Mode 0
 #define RFE_COMMON_RAM_PATRIM01_VAL0_W                                        5U
 #define RFE_COMMON_RAM_PATRIM01_VAL0_M                                   0x001FU
 #define RFE_COMMON_RAM_PATRIM01_VAL0_S                                        0U
@@ -850,14 +876,14 @@
 //******************************************************************************
 // Field: [12:8] val3
 //
-// PA Trim for Mode 3 
+// PA Trim for Mode 3
 #define RFE_COMMON_RAM_PATRIM23_VAL3_W                                        5U
 #define RFE_COMMON_RAM_PATRIM23_VAL3_M                                   0x1F00U
 #define RFE_COMMON_RAM_PATRIM23_VAL3_S                                        8U
 
 // Field: [4:0] val2
 //
-// PA Trim for Mode 2 
+// PA Trim for Mode 2
 #define RFE_COMMON_RAM_PATRIM23_VAL2_W                                        5U
 #define RFE_COMMON_RAM_PATRIM23_VAL2_M                                   0x001FU
 #define RFE_COMMON_RAM_PATRIM23_VAL2_S                                        0U

@@ -350,7 +350,7 @@ RCL_Events RCL_Handler_Generic_Tx(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Ev
             {
                 LRF_programFrequency(txCmd->rfFrequency, true);
             }
-            if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(txCmd->txPower, txCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -503,7 +503,7 @@ RCL_Events RCL_Handler_Generic_TxRepeat(RCL_Command *cmd, LRF_Events lrfEvents, 
             {
                 LRF_programFrequency(txCmd->rfFrequency, true);
             }
-            if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(txCmd->txPower, txCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -750,7 +750,7 @@ RCL_Events RCL_Handler_Generic_TxTest(RCL_Command *cmd, LRF_Events lrfEvents, RC
             /* Default end status */
             genericHandlerState.common.endStatus = RCL_CommandStatus_Finished;
 
-            if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(txCmd->txPower, txCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -1273,7 +1273,7 @@ RCL_Events RCL_Handler_Nesb_Ptx(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
             {
                 LRF_programFrequency(txCmd->rfFrequency, true);
             }
-            if (LRF_programTxPower(txCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(txCmd->txPower, txCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;
@@ -1634,7 +1634,7 @@ RCL_Events RCL_Handler_Nesb_Prx(RCL_Command *cmd, LRF_Events lrfEvents,  RCL_Eve
             {
                 LRF_programFrequency(rxCmd->rfFrequency, false);
             }
-            if (LRF_programTxPower(rxCmd->txPower) != TxPowerResult_Ok)
+            if (LRF_programTxPower(rxCmd->txPower, rxCmd->rfFrequency) != TxPowerResult_Ok)
             {
                 cmd->status = RCL_CommandStatus_Error_Param;
                 rclEvents.lastCmdDone = 1;

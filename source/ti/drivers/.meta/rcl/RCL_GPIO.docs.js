@@ -393,17 +393,60 @@ will reside in RAM and an extern statement to the configuration structure \`lrfC
         displayName: "IEEE 802.15.4 REQUEST Threshold",
         description: "IEEE 802.15.4 only: Number of preamble symbols needed to assert REQUEST signal in RX",
         longDescription: `
-This setting is only used on IEEE 802.15.4. If the command uses 
+This setting is only used on IEEE 802.15.4. If the command uses
 \`.coexControl.rxMode = RCL_CoexRxMode_RequestOnPacket\`, the REQUEST signal is asserted during RX
-when this number of subsequent preamble symbols is detected. (Each symbol is 4 bits, and a standard 
+when this number of subsequent preamble symbols is detected. (Each symbol is 4 bits, and a standard
 preamble has 8 symbols.) A lower number gives faster detection, but more false positives.
 `
     }
 };
 
+const powerLimitation = {
+    outputPowerLimitation: {
+        displayName: "RCL Tx Output Power Limitation",
+        description: `
+Limit frequency-specific Tx output power based on power limitation tables and the selected regulatory domains.`
+    },
+    rclRegulatoryDomain: {
+        displayName: "Regulatory Domains",
+        description: "Select the applicable regulatory domain for frequency-specific Tx output power limitation",
+        longDescription: `
+This sets a bitmask that determines the regulatory domains for which the power limitation table applies.
+The power limitation table is used to limit the Tx output power at specific frequencies.
+This is useful when needing to comply with different regulatory domains.
+
+When selecting multiple regulatory domains at the same time, the most strict regulatory domain is used
+to determine the maximum output power at a given RF frequency.
+
+When no regulatory domain is selected, no frequency-specific Tx output power limitation is applied.`
+    },
+    rclRegulatoryDomainOptions: {
+        etsi: {
+            displayName: "ETSI",
+            description: "European Telecommunications Standards Institute (Europe)"
+        },
+        fcc: {
+            displayName: "FCC",
+            description: "Federal Communications Commission (United States of America)"
+        },
+        miit: {
+            displayName: "MIIT",
+            description: "Ministry of Industry and Information Technology (China)"
+        },
+    },
+    runtimeChangeable: {
+        displayName: "Allow Runtime Modification",
+        longDescription: `
+Allow the Tx ouput power limitation configuration to be changed run-time. If this option is deselected, the Tx output power limitation configuration
+is declared const and cannot be changed after the device has been started. If selected, the Tx output power limitation configuration
+will reside in RAM and an extern statement to the configuration  \`rclRegulatoryMask\` is given.
+`
+    },
+};
 
 exports = {
     base,
     config,
-    coex
+    coex,
+    powerLimitation
 };
