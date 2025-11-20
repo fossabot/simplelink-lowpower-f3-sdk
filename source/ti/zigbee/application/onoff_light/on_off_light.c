@@ -174,7 +174,7 @@ MAIN()
   zb_set_network_coordinator_role(DEFAULT_CHANLIST);
 
   /* Set keepalive mode to mac data poll so sleepy zeds consume less power */
-  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE); 
+  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE);
 #ifdef DEFAULT_NWK_KEY
   zb_uint8_t nwk_key[16] = DEFAULT_NWK_KEY;
   zb_secur_setup_nwk_key(nwk_key, 0);
@@ -192,7 +192,7 @@ MAIN()
 #endif //ZBOSS_REV23
 
   /* Set keepalive mode to mac data poll so sleepy zeds consume less power */
-  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE); 
+  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE);
 
 #elif defined ZB_ED_ROLE
   zb_set_network_ed_role(DEFAULT_CHANLIST);
@@ -411,6 +411,30 @@ void button_press_handler(zb_uint8_t param)
   Log_printf(LogModule_Zigbee_App, Log_INFO, "button is pressed, do nothing");
 }
 
+void set_tx_power(zb_int8_t power)
+{
+  zb_uint32_t chanlist = DEFAULT_CHANLIST;
+  for (zb_uint8_t i = 0; i < 32; i++) {
+    if (chanlist & (1U << i)) {
+      zb_bufid_t buf = zb_buf_get_out();
+      if (!buf)
+      {
+        Log_printf(LogModule_Zigbee_App, Log_WARNING, "no buffer available");
+        return;
+      }
+
+      zb_tx_power_params_t *power_params = (zb_tx_power_params_t *)zb_buf_begin(buf);
+      power_params->status = RET_OK;
+      power_params->page = 0;
+      power_params->channel = i;
+      power_params->tx_power = power;
+      power_params->cb = NULL;
+
+      zb_set_tx_power_async(buf);
+    }
+  }
+}
+
 /* Callback to handle the stack events */
 void zboss_signal_handler(zb_uint8_t param)
 {
@@ -429,7 +453,7 @@ void zboss_signal_handler(zb_uint8_t param)
 #ifdef TEST_USE_INSTALLCODE
         zb_secur_ic_str_add(g_ed_addr, g_installcode, NULL);
 #endif
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         zboss_start_continue();
         break;
 
@@ -451,7 +475,7 @@ void zboss_signal_handler(zb_uint8_t param)
           ZB_SCHEDULE_APP_ALARM_CANCEL(off_network_attention, ZB_ALARM_ANY_PARAM);
           zb_osif_led_off(1);
         }
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
 
 #ifdef ZB_USE_BUTTONS
@@ -481,7 +505,7 @@ void zboss_signal_handler(zb_uint8_t param)
   else
   {
     switch(sig)
-    { 
+    {
       case ZB_BDB_SIGNAL_DEVICE_FIRST_START:
         Log_printf(LogModule_Zigbee_App, Log_WARNING, "Device can not find any network on start, so try to perform network steering");
         ZB_SCHEDULE_APP_ALARM(restart_commissioning, 0, 10 * ZB_TIME_ONE_SECOND);

@@ -102,34 +102,34 @@ void OPT_HCI_CS_TestEndCompleteCback(uint8_t status)
     HCI_CS_TestEndCompleteCback(status);
 }
 
-uint8_t OPT_llCsInitChanIdxArrWrapper(uint8_t configId, uint16_t connId, const uint8_t* pCsConfig)
+uint8_t OPT_llCsInitChanIdxArrWrapper(uint16_t connId, uint8_t configId)
 {
-    return llCsInitChanIdxArrWrapper(configId, connId, pCsConfig);
+    return llCsInitChanIdxArrWrapper(connId, configId);
 }
 
-uint8_t OPT_llCsSelectStepChanWrapper(uint8_t stepMode, uint16_t connId, const uint8_t* pCsConfig)
+uint8_t OPT_llCsSelectStepChanWrapper(uint16_t connId, uint8_t configId, uint8_t stepMode)
 {
-    return llCsSelectStepChanWrapper(stepMode, connId, pCsConfig);
+    return llCsSelectStepChanWrapper(connId, configId, stepMode);
 }
 
-uint8_t OPT_llCsGetNextAntennaPermutationWrapper(csACI_e ACI)
+uint8_t OPT_llCsGetNextAntennaPermutationWrapper(uint16_t connId, csACI_e ACI)
 {
-    return llCsGetNextAntennaPermutationWrapper(ACI);
+    return llCsGetNextAntennaPermutationWrapper(connId, ACI);
 }
 
-void OPT_llCsSelectAAWrapper(uint8_t csRole, uint32_t* aaRx, uint32_t* aaTx)
+void OPT_llCsSelectAAWrapper(uint16_t connId, uint8_t csRole, uint32_t* aaRx, uint32_t* aaTx)
 {
-    llCsSelectAAWrapper(csRole, aaRx, aaTx);
+    llCsSelectAAWrapper(connId, csRole, aaRx, aaTx);
 }
 
-void OPT_llCsGetRandomSequenceWrapper(uint8_t csRole, uint32_t* pTx, uint32_t* pRx, uint8_t plLen)
+void OPT_llCsGetRandomSequenceWrapper(uint16_t connId, uint8_t csRole, uint32_t* pTx, uint32_t* pRx, uint8_t plLen)
 {
-    llCsGetRandomSequenceWrapper(csRole, pTx, pRx, plLen);
+    llCsGetRandomSequenceWrapper(connId, csRole, pTx, pRx, plLen);
 }
 
-uint8_t OPT_llCsGetToneExtentionWrapper(void)
+uint8_t OPT_llCsGetToneExtentionWrapper(uint16_t connId)
 {
-    return llCsGetToneExtentionWrapper();
+    return llCsGetToneExtentionWrapper(connId);
 }
 
 #endif /* defined(CS_TEST) */

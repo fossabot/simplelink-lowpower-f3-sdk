@@ -213,25 +213,37 @@ void ClockP_scheduleNextTick(uint32_t absTick)
     uint32_t newSystim = (uint32_t)(absTick * ClockP_TICK_PERIOD);
 
     /* At this point, we no longer care about the previously set compare value,
-     * but we might end up getting a pending interrupt from the old compare
-     * value because it could now be in the past. To prevent the CPU from
-     * vectoring to the ISR for the wrong compare value, the pending interrupt
-     * needs to be cleared, but before that is done, the channel also needs to
-     * be un-armed. This is for the case where the interrupt would become
-     * pending after clearing the interrupt, but before updating the compare
-     * value.
+     * but we might end up getting an event and a pending interrupt from the old
+     * compare value because it could now be in the past. To prevent the CPU
+     * from vectoring to the ISR for the wrong compare value, we need to do the
+     * following:
+     *  1. Prevent event from being generated for the old compare value, by
+     *     un-arming the channel.
+     *  2. Clear any event that might have been set before un-arming the
+     *     channel, by reading the channel compare value.
+     *  3. Clear any pending interrupt that might have been set by the
+     *     potential event cleared in step 2.
+     *
+     * After this, a new compare value can be written. This will re-arm the
+     * channel as well. Any event/interrupt generated after this is guaranteed
+     * to be for the new compare value.
      */
 
-    /* Un-arm SysTimer channel 0 */
+    /* Un-arm SysTimer channel 0. The channel is no longer in compare mode after
+     * this.
+     */
     HWREG(SYSTIM_BASE + SYSTIM_O_ARMCLR) = SYSTIM_ARMCLR_CH0_CLR;
 
-    /* Clear pending interrupt */
+    /* Read the capture/compare value. This will clear the event, if set, since
+     * the channel is not in compare mode.
+     */
+    HWREG(SYSTIM_BASE + SYSTIM_O_CH0CC);
+
+    /* Clear pending interrupt. */
     HwiP_clearInterrupt(INT_CPUIRQ16);
 
-    /* Note: Channel interrupt flag is automatically cleared when writing a
-     * compare value, but the pending status is not cleared in NVIC, which is
-     * why the above two statements are needed.
-     * Writing a new compare value will re-arm the channel.
+    /* Write new compare value. This will also re-arm the channel, and put the
+     * channel in compare mode.
      */
     HWREG(SYSTIM_BASE + SYSTIM_O_CH0CC) = newSystim;
 

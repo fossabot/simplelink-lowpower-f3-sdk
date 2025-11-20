@@ -39,7 +39,6 @@ The following instructions assume you're using a Unix-Like shell. `Git Bash`,
 
     $ source .venv/bin/activate
 
-
 For clarity, this document will use `$` to denote the prompt of your system
 shell and `$(venv)` to denote the prompt of your virtual environment shell.
 Therefore, the following command is expected to be ran with your virtual
@@ -60,13 +59,11 @@ environment.
 
 This will install all requirements necessary to run the `sign_hsm_fw.py` script
 
-
 # Running the `sign_hsm_fw.py` script
 
 Once you have activated the virtual environment as described above. The
 `sign_hsm_fw.py` script has a help menu that can be seen with the `-h/--help`
 options.
-
 
 ## Generate a new private/public key pair
 
@@ -101,7 +98,7 @@ it or send it as an update to your devices in the field.
 
 - For provisioning , see `<sdk>/bin/hsm/README.md`.
 - For in the field updates, see the SDK example at
-    `<sdk>/examples/<nortos|rtos>/LP_EM_CC2745R10_Q1/hsm/hsmfwupdate`
+    `<sdk>/examples/<nortos|rtos>/<device>/hsm/hsmfwupdate`
 
 # Customizing the signing process
 
@@ -125,6 +122,3 @@ are:
 
 These three things must be done exactly the same in order for your custom
 signing process to result in an HSM FW image which is accepted.
-
-
-

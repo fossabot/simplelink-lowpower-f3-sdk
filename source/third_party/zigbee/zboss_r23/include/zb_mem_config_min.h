@@ -31,7 +31,6 @@
    @{
 */
 
-
 #define ZB_CONFIG_ROLE_ZC
 /*#define ZB_CONFIG_ROLE_ZR*/
 /*#define ZB_CONFIG_ROLE_ZED*/

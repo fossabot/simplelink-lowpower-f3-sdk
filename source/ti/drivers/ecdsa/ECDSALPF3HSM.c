@@ -37,6 +37,8 @@
 #include <ti/drivers/ecdsa/ECDSALPF3HSM.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKeyPlaintext.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
+#include <ti/drivers/dpl/SemaphoreP.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 
 /* HSM related includes */
 #include <ti/drivers/cryptoutils/hsm/HSMLPF3.h>
@@ -62,6 +64,17 @@
 #include <ti/drivers/dpl/DebugP.h>
 #include <ti/drivers/dpl/HwiP.h>
 
+#include <ti/devices/DeviceFamily.h>
+#include DeviceFamily_constructPath(inc/hw_ints.h)
+
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX)
+    /* HSM Register names for CC35XX are different compared to CC27XX
+     * Below mapping helps to keep the source code same between
+     * both devices.
+     */
+    #define INT_HSM_SEC_IRQ INT_OSPR_HSM_HOST_0_SEC_IRQ
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX) */
+
 /* Helper functions */
 static int_fast16_t ECDSALPF3HSM_initializeHSMOperations(ECDSA_Handle handle);
 
@@ -73,6 +86,10 @@ static int_fast16_t ECDSALPF3HSM_LoadKeyAsset(ECDSA_Handle handle, uint8_t *key,
 static int_fast16_t ECDSALPF3HSM_createAndLoadECurveAssetID(ECDSA_Handle handle);
 static int_fast16_t ECDSALPF3HSM_createECurveAsset(ECDSA_Handle handle);
 static int_fast16_t ECDSALPF3HSM_LoadECurve(ECDSA_Handle handle);
+
+static int_fast16_t ECDSALPF3HSM_createAndLoadPublicDataObj(ECDSA_Handle handle);
+static int_fast16_t ECDSALPF3HSM_createPublicDataObj(ECDSA_Handle handle);
+static int_fast16_t ECDSALPF3HSM_loadPublicDataObj(ECDSA_Handle handle);
 
 static int_fast16_t ECDSALPF3HSM_freeAssetID(ECDSA_Handle handle, uint32_t AssetID);
 static int_fast16_t ECDSALPF3HSM_freeAllAssets(ECDSA_Handle handle);
@@ -143,7 +160,8 @@ ECDSA_Handle ECDSA_construct(ECDSA_Config *config, const ECDSA_Params *params)
         HwiP_restore(key);
 
         object->returnBehavior = params->returnBehavior;
-        object->accessTimeout  = params->timeout;
+        object->accessTimeout  = params->returnBehavior == ECDSA_RETURN_BEHAVIOR_BLOCKING ? params->timeout
+                                                                                          : SemaphoreP_NO_WAIT;
         object->callbackFxn    = params->callbackFxn;
         object->keyAssetID     = 0U;
         object->paramAssetID   = 0U;
@@ -275,48 +293,90 @@ static int_fast16_t ECDSALPF3HSM_initializeHSMOperations(ECDSA_Handle handle)
         return ECDSA_STATUS_RESOURCE_UNAVAILABLE;
     }
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+    {
+        return ECDSA_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     /* Create two assets and load data into them:
      * - First asset is the private key.
      * - Second asset is the ECC curve parameters.
      */
     status = ECDSALPF3HSM_createAndLoadAllAssets(handle);
 
+    if (HSMLPF3_isStandaloneDMASupportEnabled() || (status != ECDH_STATUS_SUCCESS))
+    {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+    }
+
     return status;
 }
 
 /*
- *  ======== ECDSALPF3HSM_ecdsaPostProcessing ========
+ *  ======== ECDSALPF3HSM_readSignatureMaterial ========
  */
-static inline void ECDSALPF3HSM_ecdsaPostProcessing(uintptr_t arg0)
+static int_fast16_t ECDSALPF3HSM_readSignatureMaterial(ECDSA_Handle handle)
+{
+    ECDSALPF3HSM_Object *object        = handle->object;
+    int_fast16_t status                = ECDSA_STATUS_ERROR;
+    int_fast16_t hsmRetval             = HSMLPF3_STATUS_ERROR;
+    ECDSA_OperationSign *signOperation = (ECDSA_OperationSign *)object->operation;
+    uint32_t assetSize                 = (HSM_SIGNATURE_VCOUNT * (HSM_ASYM_DATA_SIZE_VWB(object->curveLength)));
+    int32_t tokenResult                = 0U;
+
+    /* Initialize a buffer that will hold the single- or multi-component vector for the operation's key */
+    (void)memset(&object->signature[0], 0, assetSize);
+
+    HSMLPF3_getPublicDataRead(object->publicObjAssetID, &object->signature[0], assetSize);
+
+    /* Submit token to the HSM IP engine */
+    hsmRetval = HSMLPF3_submitToken(HSMLPF3_RETURN_BEHAVIOR_POLLING, NULL, (uintptr_t)handle);
+
+    if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+    {
+        /* Handles post command token submission mechanism.
+         * Waits for a result token from the HSM IP in polling and blocking modes (and calls the drivers post-processing
+         * fxn) and returns immediately when in callback mode.
+         */
+        hsmRetval = HSMLPF3_waitForResult();
+
+        if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+        {
+            tokenResult = HSMLPF3_getResultCode();
+
+            if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+            {
+                status = ECDSA_STATUS_SUCCESS;
+
+                /*
+                 * Convert the signature from HSM IP format to OS format by extracting
+                 * the R and S components of the signature, reversing the format and tossing out the header
+                 */
+                HSMLPF3_asymDsaSignatureFromHW(&object->signature[0],
+                                               object->curveLength,
+                                               HSMLPF3_BIG_ENDIAN_KEY,
+                                               signOperation->r,
+                                               signOperation->s);
+            }
+        }
+    }
+
+    return status;
+}
+
+/*
+ *  ======== ECDSALPF3HSM_ecdsaCommonPostProcessing ========
+ */
+static void ECDSALPF3HSM_ecdsaCommonPostProcessing(uintptr_t arg0, uint_fast16_t status)
 {
     ECDSA_Handle handle         = (ECDSA_Handle)arg0;
     ECDSALPF3HSM_Object *object = handle->object;
-    int_fast16_t status         = ECDSA_STATUS_ERROR;
     int_fast16_t assetStatus    = ECDSA_STATUS_ERROR;
-    int32_t tokenResult         = HSMLPF3_getResultCode();
 
-    /* TokenResult carries information regarding the operation result status as well as other information such as
-     * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
-     * relevant information to an operation's result status.
-     */
-    if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
-    {
-        status = ECDSA_STATUS_SUCCESS;
-
-        if (object->operationType == ECDSA_OPERATION_TYPE_SIGN)
-        {
-            /*
-             * Convert the signature from HSM IP format to OS format by extracting
-             * the R and S components of the signature, reversing the format and tossing out the header
-             */
-            ECDSA_OperationSign *signOperation = (ECDSA_OperationSign *)object->operation;
-            HSMLPF3_asymDsaSignatureFromHW(&object->signature[0],
-                                           object->curveLength,
-                                           HSMLPF3_BIG_ENDIAN_KEY,
-                                           signOperation->r,
-                                           signOperation->s);
-        }
-    }
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     /* Free two assets (private key and ECC curve assets) */
     assetStatus = ECDSALPF3HSM_freeAllAssets(handle);
@@ -333,6 +393,131 @@ static inline void ECDSALPF3HSM_ecdsaPostProcessing(uintptr_t arg0)
     if (object->returnBehavior == ECDSA_RETURN_BEHAVIOR_CALLBACK)
     {
         object->callbackFxn((ECDSA_Handle)arg0, status, *object->operation, object->operationType);
+    }
+}
+
+/*
+ *  ======== ECDSALPF3HSM_ecdsaSignPostProcessing ========
+ */
+static inline void ECDSALPF3HSM_ecdsaSignPostProcessing(uintptr_t arg0)
+{
+    ECDSA_Handle handle         = (ECDSA_Handle)arg0;
+    ECDSALPF3HSM_Object *object = handle->object;
+    int_fast16_t status         = ECDSA_STATUS_ERROR;
+    int32_t tokenResult         = HSMLPF3_getResultCode();
+    bool commonResourceRetval   = false;
+
+    if (HSMLPF3_isStandaloneDMASupportEnabled())
+    {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        if ((object->returnBehavior == ECDSA_RETURN_BEHAVIOR_BLOCKING) ||
+            (object->returnBehavior == ECDSA_RETURN_BEHAVIOR_POLLING))
+        {
+            /* In _construct(), the ECDSA driver sets the object's accessTimeout value to:
+             * - Blocking: user-provided value, usually SemaphoreP_WAIT_FOREVER.
+             * - Polling or Callback: SemaphoreP_NO_WAIT.
+             */
+            commonResourceRetval = CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+        }
+        else
+        {
+            commonResourceRetval = CommonResourceXXF3_acquireLockWithDelay();
+        }
+
+        if (commonResourceRetval)
+        {
+            /* TokenResult carries information regarding the operation result status as well as other information such
+             * as whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to
+             * extract only relevant information to an operation's result status.
+             */
+            if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+            {
+                status = ECDSALPF3HSM_readSignatureMaterial(handle);
+            }
+
+            /* Execute the common phase in the post processing part:
+             * - Free all created assets.
+             * - Release the HSM access semaphore.
+             * - When in Callback mode, call the user's callbck fxn.
+             */
+            ECDSALPF3HSM_ecdsaCommonPostProcessing(arg0, status);
+        }
+        else
+        {
+            (void)HwiP_enableInterrupt(INT_HSM_SEC_IRQ);
+        }
+    }
+    else
+    {
+        /* TokenResult carries information regarding the operation result status as well as other information such as
+         * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
+         * relevant information to an operation's result status.
+         */
+        if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+        {
+            status = ECDSA_STATUS_SUCCESS;
+
+            /*
+             * Convert the signature from HSM IP format to OS format by extracting
+             * the R and S components of the signature, reversing the format and tossing out the header
+             */
+            ECDSA_OperationSign *signOperation = (ECDSA_OperationSign *)object->operation;
+            HSMLPF3_asymDsaSignatureFromHW(&object->signature[0],
+                                           object->curveLength,
+                                           HSMLPF3_BIG_ENDIAN_KEY,
+                                           signOperation->r,
+                                           signOperation->s);
+        }
+
+        /* Execute the common phase in the post processing part:
+         * - Free all created assets.
+         * - Release the HSM access semaphore.
+         * - When in Callback mode, call the user's callbck fxn.
+         */
+        ECDSALPF3HSM_ecdsaCommonPostProcessing(arg0, status);
+    }
+}
+
+/*
+ *  ======== ECDSALPF3HSM_ecdsaVerifyPostProcessing ========
+ */
+static inline void ECDSALPF3HSM_ecdsaVerifyPostProcessing(uintptr_t arg0)
+{
+    int_fast16_t status = ECDSA_STATUS_ERROR;
+    int32_t tokenResult = HSMLPF3_getResultCode();
+
+    /* TokenResult carries information regarding the operation result status as well as other information such as
+     * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
+     * relevant information to an operation's result status.
+     */
+    if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+    {
+        status = ECDSA_STATUS_SUCCESS;
+    }
+
+    /* Execute the common phase in the post processing part:
+     * - Free all created assets.
+     * - Release the HSM access semaphore.
+     * - When in Callback mode, call the user's callbck fxn.
+     */
+    ECDSALPF3HSM_ecdsaCommonPostProcessing(arg0, status);
+}
+
+/*
+ *  ======== ECDSALPF3HSM_ecdsaPostProcessing ========
+ */
+static inline void ECDSALPF3HSM_ecdsaPostProcessing(uintptr_t arg0)
+{
+    ECDSA_Handle handle         = (ECDSA_Handle)arg0;
+    ECDSALPF3HSM_Object *object = handle->object;
+
+    if (object->operationType == ECDSA_OPERATION_TYPE_SIGN)
+    {
+        ECDSALPF3HSM_ecdsaSignPostProcessing(arg0);
+    }
+    else
+    {
+        ECDSALPF3HSM_ecdsaVerifyPostProcessing(arg0);
     }
 }
 
@@ -366,6 +551,9 @@ int_fast16_t ECDSA_sign(ECDSA_Handle handle, ECDSA_OperationSign *operation)
 
     if (status != ECDSA_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
          * error code anyways.
@@ -378,7 +566,7 @@ int_fast16_t ECDSA_sign(ECDSA_Handle handle, ECDSA_OperationSign *operation)
     }
 
     /* Populates the HSMLPF3 commandToken as a PK token for an ECDSA sign operation */
-    HSMLPF3_constructECDSASignPhysicalToken(object);
+    HSMLPF3_constructECDSAPhysicalToken(object);
 
     /* Submit token to the HSM IP engine */
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->returnBehavior,
@@ -402,6 +590,9 @@ int_fast16_t ECDSA_sign(ECDSA_Handle handle, ECDSA_OperationSign *operation)
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
         status = ECDSA_STATUS_ERROR;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
@@ -445,6 +636,9 @@ int_fast16_t ECDSA_verify(ECDSA_Handle handle, ECDSA_OperationVerify *operation)
 
     if (status != ECDSA_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
          * error code anyways.
@@ -456,23 +650,26 @@ int_fast16_t ECDSA_verify(ECDSA_Handle handle, ECDSA_OperationVerify *operation)
         return status;
     }
 
-    /* Signature passed by the user must be converted to a format that the HSM IP requires it to be.
-     * A 32-bit word header is attached at the beginning of each sub-vector component includes:
-     * - The length of the sub-vector component
-     * - Total number of sub-vector components
-     * - Domain ID of the sub-vector component
-     * - Index of each sub-vector component
-     * The data in the body of the sub-vector component should be reversed into little endian format.
-     */
-    memset(&object->signature[0], 0, sizeof(object->signature));
-    HSMLPF3_asymDsaSignatureToHW(operation->r,
-                                 operation->s,
-                                 HSMLPF3_BIG_ENDIAN_KEY,
-                                 object->curveLength,
-                                 &object->signature[0]);
+    if (!HSMLPF3_isStandaloneDMASupportEnabled())
+    {
+        /* Signature passed by the user must be converted to a format that the HSM IP requires it to be.
+         * A 32-bit word header is attached at the beginning of each sub-vector component includes:
+         * - The length of the sub-vector component
+         * - Total number of sub-vector components
+         * - Domain ID of the sub-vector component
+         * - Index of each sub-vector component
+         * The data in the body of the sub-vector component should be reversed into little endian format.
+         */
+        memset(&object->signature[0], 0, sizeof(object->signature));
+        HSMLPF3_asymDsaSignatureToHW(operation->r,
+                                     operation->s,
+                                     HSMLPF3_BIG_ENDIAN_KEY,
+                                     object->curveLength,
+                                     &object->signature[0]);
+    }
 
     /* Populates the HSMLPF3 commandToken as a PK token for an ECDSA verify operation */
-    HSMLPF3_constructECDSASignPhysicalToken(object);
+    HSMLPF3_constructECDSAPhysicalToken(object);
 
     /* Submit token to the HSM IP engine */
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->returnBehavior,
@@ -496,6 +693,9 @@ int_fast16_t ECDSA_verify(ECDSA_Handle handle, ECDSA_OperationVerify *operation)
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
         status = ECDSA_STATUS_ERROR;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
@@ -522,13 +722,30 @@ static int_fast16_t ECDSALPF3HSM_createAndLoadAllAssets(ECDSA_Handle handle)
      * - Load the operation's asymmetric key onto HSM RAM
      */
     status = ECDSALPF3HSM_createAndLoadKeyAssetID(handle);
-    if (status == ECDSA_STATUS_SUCCESS)
+
+    if (status != ECDSA_STATUS_SUCCESS)
+    {
+        return status;
+    }
+
+    /* Perform two HSM operations:
+     * - Create an asset that holds the operation's ECC curve parameters
+     * - Load the appropriate ECC curve parameters onto HSM RAM
+     */
+    status = ECDSALPF3HSM_createAndLoadECurveAssetID(handle);
+
+    if (status != ECDSA_STATUS_SUCCESS)
+    {
+        return status;
+    }
+
+    if (HSMLPF3_isStandaloneDMASupportEnabled())
     {
         /* Perform two HSM operations:
-         * - Create an asset that holds the operation's ECC curve parameters
-         * - Load the appropriate ECC curve parameters onto HSM RAM
+         * - Create a public data object that holds the operation's signature.
+         * - For a verify operation, Load the appropriate signature onto HSM RAM into the object.
          */
-        status = ECDSALPF3HSM_createAndLoadECurveAssetID(handle);
+        status = ECDSALPF3HSM_createAndLoadPublicDataObj(handle);
     }
 
     return status;
@@ -570,12 +787,25 @@ static int_fast16_t ECDSALPF3HSM_createAndLoadKeyAssetID(ECDSA_Handle handle)
         keyLength   = object->key->u.keyStore.keyLength;
         keyMaterial = &KeyStore_keyingMaterial[0];
 
+        /* Release the CommonResource semaphore before entering the KeyStore space since KeyStore will attempt to
+         * acquire for key management operations.
+         */
+        CommonResourceXXF3_releaseLock();
+
         status = KeyStore_PSA_retrieveFromKeyStore(object->key,
                                                    &KeyStore_keyingMaterial[0],
                                                    sizeof(KeyStore_keyingMaterial),
                                                    &object->keyAssetID,
                                                    KEYSTORE_PSA_ALG_ECDSA,
                                                    usage);
+
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+        {
+            HSMLPF3_releaseLock();
+
+            status = ECDH_STATUS_RESOURCE_UNAVAILABLE;
+        }
 
         if (status != KEYSTORE_PSA_STATUS_SUCCESS)
         {
@@ -932,28 +1162,6 @@ static int_fast16_t ECDSALPF3HSM_createECurveAsset(ECDSA_Handle handle)
 }
 
 /*
- *  ======== ECDSALPF3HSM_LoadECurvePostProcessing ========
- */
-static inline void ECDSALPF3HSM_LoadECurvePostProcessing(uintptr_t arg0)
-{
-    ECDSA_Handle handle         = (ECDSA_Handle)arg0;
-    ECDSALPF3HSM_Object *object = handle->object;
-    int_fast16_t status         = ECDSA_STATUS_ERROR;
-    int32_t tokenResult         = HSMLPF3_getResultCode();
-
-    /* TokenResult carries information regarding the operation result status as well as many other information such as
-     * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
-     * relevant information to an operation's result status.
-     */
-    if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
-    {
-        status = ECDSA_STATUS_SUCCESS;
-    }
-
-    object->hsmStatus = status;
-}
-
-/*
  *  ======== ECDSALPF3HSM_LoadECurve ========
  */
 static int_fast16_t ECDSALPF3HSM_LoadECurve(ECDSA_Handle handle)
@@ -967,7 +1175,7 @@ static int_fast16_t ECDSALPF3HSM_LoadECurve(ECDSA_Handle handle)
 
     /* Submit token to the HSM IP engine */
     hsmRetval = HSMLPF3_submitToken(HSMLPF3_RETURN_BEHAVIOR_POLLING,
-                                    ECDSALPF3HSM_LoadECurvePostProcessing,
+                                    ECDSALPF3HSM_LoadKeyAssetPostProcessing,
                                     (uintptr_t)handle);
 
     if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
@@ -975,6 +1183,136 @@ static int_fast16_t ECDSALPF3HSM_LoadECurve(ECDSA_Handle handle)
         /* Handles post command token submission mechanism.
          * Waits for a result token from the HSM IP in polling and blocking modes (and calls the drivers post-processing
          * fxn) and returns immediately when in callback mode.
+         */
+        hsmRetval = HSMLPF3_waitForResult();
+
+        if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+        {
+            status = object->hsmStatus;
+        }
+    }
+
+    return status;
+}
+
+/*
+ *  ======== ECDSALPF3HSM_createAndLoadPublicDataObj ========
+ */
+static int_fast16_t ECDSALPF3HSM_createAndLoadPublicDataObj(ECDSA_Handle handle)
+{
+    int_fast16_t status         = ECDSA_STATUS_ERROR;
+    ECDSALPF3HSM_Object *object = handle->object;
+
+    status = ECDSALPF3HSM_createPublicDataObj(handle);
+
+    if ((status == ECDSA_STATUS_SUCCESS) && (object->operationType == ECDSA_OPERATION_TYPE_VERIFY))
+    {
+        status = ECDSALPF3HSM_loadPublicDataObj(handle);
+    }
+
+    return status;
+}
+
+/*
+ *  ======== ECDSALPF3HSM_createPublicDataObjPostProcessing ========
+ */
+static inline void ECDSALPF3HSM_createPublicDataObjPostProcessing(uintptr_t arg0)
+{
+    ECDSA_Handle handle         = (ECDSA_Handle)arg0;
+    ECDSALPF3HSM_Object *object = handle->object;
+    int_fast16_t status         = ECDSA_STATUS_ERROR;
+    int32_t tokenResult         = HSMLPF3_getResultCode();
+
+    /* TokenResult carries information regarding the operation result status as well as other information such as
+     * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
+     * relevant information to an operation's result status.
+     */
+    if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+    {
+        object->publicObjAssetID = HSMLPF3_getResultAssetID();
+        status                   = ECDSA_STATUS_SUCCESS;
+    }
+
+    object->hsmStatus = status;
+}
+
+/*
+ *  ======== ECDSALPF3HSM_createPublicDataObj ========
+ */
+static int_fast16_t ECDSALPF3HSM_createPublicDataObj(ECDSA_Handle handle)
+{
+    int_fast16_t status         = ECDSA_STATUS_ERROR;
+    int_fast16_t hsmRetval      = HSMLPF3_STATUS_ERROR;
+    ECDSALPF3HSM_Object *object = handle->object;
+    uint32_t assetSize          = (HSM_SIGNATURE_VCOUNT * (HSM_ASYM_DATA_SIZE_VWB(object->curveLength)));
+    uint64_t assetPolicy        = EIP130_ASSET_POLICY_NONMODIFIABLE | EIP130_ASSET_POLICY_NODOMAIN |
+                           EIP130_ASSET_POLICY_PUBLICDATA | EIP130_ASSET_POLICY_GENERICDATA |
+                           EIP130_ASSET_POLICY_GDPUBLICDATA;
+
+    /* Populates the HSMLPF3 commandToken as a create asset token */
+    HSMLPF3_constructCreateAssetToken(assetPolicy, assetSize);
+
+    /* Submit token to the HSM IP engine */
+    hsmRetval = HSMLPF3_submitToken(HSMLPF3_RETURN_BEHAVIOR_POLLING,
+                                    ECDSALPF3HSM_createPublicDataObjPostProcessing,
+                                    (uintptr_t)handle);
+
+    if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+    {
+        /* Handles post command token submission mechanism.
+         * Waits for a result token from the HSM IP in polling and blocking modes (and calls the drivers post-processing
+         * fxn) and returns immediately when in callback mode.
+         */
+        hsmRetval = HSMLPF3_waitForResult();
+
+        if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+        {
+            status = object->hsmStatus;
+        }
+    }
+
+    return status;
+}
+
+/*
+ *  ======== ECDSALPF3HSM_loadPublicDataObj ========
+ */
+static int_fast16_t ECDSALPF3HSM_loadPublicDataObj(ECDSA_Handle handle)
+{
+    int_fast16_t status              = ECDSA_STATUS_ERROR;
+    int_fast16_t hsmRetval           = HSMLPF3_STATUS_ERROR;
+    ECDSALPF3HSM_Object *object      = handle->object;
+    ECDSA_OperationVerify *operation = (ECDSA_OperationVerify *)object->operation;
+    uint32_t assetSize               = (HSM_SIGNATURE_VCOUNT * (HSM_ASYM_DATA_SIZE_VWB(object->curveLength)));
+
+    /* Signature passed by the user must be converted to a format that the HSM IP requires it to be.
+     * A 32-bit word header is attached at the beginning of each sub-vector component includes:
+     * - The length of the sub-vector component
+     * - Total number of sub-vector components
+     * - Domain ID of the sub-vector component
+     * - Index of each sub-vector component
+     * The data in the body of the sub-vector component should be reversed into little endian format.
+     */
+    memset(&object->signature[0], 0, sizeof(object->signature));
+    HSMLPF3_asymDsaSignatureToHW(operation->r,
+                                 operation->s,
+                                 HSMLPF3_BIG_ENDIAN_KEY,
+                                 object->curveLength,
+                                 &object->signature[0]);
+
+    /* Populates the HSMLPF3 commandToken as a load asset token */
+    HSMLPF3_constructLoadPlaintextAssetToken(&object->signature[0], assetSize, object->publicObjAssetID);
+
+    /* Submit token to the HSM IP engine */
+    hsmRetval = HSMLPF3_submitToken(HSMLPF3_RETURN_BEHAVIOR_POLLING,
+                                    ECDSALPF3HSM_LoadKeyAssetPostProcessing,
+                                    (uintptr_t)handle);
+
+    if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+    {
+        /* Handles post command token submission mechanism.
+         * Waits for a result token from the HSM IP in polling and blocking modes (and calls the drivers
+         * post-processing fxn) and returns immediately when in callback mode.
          */
         hsmRetval = HSMLPF3_waitForResult();
 
@@ -1029,6 +1367,8 @@ static int_fast16_t ECDSALPF3HSM_freeAllAssets(ECDSA_Handle handle)
     {
         status = ECDSA_STATUS_ERROR;
     }
+
+    /* Free the public object. */
 
     return status;
 }

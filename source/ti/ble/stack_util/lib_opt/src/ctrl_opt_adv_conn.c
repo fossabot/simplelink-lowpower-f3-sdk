@@ -87,9 +87,9 @@
 #error "One or more dependencies are missing! Please add them."
 #endif
 
-void OPT_llProcessPeripheralConnectionCreated(void)
+void OPT_llProcessPeripheralConnectionCreated(llConnState_t* connPtr, uint8_t ownAddType, uint16_t pAdvSyncHandle)
 {
-    llProcessPeripheralConnectionCreated();
+    llProcessPeripheralConnectionCreated(connPtr, ownAddType, pAdvSyncHandle);
 }
 
 void OPT_llProcessPeripheralControlPacket(llConnState_t* connPtr, uint8_t* pPkt)
@@ -122,6 +122,11 @@ void OPT_llPeripheral_TaskEnd(void)
     llPeripheral_TaskEnd();
 }
 
+uint8_t OPT_llProcessPeripheralControlProcedures(llConnState_t* connPtr)
+{
+    return llProcessPeripheralControlProcedures(connPtr);
+}
+
 void OPT_llBuildCtrlPktPeri(llConnState_t* connPtr, uint8_t* pData, uint8_t ctrlPkt)
 {
     llBuildCtrlPktPeri(connPtr, pData, ctrlPkt);
@@ -137,9 +142,9 @@ hciStatus_t OPT_hciCmdParserPeripheral(uint8_t* pData, uint16_t cmdOpCode)
     return hciCmdParserPeripheral(pData, cmdOpCode);
 }
 
-hciStatus_t OPT_hciCmdParserVendorSpecificPeripheral(uint8_t* pData, uint16_t cmdOpCode)
+hciStatus_t OPT_hciCmdParserExtVendorSpecificPeripheral(uint8_t* pData, uint16_t cmdOpCode)
 {
-    return hciCmdParserVendorSpecificPeripheral(pData, cmdOpCode);
+    return hciCmdParserExtVendorSpecificPeripheral(pData, cmdOpCode);
 }
 
 void OPT_llAdv_TaskConnect(void)

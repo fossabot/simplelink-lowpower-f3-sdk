@@ -41,6 +41,41 @@
     const Common = system.getScript("/ti/drivers/Common.js");
     var i = 0;
     const isCC27xxx7 = system.deviceData.deviceId.match(/CC27...7/) !== null;
+
+    /**
+     * Formats a hex string into a formatted byte array string representation
+     * @param {string} hexString - The hex string to convert
+     * @param {number} byteLength - The expected byte length
+     * @return {string} Formatted byte array string
+     */
+    function formatHexToByteArray(hexString, byteLength = 32) {
+        // Convert hex string to byte array
+        const tempArray = Common.hexToBytes(hexString, byteLength);
+        let arrStr = "";
+        let byteStr;
+        const bytesPerLine = 8;
+        const indentation = "                             ";
+
+        // Format each byte
+        for (let i = 0; i < tempArray.length; i++) {
+            // Convert byte to hex string with 0x prefix and padding
+            byteStr = "0x" + tempArray[i].toString(16).padStart(2,'0');
+
+            // Format based on position
+            if ((i + 1) % bytesPerLine || i == 0) {
+                // Regular comma-separated bytes
+                arrStr += byteStr + ", ";
+            } else if (i != tempArray.length - 1) {
+                // End of line but not the last byte
+                arrStr += byteStr + ",\n" + indentation;
+            } else {
+                // Last byte (no comma)
+                arrStr += byteStr;
+            }
+        }
+
+        return arrStr;
+    }
 %%}
 /*
  *  ======== ti_devices_config.c ========
@@ -250,25 +285,26 @@ const scfg_t scfg __attribute__((section(".scfg"), used)) =
 #endif
 {
     SCFG_DEFAULT_VALUES,
+
 %%{
-var tempArray = Common.hexToBytes(inst.hsmPublicKeyHash, 32);
-var arrStr = "";
-var byteStr;
-for(i=0; i<tempArray.length; i++){
-    byteStr = "0x" + tempArray[i].toString(16).padStart(2,'0');
-    if((i+1)%8 || i==0){
-        arrStr += byteStr + ", ";
-    } else if(i!=tempArray.length-1){
-        /* Pad the beginning of each line so the initialiser array looks aligned */
-        arrStr += byteStr + ",\n                             ";
-    } else {
-        arrStr += byteStr;
-    }
-}
+var arrSecKeyId = formatHexToByteArray(inst.debugAuthSecurekeyId, 8);
+var arrSecKeyHash = formatHexToByteArray(inst.debugAuthSecurekeyPublicHash);
+var arrNonSecKeyId = formatHexToByteArray(inst.debugAuthNonSecurekeyId, 8);
+var arrNonSecKeyHash = formatHexToByteArray(inst.debugAuthNonSecurekeyPublicHash);
 %%}
 
     /* Overwrite default SCFG values */
-    .hsmCfg.publicKeyHash = {`arrStr`},
+%if (inst.debugAuthorization == "Require debug authentication") {
+    .debugAuthCfg.secureKey.keyId = {`arrSecKeyId`},
+    .debugAuthCfg.secureKey.publicKeyHash = {`arrSecKeyHash`},
+    .debugAuthCfg.nonSecureKey.keyId = {`arrNonSecKeyId`},
+    .debugAuthCfg.nonSecureKey.publicKeyHash = {`arrNonSecKeyHash`},
+    .debugAuthCfg.challengeVector.deviceConst = `inst.challengeVectorDeviceConst`,
+    .debugAuthCfg.challengeVector.lifetime = `inst.challengeVectorLifetime`,
+% }
+%var arrHsmPuclicKeyHash = formatHexToByteArray(inst.hsmPublicKeyHash);
+
+    .hsmCfg.publicKeyHash = {`arrHsmPuclicKeyHash`},
 % if (inst.authMethod != "No Authentication") {
     /* Boot Seed configuration */
     .bootSeedOffset = 0x`inst.bootSeedOffset.toString(16)`,

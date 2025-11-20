@@ -370,12 +370,12 @@ extern "C"
  * INCLUDES
  */
 #include "ti/ble/stack_util/bcomdef.h"
-#include "ti/ble/stack_util/osal/osal.h"
 #include "ti/ble/controller/ll/ll_common.h"
 #include "ti/ble/controller/ll/ll_ae.h"
 #include "ti/ble/stack_util/health_toolkit/assert.h"
 #include "ti/ble/controller/ll/ll_tx_power.h"
 #include "ti/ble/controller/hci/hci_supported_cmd.h"
+#include "ti/ble/controller/ll/ll_pawr_scan.h"
 
 /*
  * MACROS
@@ -888,7 +888,7 @@ typedef uint8 hciStatus_t;
 /// @brief LE Connection Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  status;                  //!< status of event
   uint16 connectionHandle;        //!< connection handle
@@ -904,7 +904,7 @@ typedef struct
 /// @brief LE Enhanced Connection Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  status;                  //!< status of event
   uint16 connectionHandle;        //!< connection handle
@@ -941,7 +941,7 @@ typedef struct
 /// @brief LE Advertising Packet Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  numDevices;              //!< number of discovered devices
   hciEvt_DevInfo_t* devInfo;      //!< pointer to the array of devInfo
@@ -950,7 +950,7 @@ typedef struct
 /// @brief VS LE Scan Request Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  eventType;               //!< scan request event type
   uint8  peerAddrType;            //!< peer address type
@@ -962,7 +962,7 @@ typedef struct
 /// @brief VS LE Channel Map Update Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;                          //!< osal event header
+  event_hdr_t  hdr;                               //!< osal event header
   uint8   BLEEventCode;                           //!< BLE Event Code
   uint16  connHandle;                             //!< connection handle
   uint8   nextDataChan;                           //!< next channel
@@ -971,7 +971,7 @@ typedef struct
 
 typedef struct
 {
-  osal_event_hdr_t  hdr;                          //!< Osal event header
+  event_hdr_t  hdr;                               //!< Osal event header
   uint8   BLEEventCode;                           //!< BLE Event Code
   uint8   status;                                 //!< status of event
   uint16  connHandle;                             //!< Connection handle
@@ -985,39 +985,39 @@ typedef struct
 /// @brief LE Connection Update Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
-  uint8  BLEEventCode;            //!< BLE Event Code
-  uint8  status;                  //!< status of event
-  uint16 connectionHandle;        //!< connection handle
-  uint16 connInterval;            //!< connection interval
-  uint16 connLatency;             //!< connection latency
-  uint16 connTimeout;             //!< connection supervision timeout
+  event_hdr_t  hdr;          //!< osal event header
+  uint8  BLEEventCode;       //!< BLE Event Code
+  uint8  status;             //!< status of event
+  uint16 connectionHandle;   //!< connection handle
+  uint16 connInterval;       //!< connection interval
+  uint16 connLatency;        //!< connection latency
+  uint16 connTimeout;        //!< connection supervision timeout
 } hciEvt_BLEConnUpdateComplete_t;
 
 /// @brief LE Read Remote Used Features Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
-  uint8  BLEEventCode;            //!< BLE Event Code
-  uint8  status;                  //!< status of event
-  uint16 connectionHandle;        //!< connection handle
-  uint8  features[8];             //!< features
+  event_hdr_t  hdr;          //!< osal event header
+  uint8  BLEEventCode;       //!< BLE Event Code
+  uint8  status;             //!< status of event
+  uint16 connectionHandle;   //!< connection handle
+  uint8  features[8];        //!< features
 } hciEvt_BLEReadRemoteFeatureComplete_t;
 
 /// @brief LE Encryption Change Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
-  uint8  BLEEventCode;            //!< BLE Event Code
-  uint16 connHandle;              //!< connection handle
-  uint8  reason;                  //!< reason
-  uint8  encEnable;               //!< encryption enabled or not
+  event_hdr_t  hdr;          //!< osal event header
+  uint8  BLEEventCode;       //!< BLE Event Code
+  uint16 connHandle;         //!< connection handle
+  uint8  reason;             //!< reason
+  uint8  encEnable;          //!< encryption enabled or not
 } hciEvt_EncryptChange_t;
 
 /// @brief LE Long Term Key Requested Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;            //!< osal event header
+  event_hdr_t  hdr;                 //!< osal event header
   uint8  BLEEventCode;              //!< BLE Event Code
   uint16 connHandle;                //!< connection handle
   uint8  random[B_RANDOM_NUM_SIZE]; //!< random
@@ -1027,16 +1027,16 @@ typedef struct
 /// @brief Number of Completed Packets Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;            //!< osal event header
-  uint8  numHandles;                //!< number of handles
-  uint16 *pConnectionHandle;        //!< pointer to the connection handle array
-  uint16 *pNumCompletedPackets;     //!< pointer to the number of completed packets array
+  event_hdr_t  hdr;               //!< osal event header
+  uint8  numHandles;              //!< number of handles
+  uint16 *pConnectionHandle;      //!< pointer to the connection handle array
+  uint16 *pNumCompletedPackets;   //!< pointer to the number of completed packets array
 } hciEvt_NumCompletedPkt_t;
 
 /// @brief Command Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  numHciCmdPkt;            //!< number of HCI Command Packet
   uint16 cmdOpcode;               //!< command opcode
   uint8  *pReturnParam;           //!< pointer to the return parameter
@@ -1045,7 +1045,7 @@ typedef struct
 /// @brief Vendor Specific Command Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8   length;                 //!< length of parametric data, in bytes
   uint16  cmdOpcode;              //!< command opcode
   uint8  *pEventParam;            //!< event parameters
@@ -1054,7 +1054,7 @@ typedef struct
 /// @brief Command Status Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  cmdStatus;               //!< command status
   uint8  numHciCmdPkt;            //!< number of HCI command packets
   uint16 cmdOpcode;               //!< command opcode
@@ -1063,14 +1063,14 @@ typedef struct
 /// @brief Hardware Error Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8 hardwareCode;             //!< hardware error code
 } hciEvt_HardwareError_t;
 
 /// @brief Disconnection Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  status;                  //!< status of event
   uint16 connHandle;              //!< connection handle
   uint8  reason;                  //!< reason
@@ -1079,21 +1079,21 @@ typedef struct
 /// @brief Data Buffer Overflow Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8 linkType;                 //!< synchronous or asynchronous buffer overflow
 } hciEvt_BufferOverflow_t;
 
 /// @brief Authenticated Payload Timeout Expired Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint16 connHandle;              //!< connection handle
 } hciEvt_AptoExpired_t;
 
 /// @brief L2CAP data length exceed Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint16 connHandle;              //!< connection handle
   uint16 cid;                     //!< L2CAP channel ID
 } hciEvt_DataLenExceed_t;
@@ -1101,7 +1101,7 @@ typedef struct
 /// @brief LE Remote Connection Parameter Request Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  status;                  //!< status of event
   uint16 connHandle;              //!< connection handle
@@ -1114,7 +1114,7 @@ typedef struct
 /// @brief LE Phy Update Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  status;                  //!< status of event
   uint16 connHandle;              //!< connection handle
@@ -1125,7 +1125,7 @@ typedef struct
 /// @brief LE Data Length Change Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 connHandle;              //!< connection handle
   uint16 maxTxOctets;             //!< maximum transmission bytes
@@ -1137,7 +1137,7 @@ typedef struct
 /// @brief LE Read P256 Public Key Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;             //!< osal event header
+  event_hdr_t  hdr;                  //!< osal event header
   uint8 BLEEventCode;                //!< BLE Event code
   uint8 status;                      //!< status
   uint8 p256Key[LL_SC_P256_KEY_LEN]; //!< p256 key
@@ -1146,7 +1146,7 @@ typedef struct
 /// @brief LE Generate DHKey Complete Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8 BLEEventCode;             //!< BLE Event Code
   uint8 status;                   //!< status
   uint8 dhKey[LL_SC_DHKEY_LEN];   //!< DH Key
@@ -1155,7 +1155,7 @@ typedef struct
 /// @brief LE CTE Connection IQ Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 connHandle;              //!< connection handle
   uint8  phy;                     //!< current phy
@@ -1173,7 +1173,7 @@ typedef struct
 /// @brief LE CTE Request Failed Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8 BLEEventCode;             //!< BLE Event Code
   uint8 status;                   //!< status
   uint16 connHandle;              //!< connection handle
@@ -1182,7 +1182,7 @@ typedef struct
 /// @brief LE Extended CTE Connection IQ Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 totalDataLen;            //!< samples data length includes in all next events
   uint8  eventIndex;              //!< event number
@@ -1205,7 +1205,7 @@ typedef struct
 /// @brief LE CTE Connectionless IQ Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 syncHandle;              //!< sync handle in periodic adv
   uint8  channelIndex;            //!< index of channel
@@ -1222,7 +1222,7 @@ typedef struct
 /// @brief LE Extended CTE Connectionless IQ Report Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 totalDataLen;            //!< samples data length includes in all next events
   uint8  eventIndex;              //!< event number
@@ -1244,7 +1244,7 @@ typedef struct
 /// @brief LE Periodic Advertising Sync Established event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint8  status;                  //!< status of event
   uint16 syncHandle;              //!< sync handle
@@ -1259,7 +1259,7 @@ typedef struct
 /// @brief LE Periodic Advertising Report event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 syncHandle;              //!< sync handle
   int8   txPower;                 //!< Tx Power information
@@ -1273,7 +1273,7 @@ typedef struct
 /// @brief Periodic Advertising Sync Lost Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 syncHandle;              //!< sync handle
 } hciEvt_BLEPeriodicAdvSyncLost_t;
@@ -1290,7 +1290,7 @@ typedef struct
 /// @brief LE Channel Selection Algorithm Event
 typedef struct
 {
-  osal_event_hdr_t  hdr;          //!< osal event header
+  event_hdr_t  hdr;               //!< osal event header
   uint8  BLEEventCode;            //!< BLE Event Code
   uint16 connHandle;              //!< connection handle
   uint8  chSelAlgo;               //!< channel selection algorithm
@@ -1299,21 +1299,21 @@ typedef struct
 /// @brief HCI Generic event hdr
 typedef struct
 {
-  osal_event_hdr_t hdr;         //!< OSAL event header
+  event_hdr_t hdr;              //!< OSAL event header
   uint8_t  BLEEventCode;        //!< BLE Event Code
 } hciEvtHdr_t;
 
 /// @brief HCI Packet event
 typedef struct
 {
-  osal_event_hdr_t hdr;         //!< OSAL event header
+  event_hdr_t hdr;              //!< OSAL event header
   uint8            *pData;      //!< data
 } hciPacket_t;
 
 /// @brief HCI Data Packet
 typedef struct
 {
-  osal_event_hdr_t hdr;           //!< OSAL Event header
+  event_hdr_t hdr;                //!< OSAL Event header
   uint8  pktType;                 //!< packet type
   uint16 connHandle;              //!< connection handle
   uint8  pbFlag;                  //!< flag
@@ -1327,7 +1327,7 @@ typedef struct
 // data messages up to an application
 typedef struct
 {
-  osal_event_hdr_t hdr;                   //!< OSAL event header
+  event_hdr_t hdr;                        //!< OSAL event header
   uint16 connHandle;                      //!< connection handle
   uint8  pbFlag;                          //!< data packet boundary flag
   uint16 len;                             //!< length of data packet
@@ -1409,13 +1409,6 @@ extern uint8 HCI_ValidConnTimeParams( uint16 connIntervalMin,
                                       uint16 connIntervalMax,
                                       uint16 connLatency,
                                       uint16 connTimeout );
-
-/**
- * HCI vendor specific registration for HCI Test Application.
- *
- * @param taskID The HCI Test Application OSAL task identifier.
- */
-extern void HCI_TestAppTaskRegister( uint8 taskID );
 
 /**
  * HCI vendor specific registration for Host GAP.
@@ -3019,6 +3012,60 @@ extern hciStatus_t HCI_LE_PeriodicAdvCreateSyncCmd( uint8  options,
                                                     uint16 syncTimeout,
                                                     uint8  syncCteType );
 
+/*******************************************************************************
+ * @fn          HCI_LE_SetPeriodicSyncSubeventCmd
+ *
+ * @brief       This function used by the Host to set the subevents it want to
+ *              sync with.
+ *
+ * input parameters
+ *
+ * @param       syncHandle      - Handle identifying the periodic advertising train
+ * @param       perAdvProps     - Properties for the Response data header
+ * @param       numSubevents    - Number of subevents to be set
+ * @param       subEvents       - Pointer to the array of subevents to be set
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      status of the command
+ *              HCI_SUCCESS - Command was successful
+ *              LL_STATUS_ERROR_COMMAND_DISALLOWED - Command disallowed
+ *              LL_STATUS_ERROR_BAD_PARAMETER - Invalid parameters were passed
+ *              LL_STATUS_ERROR_FEATURE_NOT_SUPPORTED - Invalid parameters were passed
+ *              HCI_ERROR_CODE_MEM_CAP_EXCEEDED - Memory capacity exceeded
+ */
+extern hciStatus_t HCI_LE_SetPeriodicSyncSubeventCmd(uint16_t syncHandle,
+                                                     uint16_t perAdvProps,
+                                                     uint8_t  numSubevents,
+                                                     uint8_t* subEvents);
+
+/*******************************************************************************
+ * @fn         HCI_LE_SetPeriodicAdvResponseDataCmd
+ *
+ * @brief      Used by the Host to set the periodic advertising response parameters
+ *             and data.
+ *
+ * input parameters
+ *
+ * @param     syncHandle - Handle identifying the periodic advertising train
+ * @param     pRspParams - Pointer to the periodic advertising response parameters
+ *                         and data.
+ *
+ * output parameters
+ *
+ * @param     None.
+ *
+ * @return    status of the command
+ *            HCI_SUCCESS - Command was successful
+ *            LL_STATUS_ERROR_COMMAND_DISALLOWED - Command disallowed
+ *            LL_STATUS_ERROR_UNKNOWN_ADVERTISING_IDENTIFIER - Unknown advertising identifier
+ *            LL_STATUS_ERROR_BAD_PARAMETER - Invalid parameters were passed
+ *            HCI_ERROR_CODE_MEM_CAP_EXCEEDED - Memory capacity exceeded
+*/
+extern hciStatus_t HCI_LE_SetPeriodicAdvResponseDataCmd(uint16 syncHandle,
+                                                        uint8_t* pRspParams);
 /**
  * HCI_LE_PeriodicAdvCreateSyncCancelCmd
  *
@@ -4464,6 +4511,164 @@ hciStatus_t HCI_EXT_RssiMon_GetConfigCmd(void);
  */
 hciStatus_t HCI_EXT_RssiMon_GetRssiStatCmd(uint16_t connHandle);
 
+/*******************************************************************************
+ * @fn          HCI_LE_PAdvSetInfoTransferCmd
+ *
+ * @brief       Periodic advertising sync transfer command is used to instruct
+ *              the controller to send synchronization information about the
+ *              periodic advertising in an advertising set to a connected
+ *              device
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       connHandle  - Connection handle.
+ * @param       serviceData - Value provided by the host for use by the Host
+ *                            of the peer device.
+ * @param       advHandle   - Advertising set of the periodic advertising.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      HCI_SUCCESS when success.
+ *              Otherwise:
+ *              HCI_ERROR_CODE_UNKNOWN_ADVERTISING_IDENTIFIER
+ *              HCI_ERROR_CODE_UNKNOWN_CONN_ID
+ *              HCI_ERROR_CODE_UNSUPPORTED_FEATURE_PARAM_VALUE
+ */
+hciStatus_t HCI_LE_PAdvSetInfoTransferCmd( uint16_t  connHandle,
+                                           uint16_t  serviceData,
+                                           uint8_t   advHandle);
+
+/*******************************************************************************
+ * @fn          HCI_LE_PAdvSyncTransferCmd
+ *
+ * @brief       Periodic advertising sync transfer command is used to instruct
+ *              the controller to send synchronization information about the
+ *              periodic advertising train identified by the Sync_Handle parameter
+ *              to a connected device
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       connHandle  - Connection handle.
+ * @param       serviceData - Value provided by the host for use by the Host
+ *                            of the peer device.
+ * @param       syncHandle  - Sync handle of the periodic advertising train.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      HCI_SUCCESS when success.
+ *              Otherwise:
+ *              HCI_ERROR_CODE_UNKNOWN_ADVERTISING_IDENTIFIER
+ *              HCI_ERROR_CODE_UNKNOWN_CONN_ID
+ *              HCI_ERROR_CODE_UNSUPPORTED_FEATURE_PARAM_VALUE
+ */
+hciStatus_t HCI_LE_PAdvSyncTransferCmd( uint16_t  connHandle,
+                                        uint16_t  serviceData,
+                                        uint16_t  syncHandle );
+
+/*******************************************************************************
+ * @fn          HCI_LE_SetPASTParamCmd
+ *
+ * @brief       Periodic advertising sync transfer parameters command is used to
+ *              specify how the controller will process periodic advertising
+ *              synchronization information (syncInfo) received from the device
+ *              identified by the Connection_Handle parameter.
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       connHandle    - Connection handle.
+ * @param       mode          - Action to be taken when periodic advertising
+ *                              synchronization information is received:
+ *                              0x00 - No attempt is made to synchronize to the periodic
+ *                                     advertising and no event is sent to host
+ *                              0x01 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised if we succeed to sync or not to the host
+ *                                     Periodic advertisements reports will not raised to the host
+ *                              0x02 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised to if we succeed to sync or not
+ *                                     Periodic advertisements reports will be raised to the host
+ *                                     with duplicate filtering is disabled
+ *                              0x03 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised to if we succeed to sync or not
+ *                                     Periodic advertisements reports will be raised to the host
+ *                                     with duplicate filtering is enabled
+ * @param       skip          - Number of consecutive periodic advertising packets
+ *                              the device may skip after successfully receiving
+ *                              a periodic advertising packet
+ * @param       syncTimeout  - Maximum permitted time between successful receives
+ * @param       cteType      - Whether to only synchronize to periodic advertising
+ *                             with certain types of Constant Tone Extension
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      HCI_SUCCESS when success.
+ *              Otherwise:
+ *              HCI_ERROR_CODE_UNSUPPORTED_FEATURE_PARAM_VALUE
+ *              HCI_ERROR_CODE_UNKNOWN_CONN_ID
+ *              HCI_ERROR_CODE_CMD_DISALLOWED
+ */
+hciStatus_t HCI_LE_SetPASTParamCmd( uint16_t  connHandle,
+                                    uint8_t   mode,
+                                    uint16_t  skip,
+                                    uint16_t  syncTimeout,
+                                    uint8_t   cteType );
+
+/*******************************************************************************
+ * @fn          HCI_LE_SetDefaultPASTParamCmd
+ *
+ * @brief       Periodic advertising sync transfer set default parameters command
+ *              is used to specify the initial value for the periodic advertising
+ *              sync transfer parameters
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       mode          - Action to be taken when periodic advertising
+ *                              synchronization information is received:
+ *                              0x00 - No attempt is made to synchronize to the periodic
+ *                                     advertising and no event is sent to host
+ *                              0x01 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised if we succeed to sync or not to the host
+ *                                     Periodic advertisements reports will not raised to the host
+ *                              0x02 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised to if we succeed to sync or not
+ *                                     Periodic advertisements reports will be raised to the host
+ *                                     with duplicate filtering is disabled
+ *                              0x03 - Attempt to synchronize to periodic advertising,
+ *                                     Event is raised to if we succeed to sync or not
+ *                                     Periodic advertisements reports will be raised to the host
+ * @param       skip          - Number of consecutive periodic advertising packets
+ *                              the device may skip after successfully receiving
+ *                              a periodic advertising packet
+ * @param       syncTimeout  - Maximum permitted time between successful receives
+ * @param       cteType      - Whether to only synchronize to periodic advertising
+ *                             with certain types of Constant Tone Extension
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return @ref HCI_SUCCESS when success.
+ *              Otherwise:
+ *              HCI_ERROR_CODE_UNSUPPORTED_FEATURE_PARAM_VALUE
+ *              HCI_ERROR_CODE_CMD_DISALLOWED
+ */
+hciStatus_t HCI_LE_SetDefaultPASTParamCmd( uint8_t   mode,
+                                           uint16_t  skip,
+                                           uint16_t  syncTimeout,
+                                           uint8_t   cteType );
 #ifdef __cplusplus
 }
 #endif

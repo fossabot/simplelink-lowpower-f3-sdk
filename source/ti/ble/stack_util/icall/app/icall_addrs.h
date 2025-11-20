@@ -90,15 +90,6 @@ extern void startup_entry( const ICall_RemoteTaskArg *arg0, void *arg1 );
  */
 
 /**
- * Initializer for an array of thread priorities.
- * Each element of the array corresponds to TI-RTOS specific
- * thread priority value given to a thread to be created
- * per the entry function defined in @ref ICALL_ADDR_MAPS
- * initializer, in the same sequence.
- */
-#define ICALL_TASK_PRIORITIES { 5 }
-
-/**
  * Initializer for an array of thread stack sizes.
  * Each element of the array corresponds to stack depth
  * allocated to a thread to be created per the entry function

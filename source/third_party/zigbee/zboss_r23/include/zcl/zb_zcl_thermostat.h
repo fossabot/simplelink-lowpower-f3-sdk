@@ -1107,7 +1107,7 @@ enum zb_zcl_thermostat_cmd_resp_ha_e
 
 #define ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_THERMOSTAT_SETPOINT_CHANGE_AMOUNT_ID(data_ptr)        \
 {                                                                                                \
-  ZB_ZCL_ATTR_THERMOSTAT_SETPOINT_CHANGE_AMOUNT_TIMESTAMP_ID,                                    \
+  ZB_ZCL_ATTR_THERMOSTAT_SETPOINT_CHANGE_AMOUNT_ID,                                              \
   ZB_ZCL_ATTR_TYPE_U16,                                                                          \
   ZB_ZCL_ATTR_ACCESS_READ_ONLY,                                                                  \
   (ZB_ZCL_NON_MANUFACTURER_SPECIFIC),                                                            \

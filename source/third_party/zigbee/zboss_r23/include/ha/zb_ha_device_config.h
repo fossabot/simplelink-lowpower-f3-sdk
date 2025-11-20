@@ -83,6 +83,8 @@ enum zb_ha_standard_devs_e
   ZB_HA_DIMMER_SWITCH_DEVICE_ID       = 0x0104,
   /*! Color Dimmer Switch Device */
   ZB_HA_COLOR_DIMMER_SWITCH_DEVICE_ID = 0x0105,
+  /*! Light Sensor */
+  ZB_HA_LIGHT_SENSOR_DEVICE_ID        = 0x0106,
   /*! Shade */
   ZB_HA_SHADE_DEVICE_ID               = 0x0200,
   /*! Shade controller */
@@ -371,7 +373,7 @@ enum zb_ha_standard_devs_e
 #define ZB_ZCL_SUPPORT_CLUSTER_LEVEL_CONTROL 1
 #endif /* ZB_HA_DEFINE_DEVICE_DIMMABLE_LIGHT */
 
-#ifdef ZB_HA_DEFINE_DEVICE_DIMMABLE_LIGHT
+#ifdef ZB_HA_DEFINE_DEVICE_DIMMER_SWITCH
 #define ZB_ZCL_SUPPORT_CLUSTER_BASIC    1
 #define ZB_ZCL_SUPPORT_CLUSTER_IDENTIFY 1
 #define ZB_ZCL_SUPPORT_CLUSTER_SCENES   1

@@ -127,21 +127,11 @@ extern "C"
 #define SUFFIX_TIMESTAMP_FLAG           8
 
 // Receive Suffix Flags
-#if defined(BLE_VS_FEATURES) && (BLE_VS_FEATURES & SCAN_REQ_RPT_CFG)
-#define ADV_SUFFIX_FLAGS                (SUFFIX_RSSI_FLAG+SUFFIX_STATUS_FLAG)       // Connect Req and Scan Req Packets
-#else // !SCAN_REQ_RPT_CFG
-#define ADV_SUFFIX_FLAGS                (SUFFIX_FLAG_NONE)                          // Connect Req and Scan Req Packets
-#endif // SCAN_REQ_RPT_CFG
 #define SCAN_SUFFIX_FLAGS               (SUFFIX_RSSI_FLAG+SUFFIX_STATUS_FLAG)       // Adv and Scan Rsp Packets
 #define INIT_SUFFIX_FLAGS               (SUFFIX_STATUS_FLAG)                        // Adv Packets
 #define LINK_SUFFIX_FLAGS               (SUFFIX_RSSI_FLAG + SUFFIX_TIMESTAMP_FLAG)  // Data and Control Packets
 
 // Suffix Sizes
-#if defined(BLE_VS_FEATURES) && (BLE_VS_FEATURES & SCAN_REQ_RPT_CFG)
-#define ADV_SUFFIX_SIZE                 (SUFFIX_RSSI_SIZE+SUFFIX_STATUS_SIZE)
-#else // !SCAN_REQ_RPT_CFG
-#define ADV_SUFFIX_SIZE                 (SUFFIX_SIZE_NONE)
-#endif // SCAN_REQ_RPT_CFG
 #define SCAN_SUFFIX_SIZE                (SUFFIX_RSSI_SIZE+SUFFIX_STATUS_SIZE)
 #define INIT_SUFFIX_SIZE                (SUFFIX_STATUS_SIZE)
 #define LINK_SUFFIX_SIZE                (SUFFIX_RSSI_SIZE + SUFFIX_TIMESTAMP_SIZE)

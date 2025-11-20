@@ -43,7 +43,7 @@
  *  ======== zigbee.syscfg.js ========
  */
 
-"use strict";
+ "use strict";
 
 const hsm_fw_size = 0x00018000;
 
@@ -75,6 +75,7 @@ const moduleStatic = {
             hidden : false,
             description: `The revision of the Zigbee Pro stack to use`,
             default: "r23",
+            onChange:onRevisionChange,
             options: [
                 { name: "r22", displayName: "Revision 22" },
                 { name: "r23", displayName: "Revision 23" }
@@ -89,7 +90,24 @@ const moduleStatic = {
             default: [common.defaultDeviceType],
             minSelections: 1,
             onChange: onDeviceTypeChange,
-            options: common.deviceTypeOptions
+            options: [
+                {name: "zc", displayName: "ZigBee Coordinator"},
+                {name: "zr", displayName: "ZigBee Router"},
+                {name: "zed", displayName: "ZigBee End Device"},
+                {name: "mac", displayName: "Zigbee MAC Only Device"},
+                {name: "gpd", displayName: "Green Power Device"},
+            ]
+        },
+        {
+            name: "macInterface",
+            displayName: "MAC Interface",
+            hidden: true,
+            default: "api",
+            options: [
+                {name: "api", displayName: "API"},
+                // {name: "uart", displayName: "UART"}
+            ],
+
         },
         {
             name: "deviceTypeReadOnly",
@@ -116,6 +134,27 @@ const moduleStatic = {
             description: `Allow factory new devices join using pre-installed network parameters using the APIs in zb_bdb_preinst_nwk.h`,
             default: false
         },
+        {
+            name: "disableAPSFragmentation",
+            displayName: "Disable APS fragmentation",
+            hidden : true,
+            description: `Disable APS Fragmentation feature in the stack (Only for R22)`,
+            default: false
+        },
+        {
+            name: "adcNoiseEnabled",
+            displayName: "Enable ADC Noise Dependency",
+            description: "Include the ADC Noise dependency for specific configurations.",
+            default: true,
+            hidden: true
+        },
+        {
+            name: "enableMACSecurity",
+            displayName: "Enable MAC security",
+            hidden : common.defaultDeviceTypeIsMAC,
+            description: "Allow MAC-level security for devices with MAC roles",
+            default: true
+        },
         pmScript.config,
         rfScript.config,
         networkScript.config,
@@ -140,6 +179,22 @@ function validate(inst, validation)
                 inst, "deviceType"
             );
         }
+    }
+
+    if(inst.deviceType.includes("mac") && inst.deviceType.length > 1)
+    {
+        validation.logError(
+            "MAC role cannot be enabled with any other roles",
+            inst, "deviceType"
+        );
+    }
+
+    if(inst.deviceType.includes("mac") && inst.zigbeeRevision === "r22")
+    {
+        validation.logInfo(
+            "Zigbee Revision has no effect when using MAC role",
+            inst, "zigbeeRevision"
+        );
     }
 
     if(inst.deviceType.includes("gpd") && inst.deviceType.length > 1)
@@ -256,11 +311,13 @@ function moduleInstances(inst)
             $name: "zb_ieee_15_4_phy",
             phyType: "ieee_802_15_4",
             codeExportConfig: {
-                $name: "zb_ieee_15_4_phy_code_export"
+                  $name: "zb_ieee_15_4_phy_code_export",
+                  symGenMethod: "Automatic",
             }
         }
     });
 
+      if (inst.adcNoiseEnabled) {
     submodules.push({
         name: "adcNoise",
         displayName: "ADC_NOISE",
@@ -277,7 +334,7 @@ function moduleInstances(inst)
             }
         }
     });
-
+      }
     submodules.push({
         name: "aesecb",
         displayName: "AESECB",
@@ -431,11 +488,19 @@ function onDeviceTypeReadOnlyChange(inst, ui)
 /* Makes the device type read only when deviceTypeReadOnly is true */
 function onDeviceTypeChange(inst, ui)
 {
-    if(inst.deviceType.includes("zr") || inst.deviceType.includes("zc") || inst.deviceType.includes("zed"))
+    if(inst.deviceType.includes("mac"))
+    {
+        ui.zgpDirectEnabled.hidden = true;
+        ui.preInstalledNwkEnabled.hidden = true;
+        ui.macInterface.hidden = false;
+        ui.enableMACSecurity.hidden = false;
+    }
+    else if(inst.deviceType.includes("zr") || inst.deviceType.includes("zc") || inst.deviceType.includes("zed"))
     {
         ui.zgpDirectEnabled.hidden = false;
         ui.preInstalledNwkEnabled.hidden = false;
-        ui.zigbeeRevision.hidden = false;
+        ui.macInterface.hidden = true;
+        ui.enableMACSecurity.hidden = true;
     }
     else
     {
@@ -445,7 +510,7 @@ function onDeviceTypeChange(inst, ui)
         inst.preInstalledNwkEnabled = false;
         ui.preInstalledNwkEnabled.hidden = true;
 
-        ui.zigbeeRevision.hidden = true;
+        ui.macInterface.hidden = true;
     }
 
     let subsection = null;
@@ -455,6 +520,19 @@ function onDeviceTypeChange(inst, ui)
         {
             subsection.onDeviceTypeChange(inst, ui);
         }
+    }
+}
+
+/* Make updates on revision change */
+function onRevisionChange(inst, ui)
+{
+    if(inst.zigbeeRevision.includes("r22") && !(inst.deviceType.includes("gpd")) && !(inst.deviceType.includes("mac")))
+    {
+        ui.disableAPSFragmentation.hidden = false;
+    }
+    else
+    {
+        ui.disableAPSFragmentation.hidden = true;
     }
 }
 
@@ -477,7 +555,8 @@ function getLibs(inst)
     {
         let lib_names = [];
         let log_suffix = "";
-        let lib_dir = (inst.$static.zigbeeRevision === "r22") ? "/zboss_stable" : "/zboss_r23";
+        let lib_dir = ((inst.$static.zigbeeRevision === "r22") && !(inst.$static.deviceType.includes("mac"))) ? "/zboss_stable" : "/zboss_r23";
+        let revision = (inst.$static.deviceType.includes("mac")) ? "r23" : inst.$static.zigbeeRevision;
         if(inst.$static.deviceType.includes("gpd"))
         {
             lib_dir = ""
@@ -494,41 +573,63 @@ function getLibs(inst)
             pre_installed_nwk_suffix = "_preinst_nwk"
         }
 
+        let aps_frag_suffix = "";
+        if(inst.$static.disableAPSFragmentation && (inst.$static.zigbeeRevision === "r22"))
+        {
+            aps_frag_suffix = "_no_aps_frag";
+        }
+
         if(inst.$static.deviceType.includes("zc"))
         {
             if(inst.$static.zgpDirectEnabled)
             {
-                lib_names.push("zb_core_zc_zr_gp_combo" + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zc_zr_gp_combo" + pre_installed_nwk_suffix + aps_frag_suffix);
             }
             else
             {
-                lib_names.push("zb_core_zc_zr"  + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zc_zr"  + pre_installed_nwk_suffix  + aps_frag_suffix);
             }
-            lib_names.push("zb_zcl_zc_zr", "zb_zdo_zc_zr" + pre_installed_nwk_suffix, "zb_ti_platform_zc_zr" + log_suffix);
+            lib_names.push("zb_zcl_zc_zr" + aps_frag_suffix, "zb_zdo_zc_zr" + pre_installed_nwk_suffix + aps_frag_suffix, "zb_ti_platform_zc_zr" + log_suffix);
         }
         else if(inst.$static.deviceType.includes("zr"))
         {
             if(inst.$static.zgpDirectEnabled)
             {
-                lib_names.push("zb_core_zr_gp_combo"  + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zr_gp_combo"  + pre_installed_nwk_suffix  + aps_frag_suffix);
             }
             else
             {
-                lib_names.push("zb_core_zr"  + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zr"  + pre_installed_nwk_suffix  + aps_frag_suffix);
             }
-            lib_names.push("zb_zcl_zr", "zb_zdo_zr"  + pre_installed_nwk_suffix, "zb_ti_platform_zc_zr" + log_suffix);
+            lib_names.push("zb_zcl_zr" + aps_frag_suffix, "zb_zdo_zr" + pre_installed_nwk_suffix + aps_frag_suffix, "zb_ti_platform_zc_zr" + log_suffix);
         }
         else if(inst.$static.deviceType.includes("zed"))
         {
             if(inst.$static.zgpDirectEnabled)
             {
-                lib_names.push("zb_core_zed_target_plus" + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zed_target_plus" + pre_installed_nwk_suffix + aps_frag_suffix);
             }
             else
             {
-                lib_names.push("zb_core_zed" + pre_installed_nwk_suffix);
+                lib_names.push("zb_core_zed" + pre_installed_nwk_suffix  + aps_frag_suffix);
             }
-            lib_names.push("zb_zcl_zed", "zb_zdo_zed"  + pre_installed_nwk_suffix, "zb_ti_platform_zed" + log_suffix);
+            lib_names.push("zb_zcl_zed" + aps_frag_suffix, "zb_zdo_zed"  + pre_installed_nwk_suffix + aps_frag_suffix, "zb_ti_platform_zed" + log_suffix);
+        }
+        else if(inst.$static.deviceType.includes("mac"))
+        {
+            if (inst.$static.enableMACSecurity)
+            {
+                lib_names.push("zb_mac_secur",  "zb_ti_platform_zc_zr_secur" + log_suffix);
+            }
+            else
+            {
+                lib_names.push("zb_mac",  "zb_ti_platform_zc_zr" + log_suffix);
+            }
+
+            if(inst.$static.macInterface !== "api")
+            {
+                lib_names.push("zb_macsplit_soc");
+            }
         }
         else
         {
@@ -537,7 +638,7 @@ function getLibs(inst)
 
         lib_names.forEach((lib_name) =>
         {
-            let lib_with_rev = inst.$static.deviceType.includes("gpd") ? lib_name: lib_name.replace("zb_", `zb_${inst.$static.zigbeeRevision}_`)
+            let lib_with_rev = (lib_name.includes("gpd") || lib_name.includes("mac")) ? lib_name: lib_name.replace("zb_", `zb_${revision}_`)
             libs.push(`third_party/zigbee/libraries${lib_dir}/${lib_with_rev}/lib/${toolchain}/${GenLibs.getDeviceIsa()}/${lib_with_rev}.a`)
         });
     }
@@ -573,12 +674,13 @@ function getOpts(inst) {
         }
     }
 
-    if((inst.$static.zigbeeRevision === "r22") && !(inst.$static.deviceType.includes("gpd")))
+    if((inst.$static.zigbeeRevision === "r22") && !(inst.$static.deviceType.includes("gpd")) && !(inst.$static.deviceType.includes("mac")))
     {
         result.push("-DZBOSS_REV22");
         result.push(`-I${sdkPath}/source/third_party/zigbee/zboss_stable/include`);
+        console.log(`Zigbee SDK Path: ${inst.$static.deviceType}`);
     }
-    else if((inst.$static.zigbeeRevision === "r23") && !(inst.$static.deviceType.includes("gpd")))
+    else if(((inst.$static.zigbeeRevision === "r23") || (inst.$static.deviceType.includes("mac"))) && !(inst.$static.deviceType.includes("gpd")))
     {
 
         result.push("-DZBOSS_REV23");
@@ -617,6 +719,14 @@ function getOpts(inst) {
             result.push("-DZB_ENABLE_ZGP_TARGET_PLUS");
         }
     }
+    else if(inst.$static.deviceType.includes("mac"))
+    {
+        // If security is enabled, then add the ZB_MAC_SECURITY macro to allow application to use MAC security APIs
+        if (inst.$static.enableMACSecurity)
+        {
+            result.push("-DZB_MAC_SECURITY");
+        }
+    }
     else
     {
         result.push("-DZB_ZGPD_ROLE");
@@ -627,6 +737,11 @@ function getOpts(inst) {
         result.push("-DZB_BDB_PREINST_NWK_JOINING");
     }
 
+    if((!inst.$static.disableAPSFragmentation && (inst.$static.zigbeeRevision === "r22") && !(inst.$static.deviceType.includes("mac"))))
+    {
+        // R23 always has APS fragmentation enabled. APS_FRAGMENTATION will be defined within the R23 stack.
+        result.push("-DAPS_FRAGMENTATION");
+    }
     return result;
 }
 

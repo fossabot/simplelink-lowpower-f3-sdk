@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -131,7 +131,7 @@
  *     // Setup Tx buffer element:
  *     //   CAN FD without Bit Rate Switching
  *     //   Extended Message ID = 0x12345678
- *     //   Data Length of 64-bytes
+ *     //   Data Length of 64 bytes
  *     //   Message marker = 5
  *     txElem.id  = 0x12345678U;
  *     txElem.rtr = 0U;
@@ -579,9 +579,12 @@ typedef MCAN_BitTimingParams CAN_BitTimingParams;
 typedef struct CAN_Config_ *CAN_Handle;
 
 /*!
- *  @brief      The definition of a callback function used by the CAN driver.
+ *  @brief      The definition of an event callback function used by the CAN driver.
  *
- *  @note       The callback can occur in task or interrupt context.
+ *  @note       Depending on the device, the callback is executed in a high-priority task or interrupt context.
+ *              Therefore, the implementation of the callback should be short and non-blocking. Longer
+ *              processing such as Rx message handling should be deferred to a task context to avoid
+ *              increasing IRQ processing latency.
  *
  *  @param[in]  handle        A #CAN_Handle returned from #CAN_open().
  *  @param[in]  event         @ref CAN_EVENT that has occurred.
@@ -608,11 +611,15 @@ typedef void (*CAN_EventCbk)(CAN_Handle handle, uint32_t event, uint32_t data, v
 /*!
  *  @brief CAN Message RAM configuration
  *
- *  The #CAN_MsgRamConfig structure contains information used to configure
- *  the message RAM.
+ *  The #CAN_MsgRamConfig structure contains information used to configure the
+ *  message RAM. All Rx and Tx buffer elements include a 64 byte payload if CAN
+ *  FD is enabled. Otherwise, they include an 8 byte payload.
  *
  *  This structure needs to be defined before calling CAN_init() and it must
  *  not be changed thereafter.
+ *
+ *  @note   The Rx FIFO operating mode is not configurable and is always set to blocking
+ *          to allow for message loss to be detected and reported for proper error handling.
  *
  *  @sa     CAN_init()
  */
@@ -628,8 +635,8 @@ typedef struct
     /*!< Points to Extended ID filter elements. Set to NULL if zero elements. */
 
     /*
-     * Note: All Rx and Tx buffer elements include a 64-byte payload if CAN FD
-     *       is enabled. Otherwise, they include an 8-byte payload.
+     * Note: All Rx and Tx buffer elements include a 64 byte payload if CAN FD
+     *       is enabled. Otherwise, they include an 8 byte payload.
      */
 
     uint32_t rxFifoNum[2];
@@ -919,6 +926,10 @@ int_fast16_t CAN_write(CAN_Handle handle, const CAN_TxBufElement *elem);
  *  control of the application. A custom message RAM config with dedicated Tx
  *  buffer(s) must be provided during #CAN_init in order to utilize this
  *  function.
+ *
+ *  @warning  This function should not be called from multiple threads
+ *            simultaneously using the same \c bufIdx. Otherwise, data
+ *            corruption may occur.
  *
  *  @note   The default message RAM configuration uses a Tx Queue in which the
  *          message with the highest priority in the queue is transmitted first.

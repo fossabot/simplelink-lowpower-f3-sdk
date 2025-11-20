@@ -98,6 +98,20 @@ uint8_t HCI_LE_CS_ReadLocalSupportedCapabilities(void);
 uint8_t HCI_LE_CS_ReadRemoteSupportedCapabilities(uint16 connHandle);
 
 /*******************************************************************************
+ * @fn          HCI_LE_CS_WriteCachedRemoteSupportedCapabilities
+ *
+ * @brief       Write a cached CS capabilities supported by the remote Controller.
+ *
+ * @param       connHandle - Connection handle.
+ * @param       pRemoteCapabilitiesRaw - Pointer to remote capabilities in HCI raw
+ *                                       format to be set
+ *
+ * @return      @ref HCI_SUCCESS
+ *              @ref HCI_ERROR_CODE_INVALID_HCI_CMD_PARAMS if pRemoteCapabilitiesRaw is NULL
+ */
+hciStatus_t HCI_LE_CS_WriteCachedRemoteSupportedCapabilities(uint16 connHandle, uint8_t *pRemoteCapabilitiesRaw);
+
+/*******************************************************************************
  * @fn          HCI_LE_CS_SecurityEnable
  *
  * @brief       Enable CS security for the specified connection.
@@ -137,17 +151,17 @@ uint8_t HCI_LE_CS_SetDefaultSettings(uint16 connHandle,
 uint8_t HCI_LE_CS_ReadRemoteFAETable(uint16 connHandle);
 
 /*******************************************************************************
- * @fn          HCI_LE_CS_WriteRemoteFAETable
+ * @fn          HCI_LE_CS_WriteCachedRemoteFAETable
  *
  * @brief       Write the remote Controller's FAE table.
  *
  * @param       connHandle - Connection handle.
- * @param       reflectorFaeTable - Pointer to the reflector FAE table.
+ * @param       remoteFaeTable - Pointer to the remote device FAE table.
  *
  * @return      @ref HCI_SUCCESS
  */
-uint8_t HCI_LE_CS_WriteRemoteFAETable(uint16 connHandle,
-                                      void* reflectorFaeTable);
+uint8_t HCI_LE_CS_WriteCachedRemoteFAETable(uint16 connHandle,
+                                            void* remoteFaeTable);
 
 /*******************************************************************************
  * @fn          HCI_LE_CS_CreateConfig
@@ -259,7 +273,7 @@ uint8_t HCI_LE_CS_TestEnd(void);
  */
 extern void
 HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status, uint16 connHandle,
-                                            llCsCapabilities_t* peerCapabilities);
+                                            const llCsCapabilities_t* peerCapabilities);
 
 /*******************************************************************************
  * @fn          HCI_CS_ConfigCompleteCback
@@ -268,9 +282,9 @@ HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status, uint16 connHandle,
  *
  * input parameters
  *
- * @param       status     - status
  * @param       connHandle - connection handle
- * @param       csConfig   - peerCapabilities
+ * @param       configID - Configuration ID.
+ * @param       status     - status
  *
  * output parameters
  *
@@ -278,8 +292,7 @@ HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status, uint16 connHandle,
  *
  * @return      None
  */
-extern void HCI_CS_ConfigCompleteCback(uint8 status, uint16 connHandle,
-                                       const csConfigurationSet_t* csConfig);
+extern void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8 configId, uint8 status);
 
 /*******************************************************************************
  * @fn          HCI_CS_ReadRemoteFAETableCompleteCback
@@ -345,7 +358,7 @@ HCI_CS_ProcedureEnableCompleteCback(uint8 status, uint16 connHandle,
                                     csProcedureEnable_t* enableData);
 
 /*******************************************************************************
- * @fn          HCI_CS_SubeventResultCback
+ * @fn          HCI_CS_SubeventResultsProcess
  *
  * @brief       Subevent results callback
  *
@@ -360,28 +373,25 @@ HCI_CS_ProcedureEnableCompleteCback(uint8 status, uint16 connHandle,
  *
  * @return      None
  */
-extern void HCI_CS_SubeventResultCback(void* pRes, uint16 dataLength);
+void HCI_CS_SubeventResultsProcess(const RCL_CmdBleCs_SubeventResults *subeventRes, uint16_t dataLength);
 
 /*******************************************************************************
- * @fn          HCI_CS_SubeventResultContinueCback
+ * @fn          HCI_CS_SubeventContResultsProcess
  *
- * @brief       Subevent result continue callback
- *
- * @design      BLE_LOKI-506
+ * @brief       Subevent cont results callback
  *
  * input parameters
  *
- * @param       hdr - pointer to results header
- * @param       data - pointer to results data
+ * @param       pRes - pointer to cont results data
  * @param       dataLength - length of data
  *
  * output parameters
  *
  * @param       None.
  *
- * @return      None.
+ * @return      None
  */
-void HCI_CS_SubeventResultContinueCback(void* hdr, const void* data, uint16 dataLength);
+void HCI_CS_SubeventContResultsProcess(const RCL_CmdBleCs_SubeventResultsContinue *subeventRes, uint16_t dataLength);
 
 /*******************************************************************************
  * @fn          HCI_CS_TestEndCompleteCback

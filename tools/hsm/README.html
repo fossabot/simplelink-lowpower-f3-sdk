@@ -87,7 +87,7 @@
 <p>Now that you have a new HSM FW binary image, you can provision your devices with it or send it as an update to your devices in the field.</p>
 <ul>
 <li>For provisioning , see <code>&lt;sdk&gt;/bin/hsm/README.md</code>.</li>
-<li>For in the field updates, see the SDK example at <code>&lt;sdk&gt;/examples/&lt;nortos|rtos&gt;/LP_EM_CC2745R10_Q1/hsm/hsmfwupdate</code></li>
+<li>For in the field updates, see the SDK example at <code>&lt;sdk&gt;/examples/&lt;nortos|rtos&gt;/&lt;device&gt;/hsm/hsmfwupdate</code></li>
 </ul>
 <h1 id="customizing-the-signing-process">Customizing the signing process</h1>
 <p>The <code>sign_hsm_fw.py</code> script is only an example for how to obtain the necessary public key hash information and how to sign the original HSM FW image shipped in this SDK. For best security practices it is unlikely that your company will have the private key simply residing on an engineer’s machine. Instead, this private key should have restricted access which precludes the ability to pass it in as an argument to this script.</p>

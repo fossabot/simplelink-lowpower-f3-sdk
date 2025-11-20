@@ -35,7 +35,6 @@
 #include "zboss_api.h"
 #include "zb_types.h"
 #include "zb_errors.h"
-#include "zb_diag.h"
 #include "zb_debug.h"
 #include "zb_g_context.h"
 #include "zb_trace.h"

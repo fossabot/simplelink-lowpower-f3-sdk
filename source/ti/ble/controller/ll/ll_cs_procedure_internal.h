@@ -1,11 +1,12 @@
+#ifndef LL_CS_PROCEDURE_INTERNAL_H
+#define LL_CS_PROCEDURE_INTERNAL_H
+
 /******************************************************************************
 
  @file  ll_cs_procedure_internal.h
 
- @brief LL CS Procedure contains the APIs that are responsible for Initialziing
-        the CS module. Building the CS steps of a CS subevent.
-        Manages the CS double buffers.
-        Sends CS Step results to the Host.
+ @brief LL CS Procedure contains the internal functionality that are responsible
+        for procedure handling of the CS module.
 
  Group: WCS, BTS
  Target Device: cc23xx
@@ -112,7 +113,7 @@
  * input parameters
  *
  * @param       connId - connection Identifier
- * @param       csConfig - pointer to config struct
+ * @param       configId - cs config Id
  *
  * output parameters
  *
@@ -120,7 +121,7 @@
  *
  * @return      None
  */
-void llCsShuffleMainModeChannelIndexArray(uint16 connId, const csConfigurationSet_t* csConfig);
+void llCsShuffleMainModeChannelIndexArray(uint16 connId, uint8_t configId);
 
 
 /*******************************************************************************
@@ -134,8 +135,9 @@ void llCsShuffleMainModeChannelIndexArray(uint16 connId, const csConfigurationSe
  *
  * input parameters
  *
- * @param       config - pointer to config
- * @param       procParams - pointer to params
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
+ * @param       uint32 - subEventLen
  *
  * output parameters
  *
@@ -143,8 +145,7 @@ void llCsShuffleMainModeChannelIndexArray(uint16 connId, const csConfigurationSe
  *
  * @return      number of steps per subevent
  */
-uint8 llCsNumStepsPerSubEvent(const csConfigurationSet_t* config,
-                              csProcedureEnable_t* procParams);
+uint8 llCsNumStepsPerSubEvent(uint16 connId, uint8_t configId, uint32  subEventLen);
 
 /*******************************************************************************
  * @fn          llCsMainModeDur
@@ -156,8 +157,9 @@ uint8 llCsNumStepsPerSubEvent(const csConfigurationSet_t* config,
  *
  * input parameters
  *
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
  * @param       mode - step mode
- * @param       pConfig - pointer to CS config
  *
  * output parameters
  *
@@ -165,7 +167,7 @@ uint8 llCsNumStepsPerSubEvent(const csConfigurationSet_t* config,
  *
  * @return      Main Mode Step Duration in microseconds
  */
-uint16 llCsMainModeDur(uint8 mode, const csConfigurationSet_t* pConfig);
+uint16 llCsMainModeDur(uint16 connId, uint8_t configId, uint8 mode);
 
 /*******************************************************************************
  * @fn          llCsSetupStep
@@ -178,11 +180,11 @@ uint16 llCsMainModeDur(uint8 mode, const csConfigurationSet_t* pConfig);
  *
  * input parameters
  *
- * @param       stepMode -  Step Mode 0, 1, 2, 3
  * @param       connId - connection ID
+ * @param       configId - cs config Id
+ * @param       stepMode -  Step Mode 0, 1, 2, 3
  * @param       isRepetition - is a repeated main mode step
  * @param       stepData - pointer to step from stepList
- * @param       csConfig - pointer to CS config
  *
  * output parameters
  *
@@ -191,9 +193,8 @@ uint16 llCsMainModeDur(uint8 mode, const csConfigurationSet_t* pConfig);
  * @return      Status
  *
  */
-csStatus_e llCsSetupStep(uint8 stepMode, uint16 connId,
-                         RCL_CmdBleCs_Step* stepData,
-                         const csConfigurationSet_t* csConfig);
+csStatus_e llCsSetupStep(uint16 connId, uint8_t configId, uint8 stepMode,
+                         RCL_CmdBleCs_Step* stepData);
 
 /*******************************************************************************
  * @fn          llCsSetupStep0
@@ -203,7 +204,7 @@ csStatus_e llCsSetupStep(uint8 stepMode, uint16 connId,
  * input parameters
  *
  * @param       connId   - connection ID
- * @param       csConfig - pointer to the CS config being used
+ * @param       configId - cs config Id
  * @param       stepData - pointer to step data
  *
  * output parameters
@@ -212,7 +213,7 @@ csStatus_e llCsSetupStep(uint8 stepMode, uint16 connId,
  *
  * @return      None
  */
-void llCsSetupStep0(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_CmdBleCs_Step* stepData);
+void llCsSetupStep0(uint16 connId, uint8_t configId,  RCL_CmdBleCs_Step* stepData);
 
 /*******************************************************************************
  * @fn          llCsSetupStep1
@@ -222,7 +223,7 @@ void llCsSetupStep0(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  * input parameters
  *
  * @param       connId   - connection ID
- * @param       csConfig - pointer to the CS config being used
+ * @param       configId - cs config Id
  * @param       stepData - pointer to step data
  *
  * output parameters
@@ -231,7 +232,7 @@ void llCsSetupStep0(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  *
  * @return      None
  */
-void llCsSetupStep1(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_CmdBleCs_Step* stepData);
+void llCsSetupStep1(uint16 connId, uint8_t configId,  RCL_CmdBleCs_Step* stepData);
 
 /*******************************************************************************
  * @fn          llCsSetupStep2
@@ -241,7 +242,7 @@ void llCsSetupStep1(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  * input parameters
  *
  * @param       connId   - connection ID
- * @param       csConfig - pointer to the CS config being used
+ * @param       configId - cs config Id
  * @param       stepData - pointer to step data
  *
  * output parameters
@@ -250,7 +251,7 @@ void llCsSetupStep1(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  *
  * @return      None
  */
-void llCsSetupStep2(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_CmdBleCs_Step* stepData);
+void llCsSetupStep2(uint16 connId, uint8_t configId,  RCL_CmdBleCs_Step* stepData);
 
 /*******************************************************************************
  * @fn          llCsSetupStep3
@@ -260,7 +261,7 @@ void llCsSetupStep2(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  * input parameters
  *
  * @param       connId   - connection ID
- * @param       csConfig - pointer to the CS config being used
+ * @param       configId - cs config Id
  * @param       stepData - pointer to step data
  *
  * output parameters
@@ -269,7 +270,7 @@ void llCsSetupStep2(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_Cmd
  *
  * @return      None
  */
-void llCsSetupStep3(uint8 connId, const csConfigurationSet_t* csConfig,  RCL_CmdBleCs_Step* stepData);
+void llCsSetupStep3(uint16 connId, uint8_t configId, RCL_CmdBleCs_Step* stepData);
 
 /*******************************************************************************
  * @fn          llCsConvertRttType
@@ -351,8 +352,8 @@ uint8 llCsAutoCorrelation(uint32_t s);
  *
  * @return      None.
  */
-uint8 llCsChm2FilteredChanArr(uint8* pDecimalArray, uint8* pBitMapArray,
-                          uint8 mapSize);
+uint8 llCsChm2FilteredChanArr(uint8_t *pDecimalArray, const uint8_t *pBitMapArray,
+                          uint8_t mapSize);
 
 /*******************************************************************************
  * @fn          llCsReversePayload
@@ -404,7 +405,8 @@ uint8 llCsGetTSync(uint8 phy, uint8 plSize);
  *
  * input parameters
  *
- * @param       pConfig - Pointer to the configuration set
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
  *
  * output parameters
  *
@@ -412,7 +414,7 @@ uint8 llCsGetTSync(uint8 phy, uint8 plSize);
  *
  * @return      Duration for Mode 0
  */
-uint16 llCsMode0Duration(const csConfigurationSet_t* pConfig);
+uint16 llCsMode0Duration(uint16_t connId, uint8_t configId);
 
 /*******************************************************************************
  * @fn          llCsMode1Duration
@@ -421,7 +423,8 @@ uint16 llCsMode0Duration(const csConfigurationSet_t* pConfig);
  *
  * input parameters
  *
- * @param       pConfig     - Pointer to the configuration set
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
  * @param       payloadSize - Size of the payload
  *
  * output parameters
@@ -430,7 +433,7 @@ uint16 llCsMode0Duration(const csConfigurationSet_t* pConfig);
  *
  * @return      Duration for Mode 1
  */
-uint16 llCsMode1Duration(const csConfigurationSet_t* pConfig, uint8 payloadSize);
+uint16 llCsMode1Duration(uint16_t connId, uint8_t configId, uint8 payloadSize);
 
 /*******************************************************************************
  * @fn          llCsMode2Duration
@@ -439,7 +442,8 @@ uint16 llCsMode1Duration(const csConfigurationSet_t* pConfig, uint8 payloadSize)
  *
  * input parameters
  *
- * @param       pConfig - Pointer to the configuration set
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
  * @param       nPath   - Number of paths
  * @param       tSw     - Antenna Switching Time in us
  *
@@ -449,7 +453,7 @@ uint16 llCsMode1Duration(const csConfigurationSet_t* pConfig, uint8 payloadSize)
  *
  * @return      Duration for Mode 2
  */
-uint16 llCsMode2Duration(const csConfigurationSet_t* pConfig, uint8 nPath, uint16 tSw);
+uint16 llCsMode2Duration(uint16_t connId, uint8_t configId, uint8 nPath, uint16 tSw);
 
 /*******************************************************************************
  * @fn          llCsMode3Duration
@@ -458,7 +462,8 @@ uint16 llCsMode2Duration(const csConfigurationSet_t* pConfig, uint8 nPath, uint1
  *
  * input parameters
  *
- * @param       pConfig - Pointer to the configuration set
+ * @param       connId - connection ID
+ * @param       configId - cs config Id
  * @param       nPath   - Number of paths
  * @param       tSw     - Antenna Switching Time in us
  *
@@ -468,4 +473,229 @@ uint16 llCsMode2Duration(const csConfigurationSet_t* pConfig, uint8 nPath, uint1
  *
  * @return      Duration for Mode 3
  */
-uint16 llCsMode3Duration(const csConfigurationSet_t* pConfig, uint8 nPath, uint16 tSw);
+uint16 llCsMode3Duration(uint16_t connId, uint8_t configId, uint8 nPath, uint16 tSw);
+
+/*******************************************************************************
+ * @fn          llCsClearStepBuffers
+ *
+ * @brief       Clear the internal buffers
+ *
+ * input parameters
+ *
+ * @param       connId   - connection ID
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return
+ */
+void llCsClearStepBuffers();
+
+/*******************************************************************************
+ * @fn          llCsInitProcedure
+ *
+ * @brief       Initializes the Channel Sounding Procedure
+ * This function initializes the CS procedure by building the Channel Arrays,
+ * initializing StepList and Results buffers, initialzied the first subevent
+ * of the procedure. Sets the number of needed to complete the procedure.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Identifier
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+uint8 llCsInitProcedure(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsUpdateProcedureCounter
+ *
+ * @brief       Check if incrementing the procedure counter is needed
+ *
+ * input parameters
+ *
+ * @param       connId - connection Identifier
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsUpdateProcedureCounter(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsTerminateAlignProcCounter
+ *
+ * @brief       Check if the peer procedure counter is larger than the local one
+ *              If it is, it calculates the delta between the two counters and update
+ *              the local counter to match the peer counter.
+ *
+ * input parameters
+ *
+ * @param       connId     - Connection Id
+ * @param       peerCount  - Peer procedure counter
+ * @param       localCount - Local procedure counter
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsTerminateAlignProcCounter(uint16_t connId, uint16_t peerCount, uint16_t localCount);
+
+/*******************************************************************************
+ * @fn          llCsFillBuffer
+ *
+ * @brief       Fill CS Buffer with step details
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       configId - config Id
+ * @param       mode - mode
+ * @param       numSteps - number of steps
+ * @param       stepType - step type to indicate if this is repetitions/subModeInsertion/normal step
+ * @param       steps - pointer to steps
+ *
+ * output parameters
+ * @param       csSteps
+ *
+ * @return      Status
+ */
+csStatus_e llCsFillBuffer(uint16 connId, uint8_t configId, uint8 mode, uint16 numSteps, csStepType_e stepType, RCL_CmdBleCs_Step* steps);
+
+/*******************************************************************************
+ * @fn          llCsCalculateSubeventSteps
+ *
+ * @brief       Calculate the number of steps for the subevent
+ * And the number of steps remaining for the procedure.
+ * Resets the subevent counter.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration ID of the CS procedure to run
+ * @param       numMainModeSteps - Number of main mode steps in the procedure
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      None
+*/
+void llCsCalculateSubeventSteps(uint16 connId, uint8 configId, uint16 numMainModeSteps);
+
+/*******************************************************************************
+ * @fn          llCsGetChannelIndex
+ *
+ * @brief       Get Channel Index for the step. In case this is a main mode repetition step,
+ *              load the Channel Index from the DB. Otherwise, a new channel shall be selected from
+ *              the Channel Selection Shuffled Channels.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration ID of the CS procedure to run
+ * @param       mode - mode
+ * @param       stepType - step type to indicate if this is repetitions/subModeInsertion/normal step
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      Channel index
+*/
+uint8_t llCsGetChannelIndex(uint16 connId, uint8_t configId, uint8 mode, csStepType_e stepType);
+
+
+/*******************************************************************************
+ * @fn          llCsGetMModeRepetitionsIndex
+ *
+ * @brief       Get Main Mode Repetitions Channel Array Index for the step. This will
+ *              point to the 'oldest' value in the array, as the channels in the Main
+ *              Mode repetitions steps should be transmitted in the same order as in
+ *              original subEvent.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      Channel Array index
+*/
+uint8_t llCsGetMModeRepetitionsIndex(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSaveChannelIdx
+ *
+ * @brief       Save the channel index of the last main mode step. Those will be reused in
+ *              the main mode repetition and sub Mode insertion steps.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration ID of the CS procedure to run
+ * @param       mode - mode
+ * @param       stepType - step type to indicate if this is repetitions/subModeInsertion/normal step
+ * @param       channelIdx - channel indec to save
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      None
+*/
+void llCsDbSaveChannelIdx(uint16 connId, uint8_t configId, uint8 mode, csStepType_e stepType, uint8_t channelIdx);
+
+/*******************************************************************************
+ * @fn          llCsUpdateStepCount
+ *
+ * @brief       Increment the step count for the subevent handling.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration ID of the CS procedure to run
+ * @param       stepType - step type to indicate if this is repetitions/subModeInsertion/normal step
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      None
+*/
+void llCsUpdateStepCount(uint16 connId, uint8_t configId, csStepType_e stepType);
+
+ /*******************************************************************************
+ * @fn          llCsAdjustSubEventStepCount
+ *
+ * @brief       Adjust main mode step count when submode insertion affects timing.
+ *              When submode insertion steps take longer than planned, this function
+ *              adjusts the main mode step count to maintain proper timing. It compensates
+ *              for any difference between planned and actual step counts, carrying over
+ *              steps to the next subevent if necessary.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration ID of the CS procedure to run
+ *
+ * output parameters
+ *
+ * @param      None
+ *
+ * @return      None
+*/
+void llCsAdjustSubEventStepCount(uint16 connId, uint8 configId);
+
+#endif // LL_CS_PROCEDURE_INTERNAL_H

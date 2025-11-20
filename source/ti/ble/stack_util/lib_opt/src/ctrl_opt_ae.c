@@ -225,4 +225,9 @@ void OPT_LL_AE_GetTxUsageParams(llTxUsageParams_t* pExtAdvTxParams)
     LL_AE_GetTxUsageParams(pExtAdvTxParams);
 }
 
+void OPT_setAeBleUserConfig(void)
+{
+    setAeBleUserConfig();
+}
+
 #endif /* defined(USE_AE) */

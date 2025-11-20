@@ -93,6 +93,8 @@ extern void LL_SDAA_HandleLastCmdDone(uint32 event, taskInfo_t* const pCurrTask)
 extern void LL_SDAA_Init(void);
 extern void LL_SDAA_FreeDynamicMemory(void);
 extern void LL_SDAA_PostProcess(void);
+extern void setSddaBleUserConfig(void);
+
 
 // Wrapper functions for the feature implementations
 uint8 OPT_LL_SDAA_ControlTxAndGetStartType(taskInfo_t* nextConnTask, taskInfo_t* secTask, uint8 startTaskType);
@@ -105,5 +107,6 @@ void OPT_LL_SDAA_HandleLastCmdDone(uint32 event, taskInfo_t* const pCurrTask);
 void OPT_LL_SDAA_Init(void);
 void OPT_LL_SDAA_FreeDynamicMemory(void);
 void OPT_LL_SDAA_PostProcess(void);
+void OPT_setSddaBleUserConfig(void);
 
 #endif /* CTRL_ADAPTIVITY_H_ */

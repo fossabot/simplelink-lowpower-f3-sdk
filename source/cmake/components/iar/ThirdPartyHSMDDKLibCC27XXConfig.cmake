@@ -30,6 +30,8 @@ endmacro()
 
 ####################################################################################
 
+find_package("DriversLPF3" REQUIRED)
+find_package("TiUtils" REQUIRED)
 find_package("DriverlibCC27XX" REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/ThirdPartyHSMDDKLibCC27XXM33FTargets.cmake")

@@ -40,47 +40,56 @@
  *  # Overview
  *  The APU driver allows you to interact with the Algorithm Processing Unit
  *  (APU), a linear algebra accelerator peripheral using 64-bit complex numbers.
- *  Complex numbers are represented by the _float complex_ type from _complex.h_,
- *  where each number is made up of two 32-bit floats. The APU works with
- *  complex numbers in either Cartesian or Polar formats. In the Cartesian
- *  representation, the lower 32 bits are the real part and the upper 32 bits
- *  are the imaginary part. In Polar format, the lower 32 bits are the absolute
- *  part and the upper 32 bits are the angle, represented as pi radians.
- *  As long as arguments to the APU
- *  functions use the same format, the result will also be in that format.
- *  Mixing formats produces wrong results. The driver provides basic data types
- *  for vectors and matrices constructed from _float complex_, as well as many
- *  common linear algebra operations on these data types.
+ *  Complex numbers are represented by the _float complex_ type from
+ *  _complex.h_, where each number is made up of two 32-bit floats. The APU
+ *  works with complex numbers in either Cartesian or Polar formats. In the
+ *  Cartesian representation, the lower 32 bits are the real part and the upper
+ *  32 bits are the imaginary part. In Polar format, the lower 32 bits are the
+ *  absolute part and the upper 32 bits are the angle, represented as pi
+ *  radians.
+ *  As long as arguments to the APU functions use the same format, the result
+ *  will also be in that format. Mixing formats produces wrong results. The
+ *  driver provides basic data types for vectors and matrices constructed from
+ *  _float complex_, as well as many common linear algebra operations on these
+ *  data types.
  *
  *  @anchor ti_drivers_APU_DataManagement
  *  ## Data management
  *  All the vector/matrix operations can accept input and output pointers that
  *  are inside or outside APU RAM. If all pointers provided to an operation are
- *  inside APU RAM, the APU will operate in <b> scratchpad mode </b>.
- *  This means the driver will assume that, given the current pointers,
- *  the input is already in APU memory and that input and result will not
- *  overlap each other. Therefore, no data will be copied, and the function
- *  output will be placed inside APU memory. This is the most efficient way to
- *  utilize the APU and is ideal for algorithms with multiple operations that
- *  feed into each other, such as
- *  MUSIC (https://en.wikipedia.org/wiki/MUSIC_(algorithm)). When chaining
- *  together operations, make sure as many as possible use vectors and matrices
- *  that are already in APU memory, to prevent unnecessary copying and overhead.
+ *  inside APU RAM, the APU will operate in <b>scratchpad mode</b>.
+ *  This means the driver will assume that, given the current pointers, the
+ *  input is already in APU memory and that input and result will not overlap
+ *  each other. Therefore, no data will be copied, and the function output will
+ *  be placed inside APU memory. This is the most efficient way to utilize the
+ *  APU and is ideal for algorithms with multiple operations that feed into each
+ *  other, such as MUSIC (https://en.wikipedia.org/wiki/MUSIC_(algorithm)). When
+ *  chaining together operations, make sure as many as possible use vectors and
+ *  matrices that are already in APU memory, to prevent unnecessary copying and
+ *  overhead.
  *
  *  If any of the pointers are outside APU memory, the driver will copy input
- *  data to the start of its memory, place the result immediately following,
- *  and then copy the output back to the provided pointer. This may overwrite
- *  data that was already in this location.
+ *  data to the start of its memory, place the result immediately following, and
+ *  then copy the output back to the provided pointer. This may overwrite data
+ *  that was already in this location.
  *
- *  @warning The APU memory has a memory access limitation that must be
- *  respected, as to not cause a bus fault.
- *  Software must not perform any combination of back-to-back read or write
- *  instructions to APU memory (RR/ WW/ WR/ RW). There must be some other
- *  instruction in-between. For safety, load data into APU memory using
- *  any of the APU operations, #APULPF3_loadArgMirrored() or
+ *  The APU driver uses uDMA for data transfers involving the APU data memory.
+ *  More specifically, channel 8 is used.
+ *
+ *  @warning Due to errata SYS_211, the APU memory has strict access rules. Use
+ *  the provided APU functions to move data safely.
+ *  To load data into APU memory: #APULPF3_loadArgMirrored() or
  *  #APULPF3_loadTriangular().
- *  Copying data back from APU memory is automatically handled by the driver,
- *  and happens in an interrupt when the result pointer is outside APU memory.
+ *  To directly perform a memory access: #APULPF3_dataMemTransfer().
+ *  Copying data back from APU memory is automatically handled by the
+ *  driver, and happens in an interrupt when the result pointer is
+ *  outside APU memory.
+ *
+ *  @warning Due to errata SYS_211, no other SW DMA transactions can occur
+ *  while the APU is being used.
+ *
+ *  @warning Due to errata SYS_211, the APU cannot be used at the same time as
+ *  I2S.
  *
  *  The primary purpose of this driver is executing the MUSIC algorithm for
  *  distance estimation in Bluetooth Channel Sounding. An implementation of
@@ -117,7 +126,7 @@
  *  APULPF3_dotProduct(&resultVec, &resultVec, false, apuMem)
  *
  *  // Give up control of APU
- *  APULPF3_finishOperationSequence();
+ *  APULPF3_stopOperationSequence();
  *
  *  @endcode
  ***************************************************************************
@@ -136,6 +145,7 @@
 #include <ti/devices/DeviceFamily.h>
 #include DeviceFamily_constructPath(inc/hw_memmap.h)
 #include DeviceFamily_constructPath(driverlib/apu.h)
+#include DeviceFamily_constructPath(driverlib/udma.h)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -274,6 +284,17 @@ typedef struct
     APULPF3_OperationMode operationMode;
 
     APULPF3_SchedulingMode schedulingMode;
+
+    /*! uDMA control table entry allocated using ALLOCATE_CONTROL_TABLE_ENTRY
+     *  for DMA channel corresponding to #APULPF3_HWAttrs.dmaChannelMask.
+     */
+    volatile uDMAControlTableEntry *dmaTableEntry;
+
+    /*! Mask for ECH DMA channel (1 << channel number) used for APU data memory
+     * transfers.
+     */
+    uint32_t dmaChannelMask;
+
 } APULPF3_HWAttrs;
 
 /** @addtogroup APULPF3_STATUS
@@ -1058,6 +1079,25 @@ void *APULPF3_loadTriangular(APULPF3_ComplexMatrix *mat, uint16_t offset);
  * @return Pointer in APU memory where the argument is stored.
  */
 void *APULPF3_loadArgMirrored(uint16_t argSize, uint16_t offset, float complex *src);
+
+/*!
+ * @brief Transfer data to or from the APU data memory.
+ *
+ * Per errata APU_202 the APU data memory must be accessed with this function.
+ * Not doing so can make the system hang.
+ *
+ * This function brakes down the transfer into smaller blocks that take
+ * approximately 24 us to complete. Note that while a block is being transferred
+ * all interrupts are disabled, therefore, no other tasks will be able to run.
+ *
+ * @param[in] src data source pointer
+ *
+ * @param[in] dst data destination pointer
+ *
+ * @param[in] length number of elements to transfer (each element must be 4 bytes)
+ *
+ */
+void APULPF3_dataMemTransfer(const float *src, float *dst, size_t length);
 
 #ifdef __cplusplus
 }

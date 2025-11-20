@@ -103,11 +103,10 @@ extern "C"
 #include <ti/drivers/RNG.h>
 #include "ti/drivers/utils/List.h"
 
-#include "ti/ble/stack_util/osal/osal.h"
 #include "ti/ble/controller/ll/ll.h"
 #include "ti/ble/controller/ll/ll_scheduler.h"
 #include "ti/ble/stack_util/health_toolkit/assert.h"
-
+#include "ti/ble/stack_util/health_toolkit/ble_sys_stat.h"
 /*******************************************************************************
  * MACROS
  */
@@ -323,7 +322,7 @@ extern "C"
 #define LL_MIN_USED_CHANNELS_IND_LEN                   3
 #define LL_CTE_REQ_PAYLOAD_LEN                         2
 #define LL_CTE_RSP_PAYLOAD_LEN                         1
-#define LL_PERIODIC_SYNC_IND_PAYLOAD_LEN               LL_CTRL_PAYLOAD_LEN_UNDEFIEND
+#define LL_PERIODIC_SYNC_IND_PAYLOAD_LEN               35
 #define LL_CLOCK_ACCURACY_REQ_PAYLOAD_LEN              LL_CTRL_PAYLOAD_LEN_UNDEFIEND
 #define LL_CLOCK_ACCURACY_RSP_PAYLOAD_LEN              LL_CTRL_PAYLOAD_LEN_UNDEFIEND
 #define LL_CIS_REQ_PAYLOAD_LEN                         LL_CTRL_PAYLOAD_LEN_UNDEFIEND
@@ -337,10 +336,10 @@ extern "C"
 #define LL_SUBRATE_IND_PAYLOAD_LEN                     LL_CTRL_PAYLOAD_LEN_UNDEFIEND
 #define LL_CHANNEL_REPORTING_IND_PAYLOAD_LEN           LL_CTRL_PAYLOAD_LEN_UNDEFIEND
 #define LL_CHANNEL_STATUS_IND_PAYLOAD_LEN              LL_CTRL_PAYLOAD_LEN_UNDEFIEND
-#define LL_PERIODIC_SYNC_WR_IND_PAYLOAD_LEN            LL_CTRL_PAYLOAD_LEN_UNDEFIEND
+#define LL_PERIODIC_SYNC_WR_IND_PAYLOAD_LEN            43
 #define LL_FEATURE_EXT_REQ_PAYLOAD_LEN                 LL_CTRL_PAYLOAD_LEN_UNDEFIEND
 #define LL_FEATURE_EXT_RSP_PAYLOAD_LEN                 LL_CTRL_PAYLOAD_LEN_UNDEFIEND
-#define LL_CS_CHANNEL_MAP_IND_PL_LEN                   11
+#define LL_CS_CHANNEL_MAP_IND_PL_LEN                   13
 #define LL_CS_FAE_RSP_PL_LEN                           73
 #define LL_CS_FAE_REQ_PL_LEN                           1
 #define LL_CS_TERMINATE_REQ_PL_LEN                     5
@@ -477,7 +476,7 @@ extern "C"
 #define LL_CTRL_MIN_USED_CHANNELS_IND                 0x19 //  , P
 #define LL_CTRL_CTE_REQ                               0x1A // C, P
 #define LL_CTRL_CTE_RSP                               0x1B // C, P
-#define LL_CTRL_PERIODIC_SYNC_IND                     0x1C // Unsupported yet
+#define LL_CTRL_PERIODIC_SYNC_IND                     0x1C // C, P
 #define LL_CTRL_CLOCK_ACCURACY_REQ                    0x1D // Unsupported yet
 #define LL_CTRL_CLOCK_ACCURACY_RSP                    0x1E // Unsupported yet
 #define LL_CTRL_CIS_REQ                               0x1F // Unsupported yet
@@ -491,7 +490,7 @@ extern "C"
 #define LL_CTRL_SUBRATE_IND                           0x27 // Unsupported yet
 #define LL_CTRL_CHANNEL_REPORTING_IND                 0x28 // Unsupported yet
 #define LL_CTRL_CHANNEL_STATUS_IND                    0x29 // Unsupported yet
-#define LL_CTRL_PERIODIC_SYNC_WR_IND                  0x2A // Unsupported yet
+#define LL_CTRL_PERIODIC_SYNC_WR_IND                  0x2A // C, P
 #define LL_CTRL_FEATURE_EXT_REQ                       0x2B // Unsupported yet
 #define LL_CTRL_FEATURE_EXT_RSP                       0x2C // Unsupported yet
 #define LL_CTRL_CS_SEC_RSP                            0x2DU //  , P
@@ -505,7 +504,7 @@ extern "C"
 #define LL_CTRL_CS_TERMINATE_REQ                      0x35U // C
 #define LL_CTRL_CS_FAE_REQ                            0x36U // C, P
 #define LL_CTRL_CS_FAE_RSP                            0x37U // C, P
-#define LL_CTRL_CS_CHANNEL_MAP_IND                    0x38U // C
+#define LL_CTRL_CS_CHANNEL_MAP_IND                    0x38U // C, P
 #define LL_CTRL_CS_SEC_REQ                            0x39U // C
 #define LL_CTRL_CS_TERMINATE_RSP                      0x3AU // C, P
 #define LL_CTRL_FRAME_SPACE_REQ                       0x3B  // Unsupported yet
@@ -736,9 +735,9 @@ extern char *llCtrl_BleLogStrings[];
 // Byte 5
 #define LL_FEATURE_RESERVED0                           0x01
 #define LL_FEATURE_RESERVED1                           0x02
-#define LL_FEATURE_RESERVED2                           0x04
+#define LL_FEATURE_DECISION_BASED                      0x04
 #define LL_FEATURE_RESERVED3                           0x08
-#define LL_FEATURE_RESERVED4                           0x10
+#define LL_FEATURE_PAWR_SCANNER                        0x10
 #define LL_FEATURE_RESERVED5                           0x20
 #define LL_FEATURE_CS                                  0x40
 #define LL_FEATURE_CS_HOST                             0x80
@@ -971,6 +970,10 @@ extern char *llCtrl_BleLogStrings[];
 #define LL_CONN_EVT_PHY_UPDATE                         0x02
 #define LL_CONN_EVT_ALL                                0xFF
 
+// Enhanced Connection Event Params
+#define LL_ENHANCED_CONN_NO_SYNC_HANDLE                0xFFFF
+#define LL_ENHANCED_CONN_NO_ADV_HANDLE                 0xFF
+
 // Health check status
 #define LL_HEALTH_CHECK_SUCCESS         0
 #define LL_HEALTH_CHECK_CONN_FAILURE    -1
@@ -1012,6 +1015,9 @@ extern char *llCtrl_BleLogStrings[];
 #define LL_RCL_DYNAMIC_FL                    1U
 #define LL_RCL_DUPLICATE_FL_ADD              2U
 #define LL_RCL_DUPLICATE_FL_IGNORE           3U
+
+#define LL_CONN_MISS_COUNT_MARGIN            1U
+#define LL_CS_CONN_MISS_COUNT_MARGIN         5U
 
 // Optional status for update RCL filter list
 typedef enum {
@@ -1121,6 +1127,29 @@ typedef struct
   uint16 comId;                                      // company identifier
   uint16 subverNum;                                  // implementation version
 } verInfo_t;
+
+typedef struct
+{
+  uint32                            packetOffset;          // Time from a reference point to the start of the AUX_SYNC_IND in usec
+  uint32                            accessAddr;            // access address
+  uint16                            eventCounter;          // AUX_SYNC_IND counter in sync info
+  uint8                             offsetUnit;            // packet offset unit - 0 = 30 usec; 1 = 300 usec
+  uint8                             crcInit[LL_PKT_CRC_LEN];// CRC init value
+  uint8                             sca;                   // worst case sleep clock accuracy
+} llPeriodicAdvSyncInfo_t;
+
+typedef struct
+{
+  uint8                             bitmap[LL_NUM_BYTES_FOR_CHAN_MAP];     // channel map bits
+  uint8                             numUsedChans;                          // count of the number of usable data channels
+} llPeriodicChanMap_t;
+
+typedef struct
+{
+  llPeriodicChanMap_t               current;               // current channel map
+  llPeriodicChanMap_t               next;                  // new channel map
+  uint8                             updated;               // channel map was updated
+} llPeriodicAdvChanMap_t;
 
 /*
 ** Connection Data
@@ -1495,6 +1524,7 @@ struct llConn_t
   uint8             estWithHandover:1;                  // TRUE indicated this connection formed using a connection handover procedure, else FALSE
   uint8             handoverInProg:1;                   // TRUE indicates handover is in progress
   uint8             estWithCm:1;                        // TRUE indicated this connection formed using a connection monitor procedure, else FALSE
+  uint8_t           validConnEvent:1;                   // TRUE indicates that the last connection event is valid, else FALSE
   uint8_t           txBurstRatio;                       // Central only: if used, TxBurst Ratio will be determine by this value
   uint8             ownAddrType;                        // Own device address type - used for dual advertise sets with different types.
 
@@ -1788,6 +1818,7 @@ uint16               llBleToRfChannel(uint8);
 // Control Procedure Setup
 
 uint8_t              llSetupCtrlPkt( llConnState_t *connPtr, uint8_t ctrlPkt );
+uint8_t              llTrySendCtrlPktImmed(llConnState_t *connPtr, uint8_t ctrlPkt);
 void                 llBuildCtrlPktPeri( llConnState_t *connPtr, uint8 *pData, uint8_t ctrlPkt );
 void                 llBuildCtrlPktCent( llConnState_t *connPtr,uint8_t *pData, uint8_t ctrlPkt );
 void                 llPostSetupCtrlPktPeri( llConnState_t *connPtr, uint8_t ctrlPkt );
@@ -1801,6 +1832,8 @@ void                 llDequeueCtrlPkt( llConnState_t * );
 void                 llReplaceCtrlPkt( llConnState_t *, uint8, uint8);
 void                 llSendReject( llConnState_t *, uint8, uint8 );
 void                 llSendRejectInd( llConnState_t * connPtr, uint8_t errorCode );
+bool                 llIsCtrlPktCsRelated(uint8_t opcode, uint8_t* pBuf);
+
 
 uint8                llPendingUpdateParam( void );
 void                 llInitFeatureSet( void );
@@ -1841,6 +1874,7 @@ uint8                llConnExists( uint8 *, uint8 );
 uint32               llGenerateCRC( void );
 uint8                llEventInRange( uint16 , uint16 , uint16  );
 uint16               llEventDelta( uint16 , uint16  );
+bool                 llEventCmp(uint16_t , uint16_t );
 void                 llConvertLstoToEvent( llConnState_t *, connParam_t * );
 uint8                llAdjustForMissedEvent( llConnState_t *, uint32  );
 void                 llAlignToNextEvent( llConnState_t *connPtr );
@@ -1849,6 +1883,7 @@ void                 llSecTaskInitiatorHandle( taskInfo_t* secTask, RCL_Command*
 void                 llUpdateTimeGapForInitiator( uint32_t* timeGap );
 void                 llUpdateTimeGapForScanWindow( taskInfo_t* secTask, llConnState_t* nextConnPtr, RCL_Command* secCmd, uint32_t* timeGap, uint32_t curTime );
 void                 LL_GetConnTxUsageParams( llTxUsageParams_t *pConnTxParams );
+uint32_t             llConnCalculatePacketTime( const llConnState_t *connPtr, uint16_t octets );
 
 // Access Address
 uint32               llGenerateValidAccessAddr( void );
@@ -1943,6 +1978,8 @@ void                 llTaskError( void );
 llStatus_t           llCheckAcceptListUsage( void );
 uint8_t              llChackInitiatorUseAcceptList( void );
 uint8_t              llChackScannerUseAcceptList( void );
+uint8_t              llSetupDenyList( void );
+
 // Timer Related Management
 void                 llCBTimer_AptoExpiredCback( uint8 * );
 
@@ -1953,7 +1990,7 @@ void                 llSendConnEvtCallback( uint8 connEvtStatus, uint16 numPkts,
 // LL Process Event functions
 void                 llProcessScanTimeout( void );
 void                 llProcessCentralConnectionCreated( void );
-void                 llProcessPeripheralConnectionCreated( void );
+void                 llProcessPeripheralConnectionCreated( llConnState_t* connPtr, uint8_t ownAddType, uint16_t pAdvSyncHandle );
 void                 llProcessAdvAddrResolutionTimeout( void );
 void                 llProcessPeriConnectionEstablishFailed( uint8_t reason );
 
@@ -2029,6 +2066,16 @@ void llConnEndTxBurst(llConnState_t *connPtr);
 uint8_t LL_GetLtk(uint16_t connHandle, uint8_t *pLtk);
 
 void llConnSetRejectIndExt(llConnState_t *connPtr, uint8 rejectOpcode, uint8 errorCode);
+
+// Set Connection priority
+void llConnSetConnPriority(uint16 connId, uint8 connPriority);
+
+// Set Connection Event Miss Count Margin
+uint16 llConnGetMissCountMargin();
+
+// Compares two BLE addresses by RL index or address and address type.
+bool llCompareAddresses( uint8_t *pAddr1, uint8_t addrType1,
+                         uint8_t *pAddr2, uint8_t addrType2 );
 
 #ifdef __cplusplus
 }

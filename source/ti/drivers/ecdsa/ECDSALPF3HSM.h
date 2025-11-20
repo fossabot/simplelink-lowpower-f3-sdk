@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Texas Instruments Incorporated
+ * Copyright (c) 2024-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,6 +117,7 @@ typedef struct
     CryptoKey *key;
     uint32_t keyAssetID;
     uint32_t paramAssetID;
+    uint32_t publicObjAssetID;
     uint32_t curveParamSize;
     uint8_t signature[ECDSALPF3HSM_COMPONENT_VECTOR_LENGTH] __attribute__((aligned(4)));
     int_fast16_t returnStatus;

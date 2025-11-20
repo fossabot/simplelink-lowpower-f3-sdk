@@ -817,7 +817,7 @@ typedef struct zgp_cert_hacks_s
 #endif  /* ZB_ENABLE_ZGP_PROXY */
 #if defined ZB_ENABLE_ZGP_SINK || defined ZGP_COMMISSIONING_TOOL
   zb_bitfield_t gp_sink_use_assigned_alias_for_dgroup_commissioning:1; /*!< If set to 1, Sink will use assignead alias
-                                                                        *  insead derived alias for
+                                                                        *  instead derived alias for
                                                                         *  next commissioning process */
   zb_bitfield_t gp_sink_replace_sec_lvl_on_pairing:1;  //replace sec_lvl on pairing
   zb_bitfield_t gp_sink_sec_lvl_on_pairing:2;
@@ -1046,6 +1046,7 @@ zgp_report_desc_t *zb_zgp_get_report_desc_from_app_tbl(zb_zgpd_id_t *zgpd_id_p, 
 zb_uint32_t zb_zgp_app_desc_receive_reports_count(const zgp_runtime_app_tbl_ent_t *ent);
 
 void zb_zgp_handle_app_descr_init_values(zb_zgpd_id_t *zgpd_id_p);
+void zb_zgp_init_app_descr_handler(zb_zgpd_id_t *zgpd_id, zb_uint32_t sec_cnt);
 
 #endif  /* ZB_ENABLE_ZGP_SINK */
 

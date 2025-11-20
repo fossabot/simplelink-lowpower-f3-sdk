@@ -30,6 +30,42 @@
 #include "zb_bufpool.h"
 #include "zb_config_common.h"
 
+/* rx_queue declaration was moved here from zb_mac_globals.h
+    in order to add pointer for it in multipan. */
+/* Receive queue routines */
+#ifdef ZB_MAC_RX_QUEUE_CAP
+
+/* main ring buffer, that contains whole packets itself */
+ZB_RING_BUFFER_DECLARE(zb_rx_queue, zb_bufid_t, ZB_MAC_RX_QUEUE_CAP);
+
+#endif  /* ZB_USE_RX_QUEUE */
+
+/**
+ *  \addtogroup PHY common constants and types.
+ *  @{
+ */
+
+/**
+ *  @brief PHY enumerations descriptions
+ */
+typedef enum zb_phy_status_e
+{
+  PHY_BUSY                  = 0x00,
+  PHY_BUSY_RX               = 0x01,
+  PHY_BUSY_TX               = 0x02,
+  PHY_FORCE_TRX_OFF         = 0x03,
+  PHY_IDLE                  = 0x04,
+  PHY_INVALID_PARAMETER     = 0x05,
+  PHY_RX_ON                 = 0x06,
+  PHY_SUCCESS               = 0x07,
+  PHY_TRX_OFF               = 0x08,
+  PHY_TX_ON                 = 0x09,
+  PHY_UNSUPPORTED_ATTRIBUTE = 0x0a,
+  PHY_READ_ONLY             = 0x0b
+} zb_phy_status_t;
+
+/** @} */ /* PHY common constants and types */
+
 /* Include platform-specific MAC stuff from the separate repo */
 #ifndef ZB_EXTMAC
 #include "mac_platform.h"
@@ -696,10 +732,47 @@ zb_ushort_t zb_mac_get_beacon_payload_offset(zb_uint8_t *beacon);
 
 /* MAC security */
 #ifdef ZB_MAC_SECURITY
-#define MAC_SECUR_LEV5_KEYID1_AUX_HDR_SIZE 6U
+#define MAC_SECURITY_CONTROL_LENGTH 1U // 7.6.2.2: The security control field is 1 byte in length
+#define MAC_FRAME_COUNTER_FIELD_LENGTH 4U // 7.6.2.3: The frame counter field is 4 bytes in length
+#define MAC_SECUR_LEV5_KEYID3_AUX_HDR_SIZE 14U // Obsolete form of calculating length
+
+/* MAC Security Levels */
+typedef enum
+{
+  /*! No security is used */
+  ZB_MAC_SECURITY_LEVEL_none = 0,
+  /*! MIC-32 authentication is used */
+  ZB_MAC_SECURITY_LEVEL_MIC32 = 1,
+  /*! MIC-64 authentication is used */
+  ZB_MAC_SECURITY_LEVEL_MIC64 = 2,
+  /*! MIC-128 authentication is used */
+  ZB_MAC_SECURITY_LEVEL_MIC128 = 3,
+  /*! AES encryption is used */
+  ZB_MAC_SECURITY_LEVEL_ENC = 4,
+  /*! AES encryption and MIC-32 authentication are used */
+  ZB_MAC_SECURITY_LEVEL_ENCMIC32 = 5,
+  /*! AES encryption and MIC-64 authentication are used */
+  ZB_MAC_SECURITY_LEVEL_ENCMIC64 = 6,
+  /*! AES encryption and MIC-128 authentication are used */
+  ZB_MAC_SECURITY_LEVEL_ENCMIC128 = 7
+} zb_mac_security_level_e;
+
+/* Key Identifier Mode */
+typedef enum
+{
+  /*! Key is determined implicitly */
+  ZB_MAC_KEY_ID_MODE_IMPLICIT = 0,
+  /*! Key is determined from the 1-byte key index */
+  ZB_MAC_KEY_ID_MODE_1 = 1,
+  /*! Key is determined from the 4-byte key index */
+  ZB_MAC_KEY_ID_MODE_4 = 2,
+  /*! Key is determined from the 8-byte key index */
+  ZB_MAC_KEY_ID_MODE_8 = 3,
+} zb_mac_key_id_mode_e;
+
 #else
-#define MAC_SECUR_LEV5_KEYID1_AUX_HDR_SIZE 0U
-#endif
+#define MAC_SECUR_LEV5_KEYID3_AUX_HDR_SIZE 0U
+#endif /* ZB_MAC_SECURITY */
 
 #if defined ZB_MAC_TESTING_MODE || defined DOXYGEN
 #define MAC_SECUR_CERT_AUX_HDR_SIZE    5U
@@ -728,7 +801,7 @@ zb_ushort_t zb_mac_get_beacon_payload_offset(zb_uint8_t *beacon);
       ZB_FCF_GET_DST_ADDRESSING_MODE(mac_hdr),                          \
                                        ZB_U2B(ZB_FCF_GET_PANID_COMPRESSION_BIT(mac_hdr)));         \
     _ptr = zb_buf_cut_left(                                                                        \
-        _packet, hlen + MAC_SECUR_LEV5_KEYID1_AUX_HDR_SIZE * ZB_FCF_GET_SECURITY_BIT(mac_hdr));    \
+        _packet, hlen + MAC_SECUR_LEV5_KEYID3_AUX_HDR_SIZE * ZB_FCF_GET_SECURITY_BIT(mac_hdr));    \
                                                                         \
                                                                         \
   } while (ZB_FALSE)
@@ -741,7 +814,7 @@ zb_ushort_t zb_mac_get_beacon_payload_offset(zb_uint8_t *beacon);
   ( zb_mac_calculate_mhr_length(ZB_FCF_GET_SRC_ADDRESSING_MODE( _mac_hdr ), \
                                 ZB_FCF_GET_DST_ADDRESSING_MODE( _mac_hdr ), \
                                ZB_U2B(ZB_FCF_GET_PANID_COMPRESSION_BIT(_mac_hdr)))                 \
-    + MAC_SECUR_LEV5_KEYID1_AUX_HDR_SIZE * ZB_FCF_GET_SECURITY_BIT( _mac_hdr ) )
+    + MAC_SECUR_LEV5_KEYID3_AUX_HDR_SIZE * ZB_FCF_GET_SECURITY_BIT( _mac_hdr ) )
 
 /**
    Holds status of purge operation.
@@ -1188,7 +1261,7 @@ zb_mac_beacon_payload_t;
    @param p_sfs - pointer to 16bit SFS field.
 */
 
-#define ZB_MAC_GET_BEACON_ORDER( p_sfs ) ((zb_uint_t)((((zb_uint8_t*)(p_sfs))[ZB_PKT_16B_ZERO_BYTE]) & 0x07U))
+#define ZB_MAC_GET_BEACON_ORDER( p_sfs ) ((zb_uint_t)((((zb_uint8_t*)(p_sfs))[ZB_PKT_16B_ZERO_BYTE]) & 0x0fU))
 
 /**
    Gets Association Permit subfield in Superframe Specification field ( SFS )
@@ -1450,6 +1523,7 @@ zb_mac_scan_confirm_t;
 #define ZB_PIB_ATTRIBUTE_PTA_OPTIONS                    0x91U
 #define ZB_PIB_ATTRIBUTE_PTA_STATE                      0x92U
 #define ZB_PIB_ATTRIBUTE_PTA_PRIORITY                   0x93U
+
 #define ZB_PIB_ATTRIBUTE_COEX_SHUTDOWN_DURATION         0x94U /*!< Coexistence shutdown duration */
 
 /** Set/Clear ZB Temp Channel
@@ -1464,6 +1538,8 @@ zb_mac_scan_confirm_t;
 #define ZB_PIB_ATTRIBUTE_MAC_VERSION                    0x97U
 
 #define ZB_PIB_ATTRIBUTE_TRAFF_DUMP_STATE               0x98U
+#define ZB_PIB_ATTRIBUTE_RESET_TO_BOOTLOADER            0x99U
+
 /** @} */
 
 /**
@@ -1534,7 +1610,7 @@ typedef zb_uint8_t zb_mac_capability_info_t;
 #define MAC_NO_SHORT_ADDRESS        0xecU
 /** Rx enable request failed. Spec'd number of symbols longer than beacon interval */
 #define MAC_ON_TIME_TOO_LONG        0xf6U
-/** Association failed due to lack of capacity (no nbor tbl entry or no address) */
+/** A receiver enable request was unsuccessful because it could not be completed within the CAP (b/c IEEE 802.15.4-2003) */
 #define MAC_OUT_OF_CAP              0xedU
 /** Different networks within listening range have identical Pan IDs */
 #define MAC_PAN_ID_CONFLICT         0xeeU
@@ -1568,25 +1644,6 @@ typedef zb_uint8_t zb_mac_capability_info_t;
  */
 typedef zb_uint8_t zb_mac_status_t;
 
-
-/**
- *  @brief PHY enumerations descriptions
- */
-typedef enum zb_phy_status_e
-{
-  PHY_BUSY                  = 0x00,
-  PHY_BUSY_RX               = 0x01,
-  PHY_BUSY_TX               = 0x02,
-  PHY_FORCE_TRX_OFF         = 0x03,
-  PHY_IDLE                  = 0x04,
-  PHY_INVALID_PARAMETER     = 0x05,
-  PHY_RX_ON                 = 0x06,
-  PHY_SUCCESS               = 0x07,
-  PHY_TRX_OFF               = 0x08,
-  PHY_TX_ON                 = 0x09,
-  PHY_UNSUPPORTED_ATTRIBUTE = 0x0a,
-  PHY_READ_ONLY             = 0x0b
-} zb_phy_status_t;
 
 /**
  *  @name Address Modes
@@ -2322,6 +2379,7 @@ void zb_mlme_associate_confirm(zb_uint8_t param);
 typedef ZB_PACKED_PRE struct zb_mcps_poll_indication_param_s
 {
   zb_uint8_t               iface_id;
+  zb_bool_t                is_data_sent;
 } ZB_PACKED_STRUCT zb_mcps_poll_indication_param_t;
 
 /** @brief Parameters for poll request. */
@@ -2953,22 +3011,23 @@ zb_time_t osif_sub_trans_timer(zb_time_t t2, zb_time_t t1);
 
 #endif
 
-#ifdef ZB_ENABLE_ZGP
-void zb_gp_mcps_data_indication(zb_uint8_t param);
-#endif /* ZB_ENABLE_ZGP */
-
 #ifdef ZB_MAC_CONFIGURABLE_TX_POWER
 
 typedef zb_ret_t (*zb_tx_power_provider_t)(zb_uint8_t page, zb_uint8_t channel, zb_int8_t *power_dbm);
 
+/**
+ * Set TX power provider function for MAC layer
+ *
+ * When page-channel pair is changed, MAC layer should update TX power for the new channel.
+ * In this case the power provider function is used to fetch actual TX power.
+ *
+ * In monolithic architecture MAC layer is able to fetch TX power directly, whereas
+ * in split architecture, host side should send an actual array of TX power for the current region and page.
+ * Please note, in split architecture this array of TX power is sending asynchronously without confirmation.
+ */
 void zb_mac_set_tx_power_provider_function(zb_tx_power_provider_t new_provider);
 void zb_mac_set_tx_power_async_confirm(zb_bufid_t param);
 void zb_mac_get_tx_power_async_confirm(zb_bufid_t param);
-
-/**
- * @brief Update transceiver power for each page and channel synchronously according to power provider.
-*/
-void zb_mac_update_channel_pages(void);
 
 #endif /* #ifdef ZB_MAC_CONFIGURABLE_TX_POWER */
 
@@ -3125,6 +3184,7 @@ void zb_mac_api_trace_scan_request(zb_uint8_t param);
 void zb_mac_api_trace_scan_confirm(zb_uint8_t param);
 void zb_mac_api_trace_poll_request(zb_uint8_t param);
 void zb_mac_api_trace_poll_confirm(zb_uint8_t param);
+void zb_mac_api_trace_poll_indication(zb_uint8_t param);
 void zb_mac_api_trace_start_request(zb_uint8_t param);
 void zb_mac_api_trace_start_confirm(zb_uint8_t param);
 void zb_mac_api_trace_set_request(zb_uint8_t param);
@@ -3159,6 +3219,7 @@ void zb_mac_api_trace_cca_confirm(zb_uint8_t param);
 #define ZB_MAC_API_TRACE_DATA_INDICATION(param)           zb_mac_api_trace_data_indication(param)
 #define ZB_MAC_API_TRACE_POLL_REQUEST(param)              zb_mac_api_trace_poll_request(param)
 #define ZB_MAC_API_TRACE_POLL_CONFIRM(param)              zb_mac_api_trace_poll_confirm(param)
+#define ZB_MAC_API_TRACE_POLL_INDICATION(param)           zb_mac_api_trace_poll_indication(param)
 #define ZB_MAC_API_TRACE_GET_REQUEST(param)               zb_mac_api_trace_get_request(param)
 #define ZB_MAC_API_TRACE_GET_CONFIRM(param)               zb_mac_api_trace_get_confirm(param)
 #define ZB_MAC_API_TRACE_SET_REQUEST(param)               zb_mac_api_trace_set_request(param)
@@ -3188,6 +3249,7 @@ void zb_mac_api_trace_cca_confirm(zb_uint8_t param);
 #define ZB_MAC_API_TRACE_DATA_INDICATION(param)
 #define ZB_MAC_API_TRACE_POLL_REQUEST(param)
 #define ZB_MAC_API_TRACE_POLL_CONFIRM(param)
+#define ZB_MAC_API_TRACE_POLL_INDICATION(param)
 #define ZB_MAC_API_TRACE_GET_REQUEST(param)
 #define ZB_MAC_API_TRACE_GET_CONFIRM(param)
 #define ZB_MAC_API_TRACE_SET_REQUEST(param)

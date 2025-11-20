@@ -2,7 +2,7 @@
     {
         "name": "Release Notes",
         "resourceType": "file",
-        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_12_00_19.html",
+        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_14_00_39.html",
         "devices": [
             "CC2340R5"
         ],
@@ -386,7 +386,7 @@
     {
         "name": "Core SDK Release Notes",
         "resourceType": "file",
-        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_12_00_03.html",
+        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_14_00_20.html",
         "devices": [
             "CC2340R5"
         ],
@@ -474,7 +474,7 @@
     {
         "name": "TI BLE Stack Release Notes",
         "resourceType": "file",
-        "location": "../../docs/ble5stack/release_notes_ble_9_12_00.html",
+        "location": "../../docs/ble5stack/release_notes_ble_9_14_00.html",
         "devices": [
             "CC2340R5"
         ],
@@ -496,7 +496,7 @@
     {
         "name": "TI Proprietary RF Release Notes",
         "resourceType": "file",
-        "location": "../../docs/proprietary-rf/release_notes_proprietary-rf_9_11_00.html",
+        "location": "../../docs/proprietary-rf/release_notes_proprietary-rf_9_14_00.html",
         "devices": [
             "CC2340R5"
         ],
@@ -518,7 +518,7 @@
     {
         "name": "SimpleLink Common Components Module (SCCM) Release Notes",
         "resourceType": "file",
-        "location": "../../docs/sccm/release_notes_sccm_9_11_00.html",
+        "location": "../../docs/sccm/release_notes_sccm_9_14_00.html",
         "devices": [
             "CC2340R5"
         ],

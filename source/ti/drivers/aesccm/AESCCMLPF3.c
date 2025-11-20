@@ -40,6 +40,7 @@
 #include <ti/drivers/AESCommon.h>
 #include <ti/drivers/aesctr/AESCTRLPF3.h>
 #include <ti/drivers/cryptoutils/aes/AESCommonLPF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKey.h>
 #include <ti/drivers/cryptoutils/sharedresources/CryptoResourceLPF3.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
@@ -2534,6 +2535,9 @@ static void AESCCMLPF3HSM_postProcessingCommon(AESCCM_Handle handle, int_fast16_
         object->segmentedOperationInProgress = false;
     }
 
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
+
     /* Free all assets. This includes key-related asset and state-related asset (temporary asset). */
     if (AESCCMLPF3HSM_freeAllAssets(handle) != AESCCM_STATUS_SUCCESS)
     {
@@ -3034,6 +3038,20 @@ static int_fast16_t AESCCMLPF3HSM_performHSMOperation(AESCCM_Handle handle)
 
     AESCCMLPF3HSM_setupObjectMetaData(object);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->common.semaphoreTimeout))
+    {
+        /* In the case of failure to initialize the operation, we need to free all assets allocated.
+         * Capturing the return status of this operation is pointless since we are returning an
+         * error code anyways.
+         */
+        (void)AESCCMLPF3HSM_freeTempAssetID(handle);
+
+        HSMLPF3_releaseLock();
+
+        return AESCCM_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->common.returnBehavior,
                                     AESCCMLPF3HSM_postProcessingFxn,
                                     (uintptr_t)handle);
@@ -3050,6 +3068,9 @@ static int_fast16_t AESCCMLPF3HSM_performHSMOperation(AESCCM_Handle handle)
 
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated.
          * Capturing the return status of this operation is pointless since we are returning an
          * error code anyways.

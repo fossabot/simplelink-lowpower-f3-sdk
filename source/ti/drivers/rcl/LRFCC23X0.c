@@ -577,16 +577,16 @@ static void LRF_temperatureCompensateTrim(const LRF_TrimDef *trimDef)
     {
         rtrim = minRtrim;
     }
-#if defined(DeviceFamily_CC23X0R5) || defined(DeviceFamily_CC23X0R22) || defined(DeviceFamily_CC2340R53)
-    /* Write into register */
-    HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) | (rtrim << LRFDRFE_DCO_TAILRESTRIM_S);
-#elif defined(DeviceFamily_CC27XX)
+#if defined(DeviceFamily_PARENT) && (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
     /* RTRIM Tx Compensation might be required depending on the selected Tx output power. For now, initialize RAM registers to default values. */
     HWREGH_WRITE_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIMTXCMP) = 0;
     /* Write rtrim into RAM register instead of the usual register (LRFDRFE:DCO.TAILRESTRIM) */
     HWREGH_WRITE_LRF(LRFD_RFERAM_BASE + RFE_COMMON_RAM_O_RTRIM) = (rtrim << RFE_COMMON_RAM_RTRIM_VAL_S);
     /* Signal the LRF to use the default RTRIM value. This might change based on the programmed Tx output power */
     HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE5) = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE5) & ~(LRF_CC27XX_RFE_SPARE5_RTRIM_TX_COMP_BITMASK);
+#else
+    /* Write into register */
+    HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_DCO) | (rtrim << LRFDRFE_DCO_TAILRESTRIM_S);
 #endif
 
     /* Get RSSI offset from FCFG */

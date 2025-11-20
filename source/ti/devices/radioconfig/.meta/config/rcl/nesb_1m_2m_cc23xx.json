@@ -20,7 +20,7 @@
       "default_clone_name": "Custom NESB",
       "state": {
         "quality": "characterized",
-        "device_name_list": "CC2340R5,CC2340R22"
+        "device_name_list": "CC2340R5,CC2340R53,CC2340R22"
       }
     },
     "feature_group": {

@@ -7,7 +7,7 @@
  * which makes it impossible to utilize vendor for Assembly preprocessing
  */
 #define PREPROCESSOR_ONLY
-#include "../../include/zb_vendor.h"
+#include "zb_vendor.h"
 #undef  PREPROCESSOR_ONLY
 
 #define ZB_EMILL_MIN_CORTEX_M 4U

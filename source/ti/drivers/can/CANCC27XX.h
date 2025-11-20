@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,71 +53,18 @@ extern "C" {
 /** CAN message RAM size */
 #define CANCC27XX_MRAM_SIZE 4096U
 
-/** CAN functional clock frequency in MHz */
-#define CANCC27XX_CLK_FREQ_MHZ 80U
-
 /*!
- *  @brief      CANCC27XX global configuration
+ *  @brief  CANCC27XXX10 global configuration
  */
 typedef struct
 {
-    uint32_t clkFreqMHz; /*!< MCAN input clock frequency in MHz */
-} CANCC27XX_Config;
+    void *taskStack;        /*!< Pointer to interrupt handler task stack */
+    uint16_t taskStackSize; /*!< Interrupt handler task stack size */
+    uint8_t taskPri;        /*!< Interrupt handler task priority */
+} CANCC27XXX10_Config;
 
 /* Externs from ti_drivers_config.c */
-extern const CANCC27XX_Config CANCC27XX_config;
-
-/*!
- *  @brief  Reads the CANCC27XX device status flags
- *
- *  @return Device status flags.
- *
- *  @sa     #CANCC27XX_clearStatus
- */
-uint32_t CANCC27XX_getStatus(void);
-
-/*!
- *  @brief  Clears all CANCC27XX device status flags
- *
- *  @sa     #CANCC27XX_getStatus
- */
-void CANCC27XX_clearStatus(void);
-
-/*!
- *  @brief  Sets the CANCC27XX operational mode
- *
- *  @param  mode  Operational mode to set:
- *                  CANCC27XX_MODE_OPMODE_SLEEP,
- *                  CANCC27XX_MODE_OPMODE_STANDBY,
- *                  CANCC27XX_MODE_OPMODE_NORMAL
- *
- *  @sa     #CANCC27XX_getMode
- */
-void CANCC27XX_setMode(uint32_t mode);
-
-/*!
- *  @brief  Reads the CANCC27XX operational mode
- *
- *  @return Operational mode:
- *            CANCC27XX_MODE_OPMODE_SLEEP,
- *            CANCC27XX_MODE_OPMODE_STANDBY,
- *            CANCC27XX_MODE_OPMODE_NORMAL
- *
- *  @sa     #CANCC27XX_setMode
- */
-uint32_t CANCC27XX_getMode(void);
-
-/*!
- *  @brief  Disables the sleep wake error timeout
- *
- *  The sleep wake error timeout is enabled by default and powers down the
- *  CANCC27XX device within four minutes after power-on, reset, or coming out of
- *  sleep if the device is not configured by the host. This function can be used
- *  to disable the sleep wake error timeout and prevent the device from powering
- *  down.
- *
- */
-void CANCC27XX_disableSleepWakeErrorTimeout(void);
+extern const CANCC27XXX10_Config CANCC27XXX10_config;
 
 #ifdef __cplusplus
 }

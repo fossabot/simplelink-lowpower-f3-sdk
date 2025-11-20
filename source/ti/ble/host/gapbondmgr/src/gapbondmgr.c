@@ -2860,25 +2860,6 @@ uint8_t GapBondMgr_writeBondToNv(gapBondRec_t *pBondRec,
   {
     // Find an empty slot
     bondIdx = gapBondMgrFindEmpty();
-
-    // If an empty slot was found
-    if (bondIdx < gapBond_maxBonds)
-    {
-      snvErrorCode = gapBondMgrSaveBond(bondIdx, pBondRec, pLocalLtk, pDevLtk, pIRK, pSRK,
-                                        signCount, TRUE);
-
-      // If available, save the connected device's GATT configurations
-      if (charCfg)
-      {
-        snvErrorCode |=  osal_snv_write(GATT_CFG_NV_ID(bondIdx),
-                            sizeof(gapBondCharCfg_t) * gapBond_maxCharCfg,
-                            charCfg);
-      }
-    }
-    else
-    {
-      return (bleNoResources);
-    }
   }
   else if(pIRK != NULL)
   {
@@ -2900,12 +2881,32 @@ uint8_t GapBondMgr_writeBondToNv(gapBondRec_t *pBondRec,
     }
   }
 
+  // If an empty slot was found
+  if (bondIdx < gapBond_maxBonds)
+  {
+    snvErrorCode = gapBondMgrSaveBond(bondIdx, pBondRec, pLocalLtk, pDevLtk, pIRK, pSRK,
+                                      signCount, TRUE);
+
+    // If available, save the connected device's GATT configurations
+    if (charCfg)
+    {
+      snvErrorCode |=  osal_snv_write(GATT_CFG_NV_ID(bondIdx),
+                          sizeof(gapBondCharCfg_t) * gapBond_maxCharCfg,
+                          charCfg);
+    }
+  }
+  else
+  {
+    return (bleNoResources);
+  }
+
   // Check for there was an error when writing to the NV area
   if (snvErrorCode != SUCCESS)
   {
     gapBondMgrEraseBonding(bondIdx);
     gapBondMgrReadBonds();
   }
+
   return (snvErrorCode);
 }
 
@@ -2953,12 +2954,13 @@ bStatus_t GAPBondMgr_ReadLocalLTK(GAP_Peer_Addr_Types_t addrType, uint8_t *pDevA
  * @param   mode - whether to read by index (GAPBOND_READ_BY_IDX) or by address (GAPBOND_READ_BY_ADDR)
  * @param   pIdentifier - pointer to bond index (0 - GAP_BONDINGS_MAX) or device address (6 bytes BDADDR)
  * @param   addrType - address type, only relevant if mode = GAPBOND_READ_BY_ADDR
- * @output  pBondRecord - pointer to output, must be allocated by the caller
+ * @output  pBondRecord - pointer to output, must be allocated and verified by the caller
  *
- * @return  SUCCESS if bond was read successfully
- *          bleGAPNotFound if there is no bond record
- *          bleInvalidRange if the bond index is out of range or the mode is invalid
- *          bleGAPBondItemNotFound if an item is not found in nv
+ * @return  SUCCESS - bond was read successfully
+ *          bleGAPNotFound - there is no bond record
+ *          bleInvalidRange - the bond index is out of range
+ *          bleIncorrectMode - the mode is invalid
+ *          bleGAPBondItemNotFound - an item is not found in nv
  */
 uint8_t GapBondMgr_readBondFromNV(uint8_t mode,
                                   uint8_t *pIdentifier,
@@ -2988,7 +2990,7 @@ uint8_t GapBondMgr_readBondFromNV(uint8_t mode,
     if (status == SUCCESS)
     {
       // Read the bond record information
-      status = gapBondMgrReadBondInfo(idx, pBondRecord);
+      gapBondMgrReadBondInfo(idx, pBondRecord);
     }
   }
 
@@ -3055,7 +3057,7 @@ static uint8_t gapBondMgrValidateBondReadMode(uint8_t mode,
   else
   {
     // Invalid mode
-    status = bleInvalidRange;
+    status = bleIncorrectMode;
   }
 
   return status;

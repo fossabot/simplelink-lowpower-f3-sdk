@@ -96,32 +96,6 @@ extern "C"
   #endif // no Controller build components defined
 #endif
 
-// If BLE_V41_FEATURES is defined, map it to CTRL_V41_CONFIG
-#if defined ( BLE_V41_FEATURES ) && !defined ( CTRL_V41_CONFIG )
-  #define CTRL_V41_CONFIG       ( ( BLE_V41_FEATURES ) & CTRL_V41_MASK )
-#elif defined ( BLE_V41_FEATURES ) && defined ( CTRL_V41_CONFIG )
-  #error "Build Configuration Error: Cannot define both BLE_V41_FEATURES and CTRL_V41_CONFIG!"
-#endif // BLE_V41_FEATURES
-
-// If BLE_V50_FEATURES is defined, map it to CTRL_V50_CONFIG
-#if defined ( BLE_V50_FEATURES ) && !defined ( CTRL_V50_CONFIG )
-  #define CTRL_V50_CONFIG       BLE_V50_FEATURES
-#elif defined ( BLE_V50_FEATURES ) && defined ( CTRL_V50_CONFIG )
-  #error "Build Configuration Error: Cannot define both BLE_V50_FEATURES and CTRL_V50_CONFIG!"
-#endif // BLE_V41_FEATURES
-
-#if defined(CC2540) || defined(CC2541) || defined(CC2541S)
-  #if !defined ( MAX_NUM_BLE_CONNS )
-    #if ( CTRL_CONFIG & INIT_CFG )
-      #define MAX_NUM_BLE_CONNS                       3
-    #elif ( !( CTRL_CONFIG & INIT_CFG ) && ( CTRL_CONFIG & ADV_CONN_CFG ) )
-      #define MAX_NUM_BLE_CONNS                       1
-    #else // no connection needed
-      #define MAX_NUM_BLE_CONNS                       0
-    #endif // CTRL_CONFIG=INIT_CFG
-  #endif // !MAX_NUM_BLE_CONNS
-#endif // CC2540 | CC2541 | CC2541S
-
 /// @endcond // NODOC
 
 
@@ -272,9 +246,15 @@ extern "C"
  * TYPEDEFS
  */
 
-  //! BLE Generic Status return
+//! BLE Generic Status return
 typedef uint8_t bStatus_t;
 
+//! @brief Generic Event Header
+typedef struct
+{
+  uint8  event;           //!< Event ID
+  uint8  status;          //!< Event status
+} event_hdr_t;
 
 /*********************************************************************
  * System Events

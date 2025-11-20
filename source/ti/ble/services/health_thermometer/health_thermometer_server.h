@@ -115,7 +115,7 @@ typedef enum
 typedef struct
 {
   uint8   flags;
-  uint32  temp;
+  float   temp;
   struct
   {
     uint16 year;

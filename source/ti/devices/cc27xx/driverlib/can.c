@@ -3,7 +3,7 @@
  *
  *  Description:    Driver for CAN peripheral.
  *
- *  Copyright (c) 2023 Texas Instruments Incorporated
+ *  Copyright (c) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -35,4 +35,44 @@
 
 #include "can.h"
 
-// See can.h for implementation
+//*****************************************************************************
+//
+// Sets the CAN Subsystem end of interrupt register.
+//
+//*****************************************************************************
+__attribute__((weak)) void CANSSSetEndOfInt(uint32_t eoi)
+{
+    HWREG(CANFD_BASE + CANFD_O_MCANSS_EOI) = eoi;
+}
+
+//*****************************************************************************
+//
+// Clears the specified CAN line interrupt(s).
+//
+//*****************************************************************************
+__attribute__((weak)) void CANClearInt(uint8_t lineNum, uint32_t flags)
+{
+    uint32_t offset = (lineNum == CAN_INT_LINE0) ? CANFD_O_ICLR0 : CANFD_O_ICLR1;
+
+    HWREG(CANFD_BASE + offset) = flags;
+}
+
+//*****************************************************************************
+//
+// Sets the CAN Subsystem clock stop control feature flag(s).
+//
+//*****************************************************************************
+__attribute__((weak)) void CANSSSetClkStopCtrl(uint32_t flags)
+{
+    HWREG(CANFD_BASE + CANFD_O_MCANSS_CLKCTL) |= flags;
+}
+
+//*****************************************************************************
+//
+// Clears the CAN Subsystem clock stop control feature flag(s).
+//
+//*****************************************************************************
+__attribute__((weak)) void CANSSClearClkStopCtrl(uint32_t flags)
+{
+    HWREG(CANFD_BASE + CANFD_O_MCANSS_CLKCTL) &= (uint32_t)~flags;
+}

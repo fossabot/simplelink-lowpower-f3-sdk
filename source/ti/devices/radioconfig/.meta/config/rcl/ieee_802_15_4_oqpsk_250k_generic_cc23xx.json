@@ -21,17 +21,10 @@
       "protocol": "IEEE 802.15.4",
       "abbreviation": "ieee_802_15_4",
       "default_clone_name": "Custom IEEE 802.15.4",
-      "state": [
-        {
-          "quality": "preview",
-          "rf_design": "LP-EM-CC2340R53-YBG-WCSP",
-          "device_name_list": "CC2340R53"
-        },
-        {
-          "quality": "characterized",
-          "device_name_list": "CC2340R5,CC2340R2,CC2340R53,CC2340R22"
-        }
-      ]
+      "state": {
+        "quality": "characterized",
+        "device_name_list": "CC2340R5,CC2340R2,CC2340R53,CC2340R22"
+      }
     },
     "phy_properties": [
       {

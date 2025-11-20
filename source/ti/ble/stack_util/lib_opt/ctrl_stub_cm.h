@@ -94,6 +94,8 @@ extern void llCm_TaskEnd(void);
 extern void llCmsConnUpdateInd(llConnState_t* connPtr, uint8_t updateType);
 extern void llSetTaskCm(uint8_t connId, void* nextConnCmd);
 extern void llCmUpdateScanDuration(llConnState_t* connPtr);
+extern bool llCmSwitchToAdjustmentIfNeeded(llConnState_t* connPtr, bool force);
+
 
 // Wrapper functions for the feature implementations
 void OPT_llCmUpdateRclCmdPhyFeatures(uint8_t connId, uint16_t phyFeatures);
@@ -108,5 +110,6 @@ void OPT_llCm_TaskEnd(void);
 void OPT_llCmsConnUpdateInd(llConnState_t* connPtr, uint8_t updateType);
 void OPT_llSetTaskCm(uint8_t connId, void* nextConnCmd);
 void OPT_llCmUpdateScanDuration(llConnState_t* connPtr);
+bool OPT_llCmSwitchToAdjustmentIfNeeded(llConnState_t* connPtr, bool force);
 
 #endif /* CTRL_CM_H_ */

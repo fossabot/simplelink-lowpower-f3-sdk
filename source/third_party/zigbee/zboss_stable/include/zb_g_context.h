@@ -586,6 +586,7 @@ typedef struct zb_cert_hacks_s
  * Used to simulate legacy device behavior, error behavior e.t.c.
  * By default set to zero and does not affect stack behavior.
  */
+
 typedef struct zb_reg_api_s
 {
   zb_uint8_t zcl_ota_custom_query_jitter;               /*!< Custom value of ota query jitter instead of
@@ -628,22 +629,15 @@ typedef struct zb_reg_api_s
                                                          *   APS packets. */
   zb_bool_t disable_mac_ack_for_data_packets;           /*!< Disable MAC ACKs for incoming
                                                          *   MAC data packets. */
-  zb_bool_t send_leave_instead_of_tclk;                 /*!< Send leave instead of tclk
-                                                         *   on every second request for a TCLK */
-  zb_bool_t send_rejoin_instead_of_tclk;                /*!< Send leave with rejoin set to true
-                                                         *   instead of tclk */
-  zb_uint8_t num_of_link_key_req_packets;               /*!< The Leave command will be send
-                                                         *   on every N request for a TCLK */
-  zb_bool_t drop_link_key_req;                          /*!< Drop Link Key request packets
-                                                         *   until num_of_link_key_req_packets
-                                                         *   will be received */
-  zb_uint32_t zcl_ota_custom_file_version;              /*!< Custom value of ota file version instead of
-                                                         *   value from a Query Next Image Response packet */
-  zb_bool_t fail_mcps_data_request;                     /*!< Do not send packet in fail_mcps_data_request
-                                                         *   and indicate MAC_DENIED to sender */
-  zb_uint16_t alter_beacon_source;                      /*!< This variable will be added to the beacon source address
-                                                         *   and it will be incremented on each send */
-  zb_bool_t beacon_association_permit_always_true;      /*!< Send every beacon with association permit set to true */
+  zb_bool_t send_leave_instead_of_tclk; /*!< Send leave instead of tclk on every second request for a TCLK */
+  zb_bool_t send_rejoin_instead_of_tclk_on_every_second_request; /*!< Send leave with rejoin set to true instead of tclk on every second request for a TCLK */
+  zb_uint32_t zcl_ota_custom_file_version;               /*!< Custom value of ota file version instead of
+                                                          *   value from a Query Next Image Response packet
+                                                          */
+  zb_bool_t fail_mcps_data_request;                      /*!< Do not send packet in fail_mcps_data_request
+                                                          *   and indicate MAC_DENIED to sender */
+  zb_uint16_t alter_beacon_source;                       /*!< This variable will be added to the beacon source address and it will be incremented on each send */
+  zb_bool_t beacon_association_permit_always_true;       /*!< Send every beacon with association permit set to true*/
 } zb_reg_api_t;
 
 #define ZB_REGRESSION_TESTS_API() ZG->reg_api

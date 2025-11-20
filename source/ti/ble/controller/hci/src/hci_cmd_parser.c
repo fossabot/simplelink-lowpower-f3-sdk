@@ -88,16 +88,19 @@
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_adv_nconn.h"
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_power_control.h"
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_legacy_cmd.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_vendor_specific_cmd.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_ext_vendor_specific_cmd.h"
 
 /*******************************************************************************
  * CONSTANTS
  */
 
-#define HCI_CMD_PACKET_TYPE_OFFSET  0
-#define HCI_CMD_OPCODE_LO_OFFSET    1
-#define HCI_CMD_OPCODE_HI_OFFSET    2
-#define HCI_CMD_DATA_OFFSET         4
-#define HCI_CMD_NUM_OF_PARSERS      15
+#define HCI_CMD_PACKET_TYPE_OFFSET    0
+#define HCI_CMD_OPCODE_LO_OFFSET      1
+#define HCI_CMD_OPCODE_HI_OFFSET      2
+#define HCI_CMD_DATA_OFFSET           4
+#define HCI_CMD_NUM_OF_PARSERS        12
+#define HCI_EXT_VS_CMD_NUM_OF_PARSERS 5
 
 /*******************************************************************************
  * MACROS
@@ -126,12 +129,14 @@ hciStatus_t hciCmdParserPeripheral( uint8 *pData, uint16 cmdOpCode );
 hciStatus_t hciCmdParserPeriodicAdv( uint8_t *pData, uint16_t cmdOpCode );
 hciStatus_t hciCmdParserPeriodicScan( uint8 *pData, uint16 cmdOpCode );
 hciStatus_t hciCmdParserCte( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserVendorSpecific( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtendedVendorSpecific( uint8 *pData, uint16 cmdOpCode );
 hciStatus_t hciCmdParserChannelSounding( uint8 *pData, uint16 cmdOpCode );
-hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode );
-hciStatus_t hciCmdParserVendorSpecificConnection( uint8 *pData, uint16 cmdOpCode );
-hciStatus_t hciCmdParserVendorSpecificInitiator( uint8 *pData, uint16 cmdOpCode );
-hciStatus_t hciCmdParserVendorSpecificPeripheral( uint8 *pData, uint16 cmdOpCode );
-hciStatus_t hciCmdParserVendorSpecificBroadcaster( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtVendorSpecificConnection( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtVendorSpecificInitiator( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtVendorSpecificPeripheral( uint8 *pData, uint16 cmdOpCode );
+hciStatus_t hciCmdParserExtVendorSpecificBroadcaster( uint8 *pData, uint16 cmdOpCode );
 
 /**************************************************************
  *         Parsers function for a specific opcode             *
@@ -159,6 +164,8 @@ static inline hciStatus_t hciCmdParserSetPhy( uint8 *pData );
 static inline hciStatus_t hciCmdParserPeriodicAdvCreateSync( uint8 *pData );
 static inline hciStatus_t hciCmdParserAddDeviceToPeriodicAdvList( uint8 *pData );
 static inline hciStatus_t hciCmdParserRemoveDeviceFromPeriodicAdvList( uint8 *pData );
+static inline hciStatus_t hciCmdParserSetPeriodicSyncSubevent( uint8 *pData );
+static inline hciStatus_t hciCmdParserSetPeriodicAdvResponseData( uint8 *pData );
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -180,11 +187,21 @@ hciCmdParsers hciCmdParsersArray[HCI_CMD_NUM_OF_PARSERS] = { OPT_hciCmdParserLeg
                                                              OPT_hciCmdParserPeriodicScan,
                                                              hciCmdParserCte,
                                                              OPT_hciCmdParserChannelSounding,
-                                                             hciCmdParserVendorSpecificCommon,
-                                                             OPT_hciCmdParserVendorSpecificConnection,
-                                                             OPT_hciCmdParserVendorSpecificInitiator,
-                                                             OPT_hciCmdParserVendorSpecificPeripheral,
-                                                             OPT_hciCmdParserVendorSpecificBroadcaster,
+                                                             OPT_hciCmdParserVendorSpecific,
+                                                             OPT_hciCmdParserExtendedVendorSpecific,
+};
+
+/*
+ This array holds pointers to functions responsible for parsing
+ extended vendor-specific HCI commands. Each entry corresponds
+ to a specific command parser implementation, enabling modular
+ handling of custom HCI commands.
+ */
+hciCmdParsers hciExtVSCmdParsersArray[HCI_EXT_VS_CMD_NUM_OF_PARSERS] = { OPT_hciCmdParserExtVendorSpecificConnection,
+                                                                         OPT_hciCmdParserExtVendorSpecificInitiator,
+                                                                         OPT_hciCmdParserExtVendorSpecificPeripheral,
+                                                                         OPT_hciCmdParserExtVendorSpecificBroadcaster,
+                                                                         OPT_hciCmdParserExtVendorSpecificCommon,
 };
 
 /*******************************************************************************
@@ -249,6 +266,101 @@ hciStatus_t HCI_CMD_Parser( uint8 *pData )
 /*******************************************************************************
  * LOCAL FUNCTIONS
  */
+
+ /*******************************************************************************
+ * @fn          hciCmdParserExtendedVendorSpecific
+ *
+ * @brief       Parses and handles extended vendor-specific HCI commands.
+ *
+ * This function processes the provided HCI command data and opcode,
+ * specifically for extended vendor-specific commands. It iterates through
+ * the array of extended vendor-specific command parsers and invokes each
+ * parser with the given command data and opcode until a matching handler
+ * is found or all parsers have been tried.
+ *
+ * input parameters
+ *
+ * @param       pData - Pointer to packet's data.
+ * @param       cmdOpCode - The opcode of the HCI command to be parsed.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      hciStatus_t - Status code indicating the result of the command parsing and handling.
+ *                            Returns HCI_ERROR_CODE_UNKNOWN_HCI_CMD if no handler is found.
+ */
+hciStatus_t hciCmdParserExtendedVendorSpecific( uint8 *pData, uint16 cmdOpCode )
+{
+  hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
+
+  // Iterate through the extended vendor specific command parsers
+  for ( uint8 i = 0; i < (uint8)HCI_EXT_VS_CMD_NUM_OF_PARSERS; i++ )
+  {
+    status = hciExtVSCmdParsersArray[i](pData, cmdOpCode);
+
+    if ( status != (hciStatus_t)HCI_ERROR_CODE_UNKNOWN_HCI_CMD )
+    {
+      // Found match!
+      break;
+    }
+  }
+
+   return status;
+}
+
+ /*******************************************************************************
+ * @fn          hciCmdParserVendorSpecific
+ *
+ * @brief Parses and handles vendor-specific HCI commands.
+ *
+ * This function processes the provided HCI command data and opcode,
+ * specifically for vendor-specific commands. It interprets the
+ * command payload and executes the corresponding vendor-specific operation.
+ *
+ * @param pData Pointer to the buffer containing the command parameters.
+ * @param cmdOpCode The opcode of the HCI command to be parsed.
+ * @return hciStatus_t Status code indicating the result of the command parsing and handling.
+ */
+hciStatus_t hciCmdParserVendorSpecific( uint8 *pData, uint16 cmdOpCode )
+{
+  hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
+
+  switch ( cmdOpCode )
+  {
+    case HCI_EXT_RESET_SYSTEM:
+    {
+      // Function input: uint8 mode
+      status = HCI_EXT_ResetSystemCmd( pData[0] );
+      break;
+    }
+    case HCI_EXT_SET_TX_POWER_DBM:
+    {
+      // Function input: int8 txPower, uint8 fraction
+      status = HCI_EXT_SetTxPowerDbmCmd( (int8 )pData[0], pData[1] );
+      break;
+    }
+    case HCI_EXT_SET_BDADDR:
+    {
+      // Function input: uint8 *bdAddr
+      status = HCI_EXT_SetBDADDRCmd( pData );
+      break;
+    }
+    case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES:
+    {
+      // Function input: uint8 *localFeatures
+      status = HCI_EXT_SetLocalSupportedFeaturesCmd( pData );
+      break;
+    }
+    default:
+    {
+      status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
+      break;
+    }
+
+  }
+  return status;
+}
 
 /*******************************************************************************
  * @fn          hciCmdParserLegacy
@@ -728,6 +840,41 @@ hciStatus_t hciCmdParserConnection( uint8 *pData, uint16 cmdOpCode )
       status = HCI_LE_ReadLocalP256PublicKeyCmd( );
       break;
     }
+    case HCI_LE_PADV_SYNC_TRANSFER_CMD:
+    {
+      // Function input: uint16 connHandle, uint16 serviceData, uint16 syncHandle
+      status = HCI_LE_PAdvSyncTransferCmd( BUILD_UINT16( pData[0], pData[1] ),
+                                           BUILD_UINT16( pData[2], pData[3] ),
+                                           BUILD_UINT16( pData[4], pData[5] ) );
+      break;
+    }
+    case HCI_LE_PADV_SET_INFO_TRANSFER_CMD:
+    {
+      // Function input: uint16 connHandle, uint16 serviceData, uint8 advHandle
+      status = HCI_LE_PAdvSetInfoTransferCmd( BUILD_UINT16( pData[0], pData[1] ),
+                                              BUILD_UINT16( pData[2], pData[3] ),
+                                              pData[4] );
+      break;
+    }
+    case HCI_LE_SET_PADV_SYNC_TRANSFER_PARAMS_CMD:
+    {
+      // Function input: uint16 connHandle, uint8 mode, uint16 skip, uint16 syncTimeout, uint8 cteType
+      status = HCI_LE_SetPASTParamCmd( BUILD_UINT16( pData[0], pData[1] ),
+                                       pData[2],
+                                       BUILD_UINT16( pData[3], pData[4] ),
+                                       BUILD_UINT16( pData[5], pData[6] ),
+                                       pData[7] );
+      break;
+    }
+    case HCI_LE_SET_DEFAULT_PADV_SYNC_TRANSFER_PARAMS_CMD:
+    {
+      // Function input: uint8 mode, uint16 skip, uint16 syncTimeout, uint8 cteType
+      status = HCI_LE_SetDefaultPASTParamCmd( pData[0],
+                                              BUILD_UINT16( pData[1], pData[2] ),
+                                              BUILD_UINT16( pData[3], pData[4] ),
+                                              pData[5] );
+      break;
+    }
     default:
     {
       status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
@@ -915,6 +1062,16 @@ hciStatus_t hciCmdParserPeriodicScan( uint8 *pData, uint16 cmdOpCode )
                                                       pData[2] );
       break;
     }
+    case HCI_LE_SET_PERIODIC_SYNC_SUBEVENT:
+    {
+      status = hciCmdParserSetPeriodicSyncSubevent(pData);
+      break;
+    }
+    case HCI_LE_SET_PERIODIC_ADV_RESPONSE_DATA:
+    {
+      status = hciCmdParserSetPeriodicAdvResponseData(pData);
+      break;
+    }
     default:
     {
       status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
@@ -973,6 +1130,12 @@ hciStatus_t hciCmdParserChannelSounding( uint8 *pData, uint16 cmdOpCode )
       status = HCI_LE_CS_ReadRemoteSupportedCapabilities( BUILD_UINT16( pData[0], pData[1] ) );
       break;
     }
+    case HCI_LE_CS_WRITE_CACHED_REMOTE_SUPPORTED_CAPABILITIES:
+    {
+      // Function input: uint16 connHandle, Cached Peer Capabilities parameters
+      status = HCI_LE_CS_WriteCachedRemoteSupportedCapabilities( BUILD_UINT16( pData[0], pData[1] ), &pData[2] );
+      break;
+    }
     case HCI_LE_CS_SECURITY_ENABLE:
     {
       // Function input: uint16 connHandle
@@ -992,11 +1155,11 @@ hciStatus_t hciCmdParserChannelSounding( uint8 *pData, uint16 cmdOpCode )
       status = HCI_LE_CS_ReadRemoteFAETable( BUILD_UINT16( pData[0], pData[1] ) );
       break;
     }
-    case HCI_LE_CS_WRITE_REMOTE_FAE_TABLE:
+    case HCI_LE_CS_WRITE_CACHED_REMOTE_FAE_TABLE:
     {
-      // Function input: uint16 connHandle, void* reflectorFaeTable
-      status = HCI_LE_CS_WriteRemoteFAETable( BUILD_UINT16( pData[0], pData[1] ),
-                                              (void* )&pData[2] );
+      // Function input: uint16 connHandle, void* remoteFaeTable
+      status = HCI_LE_CS_WriteCachedRemoteFAETable( BUILD_UINT16( pData[0], pData[1] ),
+                                                    (void* )&pData[2] );
       break;
     }
     case HCI_LE_CS_CREATE_CONFIG:
@@ -1052,10 +1215,18 @@ hciStatus_t hciCmdParserChannelSounding( uint8 *pData, uint16 cmdOpCode )
   return status;
 }
 
-/*
-  For more details look for hciCmdParserConnection() headline
-*/
-hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
+/**
+ * @brief Parses and handles vendor-specific HCI commands.
+ *
+ * This function processes vendor-specific HCI (Host Controller Interface) commands
+ * based on the provided command opcode and input data. It is intended to extend
+ * the standard HCI command set with custom functionality.
+ *
+ * @param pData Pointer to the buffer containing the command parameters.
+ * @param cmdOpCode The opcode identifying the vendor-specific command.
+ * @return hciStatus_t Status code indicating the result of the command parsing and handling.
+ */
+hciStatus_t hciCmdParserExtVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
 {
   hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
 
@@ -1073,12 +1244,6 @@ hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
       status = HCI_EXT_DecryptCmd( pData, &pData[KEYLEN] );
       break;
     }
-    case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES:
-    {
-      // Function input: uint8 *localFeatures
-      status = HCI_EXT_SetLocalSupportedFeaturesCmd( pData );
-      break;
-    }
     case HCI_EXT_MODEM_TEST_TX:
     {
       // Function input: uint8 cwMode, uint8 txChan
@@ -1094,12 +1259,6 @@ hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
     case HCI_EXT_END_MODEM_TEST:
     {
       status = HCI_EXT_EndModemTestCmd( );
-      break;
-    }
-    case HCI_EXT_SET_BDADDR:
-    {
-      // Function input: uint8 *bdAddr
-      status = HCI_EXT_SetBDADDRCmd( pData );
       break;
     }
     case HCI_EXT_ENABLE_PTM:
@@ -1122,12 +1281,6 @@ hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
     {
       // Function input: uint8 mode
       status = LL_STATUS_ERROR_COMMAND_DISALLOWED;
-      break;
-    }
-    case HCI_EXT_RESET_SYSTEM:
-    {
-      // Function input: uint8 mode
-      status = HCI_EXT_ResetSystemCmd( pData[0] );
       break;
     }
     case HCI_EXT_SET_DTM_TX_PKT_CNT:
@@ -1162,12 +1315,6 @@ hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
                                                   pData[2], pData[3],
                                                   pData[4], pData[5],
                                                   pData[6] );
-      break;
-    }
-    case HCI_EXT_SET_TX_POWER_DBM:
-    {
-      // Function input: int8 txPower, uint8 fraction
-      status = HCI_EXT_SetTxPowerDbmCmd( (int8 )pData[0], pData[1] );
       break;
     }
     case HCI_EXT_SET_MAX_DTM_TX_POWER_DBM:
@@ -1260,7 +1407,7 @@ hciStatus_t hciCmdParserVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode )
 /*
   For more details look for hciCmdParserConnection() headline
 */
-hciStatus_t hciCmdParserVendorSpecificConnection( uint8 *pData, uint16 cmdOpCode )
+hciStatus_t hciCmdParserExtVendorSpecificConnection( uint8 *pData, uint16 cmdOpCode )
 {
   hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
 
@@ -1367,7 +1514,7 @@ hciStatus_t hciCmdParserVendorSpecificConnection( uint8 *pData, uint16 cmdOpCode
 /*
   For more details look for hciCmdParserConnection() headline
 */
-hciStatus_t hciCmdParserVendorSpecificInitiator( uint8 *pData, uint16 cmdOpCode )
+hciStatus_t hciCmdParserExtVendorSpecificInitiator( uint8 *pData, uint16 cmdOpCode )
 {
   hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
 
@@ -1400,7 +1547,7 @@ hciStatus_t hciCmdParserVendorSpecificInitiator( uint8 *pData, uint16 cmdOpCode 
 /*
   For more details look for hciCmdParserConnection() headline
 */
-hciStatus_t hciCmdParserVendorSpecificPeripheral( uint8 *pData, uint16 cmdOpCode )
+hciStatus_t hciCmdParserExtVendorSpecificPeripheral( uint8 *pData, uint16 cmdOpCode )
 {
   hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
 
@@ -1436,7 +1583,7 @@ hciStatus_t hciCmdParserVendorSpecificPeripheral( uint8 *pData, uint16 cmdOpCode
 /*
   For more details look for hciCmdParserConnection() headline
 */
-hciStatus_t hciCmdParserVendorSpecificBroadcaster( uint8 *pData, uint16 cmdOpCode )
+hciStatus_t hciCmdParserExtVendorSpecificBroadcaster( uint8 *pData, uint16 cmdOpCode )
 {
   hciStatus_t status = HCI_ERROR_CODE_UNKNOWN_HCI_CMD;
 
@@ -1946,6 +2093,69 @@ static inline hciStatus_t hciCmdParserPeriodicAdvCreateSync( uint8 *pData )
 
   return HCI_LE_PeriodicAdvCreateSyncCmd( options, advSID, advAddrType, advAddress, skip,
                                           syncTimeout, syncCteType );
+}
+
+/*******************************************************************************
+ * @fn          hciCmdParserSetPeriodicAdvResponseData
+ *
+ * @brief       This function used for parsing the pData and parsing it to
+ *              HCI_LE_SetPeriodicAdvResponseDataCmd input arguments.
+ *
+ * input parameters
+ *
+ * @param       pData - Pointer to packet's data.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      LL_STATUS_SUCCESS,
+ *              LL_STATUS_ERROR_BAD_PARAMETER,
+ *              LL_STATUS_ERROR_COMMAND_DISALLOWED,
+ *              LL_STATUS_ERROR_UNEXPECTED_STATE_ROLE,
+ *              LL_STATUS_ERROR_MEM_CAPACITY_EXCEEDED
+ *
+ */
+static inline hciStatus_t hciCmdParserSetPeriodicAdvResponseData( uint8 *pData )
+{
+
+  uint16_t syncHandle = BUILD_UINT16( pData[0], pData[1] );
+
+  return HCI_LE_SetPeriodicAdvResponseDataCmd(syncHandle, &pData[2]);
+}
+
+/*******************************************************************************
+ * @fn          hciCmdParserSetPeriodicSyncSubevent
+ *
+ * @brief       This function used for parsing the pData and parsing it to
+ *              HCI_LE_SetPeriodicSyncSubeventCmd input arguments.
+ *
+ * input parameters
+ *
+ * @param       pData - Pointer to packet's data.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      LL_STATUS_SUCCESS,
+ *              LL_STATUS_ERROR_BAD_PARAMETER,
+ *              LL_STATUS_ERROR_COMMAND_DISALLOWED,
+ *              LL_STATUS_ERROR_MEM_CAPACITY_EXCEEDED,
+ *
+ */
+static inline hciStatus_t hciCmdParserSetPeriodicSyncSubevent( uint8 *pData )
+{
+
+  uint16_t syncHandle = BUILD_UINT16( pData[0], pData[1] );
+  uint8 perAdvProps = BUILD_UINT16( pData[2], pData[3] );
+  uint8 numSubevents = pData[4];
+  uint8 *subEvents = &pData[5];
+
+  return HCI_LE_SetPeriodicSyncSubeventCmd(syncHandle,
+                                           perAdvProps,
+                                           numSubevents,
+                                           subEvents);
 }
 
 /*******************************************************************************

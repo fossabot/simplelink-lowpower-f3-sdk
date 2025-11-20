@@ -307,6 +307,8 @@ ZB_DECLARE_SIMPLE_DESC(8,9);
 /** Control4 profile identifier. */
 #define ZB_AF_CONTROL4_PROFILE_ID 0xC25DU
 #endif
+/** Manufacturer Specific Application Profile initial ID - ZCL8 2.6.1.1 */
+#define ZB_MSP_INITIAL_PROFILE_ID 0xC000U
 /** @} */
 
 /** @} */ /* af_common_constants */

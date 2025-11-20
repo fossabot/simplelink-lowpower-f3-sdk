@@ -87,11 +87,12 @@
 #include "ti/ble/controller/ll/ll_cs_mgr.h"
 #include "ti/ble/controller/ll/ll_cs_db.h"
 #include "ti/ble/controller/ll/ll_cs_common.h"
-
 #include <ti/drivers/utils/Math.h>
 // Stub headers
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_connectable.h"
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_ble_health.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_pscan.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_pawr_scan.h"
 
 /*******************************************************************************
  * MACROS
@@ -533,7 +534,7 @@ void HCI_SendCommandStatusEvent( uint8 eventCode, uint16 status, uint16 opcode )
 {
   uint8 data[HCI_CMD_STATUS_EVENT_LEN];
 
-  data[0] = status;
+  data[0] = LO_UINT16(status);
   data[1] = 1;                   // number of HCI command packets
   data[2] = LO_UINT16( opcode ); // opcode (LSB)
   data[3] = HI_UINT16( opcode ); // opcode (MSB)
@@ -981,7 +982,7 @@ void HCI_AeScanCback( uint8 event, void *pData )
  */
 WEAK_FUNC void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
                                                            uint16 connHandle,
-                                                           llCsCapabilities_t* peerCapabilities)
+                                                           const llCsCapabilities_t* peerCapabilities)
 {
   uint8* pEvt;
   // Pointer to data inside pEvt, that pointer point next slot to be filled
@@ -991,7 +992,7 @@ WEAK_FUNC void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
     &pData, HCI_LE_CS_READ_REMOTE_SUPPORTED_CAPABILITIES_COMPLETE_EVENT,
     HCI_LE_CS_READ_REMOTE_SUPPORTED_CAPABILITIES_COMPLETE_EVENT_LEN);
 
-  if (pEvt)
+  if (NULL != pEvt)
   {
     *pData++ = status;                // status
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
@@ -1049,44 +1050,47 @@ WEAK_FUNC void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
  *
  * @return      None
  */
-WEAK_FUNC void HCI_CS_ConfigCompleteCback(uint8 status,
-                                          uint16 connHandle,
-                                          const csConfigurationSet_t* csConfig)
+WEAK_FUNC void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8_t configId, uint8 status)
 {
   uint8* pEvt;
+  const csConfigurationSet_t* csConfig = NULL;
+
   // Pointer to data inside pEvt, that pointer point next slot to be filled
   uint8* pData;
 
   pEvt = hciAllocAndPrepHciLeEvtPkt(&pData, HCI_LE_CS_CONFIG_COMPLETE_EVENT,
                                     HCI_LE_CS_CONFIG_COMPLETE_EVENT_LEN);
 
-  if (pEvt)
+if (NULL != pEvt)
   {
     *pData++ = status;                // status
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
     *pData++ = HI_UINT16(connHandle); // connection handle (MSB)
-    *pData++ = csConfig->configId;
-    *pData++ = csConfig->state;
-    *pData++ = csConfig->mainMode;
-    *pData++ = csConfig->subMode;
-    *pData++ = csConfig->mainModeMinSteps;
-    *pData++ = csConfig->mainModeMaxSteps;
-    *pData++ = csConfig->mainModeRepetition;
-    *pData++ = csConfig->modeZeroSteps;
-    *pData++ = csConfig->role;
-    *pData++ = csConfig->rttType;
-    *pData++ = csConfig->csSyncPhy;
-    pData = MAP_osal_memcpy(pData, &csConfig->channelMap, CS_CHM_SIZE);
-    *pData++ = csConfig->chMRepetition;
-    *pData++ = csConfig->chSel;
-    *pData++ = csConfig->ch3cShape;
-    *pData++ = csConfig->ch3CJump;
-    *pData++ = CS_RFU;
-    *pData++ = csConfig->tIP1;
-    *pData++ = csConfig->tIP2;
-    *pData++ = csConfig->tFCs;
-    *pData = csConfig->tPM;
-
+    *pData++ = configId;              // configId
+    if ( status == CS_STATUS_SUCCESS )
+    {
+      csConfig = llCsDbGetConfiguration(connHandle, configId);
+      *pData++ = csConfig->action;
+      *pData++ = csConfig->mainMode;
+      *pData++ = csConfig->subMode;
+      *pData++ = csConfig->mainModeMinSteps;
+      *pData++ = csConfig->mainModeMaxSteps;
+      *pData++ = csConfig->mainModeRepetition;
+      *pData++ = csConfig->modeZeroSteps;
+      *pData++ = csConfig->role;
+      *pData++ = csConfig->rttType;
+      *pData++ = csConfig->csSyncPhy;
+      pData = MAP_osal_memcpy(pData, &csConfig->channelMap, CS_CHM_SIZE);
+      *pData++ = csConfig->chMRepetition;
+      *pData++ = csConfig->chSel;
+      *pData++ = csConfig->ch3cShape;
+      *pData++ = csConfig->ch3CJump;
+      *pData++ = CS_RFU;
+      *pData++ = csConfig->tIP1;
+      *pData++ = csConfig->tIP2;
+      *pData++ = csConfig->tFCs;
+      *pData = csConfig->tPM;
+    }
     // send the message
     HCI_SendEventToHost(pEvt);
   }
@@ -1122,12 +1126,12 @@ WEAK_FUNC void HCI_CS_ReadRemoteFAETableCompleteCback(uint8 status,
   pEvt = hciAllocAndPrepHciLeEvtPkt(
     &pData, HCI_LE_CS_READ_REMOTE_FAE_TABLE_COMPLETE_EVENT, eventLen);
 
-  if (pEvt)
+  if (NULL != pEvt)
   {
+    *pData++ = status;                // status
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
     *pData++ = HI_UINT16(connHandle); // connection handle (MSB)
-    *pData++ = status;                // status
-    if (faeTable)
+    if (NULL != faeTable)
     {
       for (uint8 i = 0; i <= (eventLen - 4); i++)
       {
@@ -1166,7 +1170,7 @@ WEAK_FUNC void HCI_CS_SecurityEnableCompleteCback(uint8 status, uint16 connHandl
     hciAllocAndPrepHciLeEvtPkt(&pData, HCI_LE_CS_SECURITY_ENABLE_COMPLETE_EVENT,
                                HCI_LE_CS_SECURITY_ENABLE_COMPLETE_EVENT_LEN);
 
-  if (pEvt)
+  if (NULL != pEvt)
   {
     *pData++ = status;                // status
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
@@ -1208,7 +1212,7 @@ WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
     &pData, HCI_LE_CS_PROCEDURE_ENABLE_COMPLETE_EVENT,
     HCI_LE_CS_PROCEDURE_ENABLE_COMPLETE_EVENT_LEN);
 
-  if (pEvt)
+  if (NULL != pEvt)
   {
     *pData++ = status;
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
@@ -1241,7 +1245,7 @@ WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
 }
 
 /*******************************************************************************
- * @fn          HCI_CS_SubeventResultCback
+ * @fn          HCI_CS_SubeventResultsProcess
  *
  * @brief       Subevent results callback
  *
@@ -1256,9 +1260,9 @@ WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
  *
  * @return      None
  */
-WEAK_FUNC void HCI_CS_SubeventResultCback(void* pRes, uint16 dataLength)
+WEAK_FUNC void HCI_CS_SubeventResultsProcess(const RCL_CmdBleCs_SubeventResults *subeventRes, uint16_t dataLength)
 {
-  if (pRes)
+  if (subeventRes)
   {
     uint8* pEvt;
     // Pointer to data inside pEvt, that pointer point next slot to be filled
@@ -1266,12 +1270,54 @@ WEAK_FUNC void HCI_CS_SubeventResultCback(void* pRes, uint16 dataLength)
 
     pEvt = hciAllocAndPrepHciEvtPkt(&pData, HCI_LE_EVENT_CODE, dataLength);
 
-    if (pEvt)
+    if (NULL != pEvt)
     {
-      if (pData)
+      if (NULL != pData)
       {
         // Copy results into pData
-        MAP_osal_memcpy(pData, pRes, dataLength);
+        MAP_osal_memcpy(pData, (void *)subeventRes, dataLength);
+      }
+
+      // send the message
+      HCI_SendEventToHost(pEvt);
+    }
+  }
+}
+
+/*******************************************************************************
+ * @fn          HCI_CS_SubeventContResultsProcess
+ *
+ * @brief       Subevent results callback
+ *
+ * input parameters
+ *
+ * @param       pRes - pointer to cont results data
+ * @param       dataLength - length of data
+
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+
+WEAK_FUNC void HCI_CS_SubeventContResultsProcess(const RCL_CmdBleCs_SubeventResultsContinue* subeventRes, uint16_t dataLength)
+{
+  if (subeventRes)
+  {
+    uint8* pEvt;
+    // Pointer to data inside pEvt, that pointer point next slot to be filled
+    uint8* pData;
+
+    pEvt = hciAllocAndPrepHciEvtPkt(&pData, HCI_LE_EVENT_CODE, dataLength);
+
+    if (NULL != pEvt)
+    {
+      if (NULL != pData)
+      {
+        // Copy results into pData
+        MAP_osal_memcpy(pData, (void *)subeventRes, dataLength);
       }
 
       // send the message
@@ -1305,7 +1351,7 @@ void HCI_CS_TestEndCompleteCback(uint8 status)
                                      HCI_LE_CS_TEST_END_COMPLETE_EVENT,
                                      HCI_LE_CS_TEST_END_COMPLETE_EVENT_LEN);
 
-  if (pEvt)
+  if (NULL != pEvt)
   {
     *pData++ = status;
 
@@ -2044,7 +2090,9 @@ void LL_EnhancedConnectionCompleteCback( uint8 reasonCode, uint16 connHandle,
                                          uint8 *peerRPA, uint16 connInterval,
                                          uint16 peripheralLatency,
                                          uint16 connTimeout,
-                                         uint8 clockAccuracy )
+                                         uint8 clockAccuracy,
+                                         uint8 advHandle,
+                                         uint16 syncHandle)
 {
   uint8 *pEvt;
   // Pointer to data inside pEvt, that pointer point next slot to be filled
@@ -2055,8 +2103,17 @@ void LL_EnhancedConnectionCompleteCback( uint8 reasonCode, uint16 connHandle,
 
   if ( HCI_CheckEventMaskLe( LE_EVT_ENH_CONN_COMPLETE_BIT ) )
   {
-    hciPktLen = HCI_ENH_CONNECTION_COMPLETE_EVENT_LEN;
-    hciEvtType = HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT;
+    if(OPT_LL_PAwRS_IsEnable() == TRUE)
+    {
+        hciPktLen = HCI_ENH_CONNECTION_COMPLETE_EVENT_LEN_V2;
+        hciEvtType = HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT_V2;
+    }
+    else
+    {
+        hciPktLen = HCI_ENH_CONNECTION_COMPLETE_EVENT_LEN_V1;
+        hciEvtType = HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT_V1;
+    }
+
     enhanceConn = TRUE;
   }
   else if ( HCI_CheckEventMaskLe( LE_EVT_CONN_COMPLETE_BIT ) )
@@ -2122,8 +2179,15 @@ void LL_EnhancedConnectionCompleteCback( uint8 reasonCode, uint16 connHandle,
       *pData++ = HI_UINT16( peripheralLatency );   // peripheral latency (LSB)
       *pData++ = LO_UINT16( connTimeout );         // connection timeout (LSB)
       *pData++ = HI_UINT16( connTimeout );         // connection timeout (MSB)
-      *pData   = clockAccuracy;                    // clock accuracy
+      *pData = clockAccuracy;                      // clock accuracy
 
+      if ((enhanceConn == TRUE) && (OPT_LL_PAwRS_IsEnable() == TRUE))
+      {
+          pData++;
+          *pData++ = advHandle; // Advertising handle
+          *pData++ = LO_UINT16( syncHandle ); // Sync handle (LSB)
+          *pData = HI_UINT16( syncHandle ); // Sync handle (MSB)
+      }
       // Send message
       HCI_SendEventToHost( pEvt );
     }
@@ -2553,50 +2617,10 @@ void HCI_EXT_RssiMon_ReportCB(uint8_t handle, int8_t threshPass)
   hciSendVendorSpecificEvent(data, HCI_EXT_RSSI_MON_EVENT_LEN);
 }
 
-/*********************************************************************
- * @fn      HCI_PeriodicAdvSyncEstablishedEvent
- *
- * @brief   This event indicates the scanner that the Controller has received
- *          the first periodic advertising packet from an advertiser after the
- *          HCI_LE_Periodic_Advertising_Create_Sync command has been sent to the Controller.
- *
- * @design  /ref did_286039104
- *
- * input parameters
- *
- * @param   status           - Periodic advertising sync HCI status
- * @param   syncHandle       - Handle identifying the periodic advertising train assigned by the Controller
- *                             (Range: 0x0000 to 0x0EFF)
- * @param   advSid           - Value of the Advertising SID subfield in the ADI field of the PDU
- * @param   advAddrType      - Advertiser address type
- *                             0x00 - Public
- *                             0x01 - Random
- *                             0x02 - Public Identity Address
- *                             0x03 - Random Identity Address
- * @param   advAddress       - Advertiser address
- * @param   advPhy           - Advertiser PHY
- *                             0x01 - LE 1M
- *                             0x02 - LE 2M
- *                             0x03 - LE Coded
- * @param   periodicAdvInt   - Periodic advertising interval Range: 0x0006 to 0xFFFF
- *                             Time = N * 1.25 ms (Time Range: 7.5 ms to 81.91875 s)
- * @param   advClockAccuracy - Accuracy of the periodic advertiser's clock
- *                             0x00 - 500 ppm
- *                             0x01 - 250 ppm
- *                             0x02 - 150 ppm
- *                             0x03 - 100 ppm
- *                             0x04 - 75 ppm
- *                             0x05 - 50 ppm
- *                             0x06 - 30 ppm
- *                             0x07 - 20 ppm
- *
- * @return  void
+/*******************************************************************************
+ * Public function defined in ll.h
  */
-void HCI_PeriodicAdvSyncEstablishedEvent( uint8 status, uint16 syncHandle,
-                                          uint8 advSid, uint8 advAddrType,
-                                          uint8 *advAddress, uint8 advPhy,
-                                          uint16 periodicAdvInt,
-                                          uint8 advClockAccuracy )
+void HCI_PadvSyncEstabEventV1( uint8 status, uint8_t* llPadvSEstEventParams)
 {
   uint8 *pEvt;
   // Pointer to data inside pEvt, that pointer point next slot to be filled
@@ -2605,28 +2629,13 @@ void HCI_PeriodicAdvSyncEstablishedEvent( uint8 status, uint16 syncHandle,
   if ( HCI_CheckEventMaskLe( LE_EVT_PERIODIC_ADV_SYNC_ESTABLISHED_BIT ) )
   {
     pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
-                                       HCI_BLE_PERIODIC_ADV_SYNCH_ESTABLISHED_EVENT,
-                                       HCI_PERIODIC_ADV_SYNCH_ESTABLISHED_EVENT_LEN );
+                                       HCI_BLE_PADV_SYNC_ESTAB_V1_EVENT,
+                                       HCI_PADV_SYNC_ESTAB_EVENT_V1_LEN );
     if ( pEvt )
     {
       // Populate data
       *pData++ = status;
-      *pData++ = LO_UINT16( syncHandle );             // Sync handle (LSB)
-      *pData++ = HI_UINT16( syncHandle );             // Sync handle (MSB)
-      *pData++ = advSid;
-      *pData++ = advAddrType;
-
-      if ( advAddress != NULL )
-      {
-        memcpy( pData, advAddress, B_ADDR_LEN );
-      }
-
-      pData += B_ADDR_LEN;
-
-      *pData++ = advPhy;
-      *pData++ = LO_UINT16( periodicAdvInt );         // Periodic interval (LSB)
-      *pData++ = HI_UINT16( periodicAdvInt );         // Periodic interval (MSB)
-      *pData   = advClockAccuracy;
+      osal_memcpy( pData, llPadvSEstEventParams, HCI_PADV_SYNC_ESTAB_EVENT_V1_LEN - 2 );
 
       // Send message
       HCI_SendEventToHost( pEvt );
@@ -2634,72 +2643,115 @@ void HCI_PeriodicAdvSyncEstablishedEvent( uint8 status, uint16 syncHandle,
   }
 }
 
-/*********************************************************************
- * @fn      HCI_LE_PeriodicAdvertisingReportEvent
- *
- * @brief   This event indicates the scanner that the Controller has
- *          received a Periodic Advertising packet.
- *
- * @design  /ref did_286039104
- *
- * @param   syncHandle - Handle identifying the periodic advertising train
- * @param   txPower    - Tx Power information (Range: -127 to +20)
- * @param   rssi       - RSSI value for the received packet (Range: -127 to +20)
- *                       If the packet contains CTE, this value is not available
- * @param   cteType    - Constant Tone Extension type
- *                       0x00 - AoA Constant Tone Extension
- *                       0x01 - AoD Constant Tone Extension with 1us slots
- *                       0x02 - AoD Constant Tone Extension with 2us slots
- *                       0xFF - No Constant Tone Extension
- * @param   dataStatus - Data status
- *                       0x00 - Data complete
- *                       0x01 - Data incomplete, more data to come
- *                       0x02 - Data incomplete, data truncated, no more to come
- * @param   dataLen    - Length of the Data field (Range: 0 to 247)
- * @param   data       - Data received from a Periodic Advertising packet
- *
- * @return  void
+/*******************************************************************************
+ * Public function defined in ll.h
  */
-void HCI_PeriodicAdvReportEvent( uint16 syncHandle, int8 txPower, int8 rssi,
-                                 uint8 cteType, uint8 dataStatus, uint8 dataLen,
-                                 uint8 *data )
+void HCI_PadvSyncEstabEventV2( uint8 status, uint8_t* llPadvSEstEventParams)
 {
-  uint8 *pEvt;
+  uint8_t *pEvt;
   // Pointer to data inside pEvt, that pointer point next slot to be filled
-  uint8 *pData;
+  uint8_t *pData;
+
+  if ( HCI_CheckEventMaskLe( LE_EVT_PERIODIC_ADV_SYNC_ESTABLISHED_BIT ) )
+  {
+    pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
+                                       HCI_BLE_PADV_SYNC_ESTAB_V2_EVENT,
+                                       HCI_PADV_SYNC_ESTAB_EVENT_V2_LEN );
+    if ( pEvt )
+    {
+      // Populate data
+      *pData++ = status;
+      osal_memcpy( pData, llPadvSEstEventParams, HCI_PADV_SYNC_ESTAB_EVENT_V2_LEN - 2 );
+
+      // Send message
+      HCI_SendEventToHost( pEvt );
+    }
+  }
+}
+
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PeriodicAdvReportEventV1( uint8_t* periodicEvtParams, uint8_t dataStatus, uint8 dataLen, uint8 *data )
+{
+ uint8_t *pEvt;
+ // Pointer to data inside pEvt, that pointer point next slot to be filled
+ uint8_t *pData;
+
+ if ( HCI_CheckEventMaskLe( LE_EVT_PERIODIC_ADV_REPORT_BIT ) )
+ {
+   uint8_t dataLength;
+   uint8_t eventLength;
+   uint8_t dataOffset = 0;
+
+   do
+   {
+     // Data length
+     dataLength = Math_MIN( dataLen, HCI_PERIODIC_ADV_REPORT_V1_MAX_DATA );
+     dataLen -= dataLength;
+     eventLength = HCI_PADV_REPORT_EVENT_V1_LEN + dataLength;
+
+     pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
+                                        HCI_BLE_PADV_REPORT_V1_EVENT,
+                                        eventLength );
+     if ( pEvt )
+     {
+       // Populate data
+       osal_memcpy( pData, periodicEvtParams, HCI_PADV_REPORT_EVENT_V1_PARAMS_LEN );
+       pData += HCI_PADV_REPORT_EVENT_V1_PARAMS_LEN;
+       *pData++ = (dataLen > 0) ? HCI_PERIODIC_ADV_REPORT_DATA_INCOMPLETE : dataStatus;
+       *pData++ = dataLength;
+
+       if ( (data != NULL) && (dataLength > 0) )
+       {
+         osal_memcpy( pData, data + dataOffset, dataLength );
+         dataOffset += dataLength;
+       }
+
+       // Send message
+       HCI_SendEventToHost( pEvt );
+     }
+   }
+   while ( dataLen > 0 );
+ }
+}
+
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PeriodicAdvReportEventV2( uint8_t* periodicEvtParams, uint8_t dataStatus, uint8 dataLen, uint8 *data )
+{
+  uint8_t *pEvt;
+  // Pointer to data inside pEvt, that pointer point next slot to be filled
+  uint8_t *pData;
 
   if ( HCI_CheckEventMaskLe( LE_EVT_PERIODIC_ADV_REPORT_BIT ) )
   {
-    uint8 dataLength;
-    uint8 eventLength;
-    uint8 dataOffset = 0;
+    uint8_t dataLength;
+    uint8_t eventLength;
+    uint8_t dataOffset = 0;
 
     do
     {
       // Data length
-      dataLength = Math_MIN( dataLen, HCI_PERIODIC_ADV_REPORT_MAX_DATA );
+      dataLength = Math_MIN( dataLen, HCI_PERIODIC_ADV_REPORT_V2_MAX_DATA );
       dataLen -= dataLength;
-      eventLength = HCI_PERIODIC_ADV_REPORT_EVENT_LEN + dataLength;
+      eventLength = HCI_PADV_REPORT_EVENT_V2_LEN + dataLength;
 
       pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
-                                         HCI_BLE_PERIODIC_ADV_REPORT_EVENT,
+                                         HCI_BLE_PADV_REPORT_V2_EVENT,
                                          eventLength );
       if ( pEvt )
       {
         // Populate data
-        *pData++ = LO_UINT16( syncHandle );              // Sync handle (LSB)
-        *pData++ = HI_UINT16( syncHandle );              // Sync handle (MSB)
-        *pData++ = txPower;
-        *pData++ = rssi;
-        *pData++ = cteType;
-        *pData++ =
-            (dataLen > 0) ? HCI_PERIODIC_ADV_REPORT_DATA_INCOMPLETE :
-                            dataStatus;
+        osal_memcpy( pData, periodicEvtParams, HCI_PADV_REPORT_EVENT_V2_PARAMS_LEN );
+        pData += HCI_PADV_REPORT_EVENT_V2_PARAMS_LEN;
+        *pData++ = (dataLen > 0) ? HCI_PERIODIC_ADV_REPORT_DATA_INCOMPLETE : dataStatus;
         *pData++ = dataLength;
 
         if ( (data != NULL) && (dataLength > 0) )
         {
-          memcpy( pData, data + dataOffset, dataLength );
+          osal_memcpy( pData, data + dataOffset, dataLength );
           dataOffset += dataLength;
         }
 
@@ -3492,5 +3544,66 @@ uint8 hciSetEventMask( uint8 *pEventMask, uint8 eventMaskTableIndex )
 
   return status;
 }
+
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PASTReceivedEventV1( uint8_t status, uint8_t* pPASTReceivedInfo )
+{
+  uint8_t *pEvt = NULL;
+  // Pointer to data inside pEvt, that pointer point next slot to be filled
+  uint8_t *pData = NULL;
+
+  // Check if the periodic advertising sync transfer received event V1 is enabled
+  if ( HCI_CheckEventMaskLe( LE_EVT_PADV_SYNC_TRANSFER_RECEIVED_BIT_V1 ) == UTRUE )
+  {
+    // Allocate and prepare the event V1
+    pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
+                                       HCI_BLE_PADV_SYNC_TRANSFER_RECEIVED_EVENT_V1,
+                                       HCI_PADV_SYNC_TRANSFER_RECEIVED_LEN_V1 );
+    if ( pEvt != NULL )
+    {
+      // Populate data
+      *pData++ = status;
+      // Copy the received info, excluding the first two bytes (status and subevent code),
+      // which are already set
+      osal_memcpy( pData, pPASTReceivedInfo, HCI_PADV_SYNC_TRANSFER_RECEIVED_LEN_V1 - 2 );
+
+      // Send message
+      HCI_SendEventToHost( pEvt );
+    }
+  }
+}
+
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PASTReceivedEventV2( uint8_t status, uint8_t* pPASTReceivedInfo )
+{
+  uint8_t *pEvt = NULL;
+  // Pointer to data inside pEvt, that pointer point next slot to be filled
+  uint8_t *pData = NULL;
+
+  // Check if the periodic advertising sync transfer received event V2 is enabled
+  if ( HCI_CheckEventMaskLe( LE_EVT_PADV_SYNC_TRANSFER_RECEIVED_BIT_V2 ) == UTRUE )
+  {
+    // Allocate and prepare the event V2
+    pEvt = hciAllocAndPrepHciLeEvtPkt( &pData,
+                                       HCI_BLE_PADV_SYNC_TRANSFER_RECEIVED_EVENT_V2,
+                                       HCI_PADV_SYNC_TRANSFER_RECEIVED_LEN_V2 );
+    if ( pEvt != NULL )
+    {
+      // Populate data
+      *pData++ = status;
+      // Copy the received info, excluding the first two bytes (status and subevent code),
+      // which are already set
+      osal_memcpy( pData, pPASTReceivedInfo, HCI_PADV_SYNC_TRANSFER_RECEIVED_LEN_V2 - 2 );
+
+      // Send message
+      HCI_SendEventToHost( pEvt );
+    }
+  }
+}
+
 /*******************************************************************************
  */

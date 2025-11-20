@@ -24,6 +24,8 @@
 #ifndef ZB_ZCL_TUNNEL_H
 #define ZB_ZCL_TUNNEL_H 1
 
+#if defined ZB_ZCL_SUPPORT_CLUSTER_TUNNEL || defined DOXYGEN
+
 /** @cond (DOXYGEN_ZCL_SECTION && DOXYGEN_CUSTOM_TUNNEL_CLUSTER) */
 
 /** @addtogroup ZB_ZCL_TUNNEL
@@ -360,5 +362,7 @@ void zb_zcl_tunnel_init_server(void);
 void zb_zcl_tunnel_init_client(void);
 #define ZB_ZCL_CLUSTER_ID_TUNNEL_SERVER_ROLE_INIT zb_zcl_tunnel_init_server
 #define ZB_ZCL_CLUSTER_ID_TUNNEL_CLIENT_ROLE_INIT zb_zcl_tunnel_init_client
+
+#endif /* ZB_ZCL_SUPPORT_CLUSTER_TUNNEL */
 
 #endif /* ZB_ZCL_TUNNEL_H */

@@ -122,6 +122,11 @@ void OPT_llCentral_TaskEnd(void)
     llCentral_TaskEnd();
 }
 
+uint8_t OPT_llProcessCentralControlProcedures(llConnState_t* connPtr)
+{
+    return llProcessCentralControlProcedures(connPtr);
+}
+
 void OPT_llExtInit_PostProcess(void)
 {
     llExtInit_PostProcess();
@@ -157,9 +162,9 @@ llStatus_t OPT_HCI_TL_ext_create_conn(uint16_t opcode, uint8_t* pHciParams)
     return HCI_TL_ext_create_conn(opcode, pHciParams);
 }
 
-hciStatus_t OPT_hciCmdParserVendorSpecificInitiator(uint8_t* pData, uint16_t cmdOpCode)
+hciStatus_t OPT_hciCmdParserExtVendorSpecificInitiator(uint8_t* pData, uint16_t cmdOpCode)
 {
-    return hciCmdParserVendorSpecificInitiator(pData, cmdOpCode);
+    return hciCmdParserExtVendorSpecificInitiator(pData, cmdOpCode);
 }
 
 void OPT_LL_rclInitRxEntryDone(void)

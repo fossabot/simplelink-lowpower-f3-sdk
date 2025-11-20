@@ -112,9 +112,9 @@ hciStatus_t OPT_hciCmdParserConnection(uint8_t* pData, uint16_t cmdOpCode)
     return hciCmdParserConnection(pData, cmdOpCode);
 }
 
-hciStatus_t OPT_hciCmdParserVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode)
+hciStatus_t OPT_hciCmdParserExtVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode)
 {
-    return hciCmdParserVendorSpecificConnection(pData, cmdOpCode);
+    return hciCmdParserExtVendorSpecificConnection(pData, cmdOpCode);
 }
 
 uint8_t OPT_llRxEntryDoneEventHandleStateConnection(void)

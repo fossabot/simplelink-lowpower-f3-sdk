@@ -18,7 +18,7 @@
             "+../../app/app_pairing.c -> app/app_pairing.c",
             "+../../app/app_data.c -> app/app_data.c",
             "+../../app/Profiles/app_simple_gatt.c -> app/Profiles/app_simple_gatt.c",
-            "+../basic_ble_oad_dual_image.syscfg -> basic_ble_oad_dual_image.syscfg",
+            "+../../basic_ble_oad_dual_image.syscfg -> basic_ble_oad_dual_image.syscfg",
             "+../../common/Startup/main_freertos.c -> main_freertos.c",
             "+cc27xx_freertos.cmd -> cc27xx_freertos.cmd"
         ]

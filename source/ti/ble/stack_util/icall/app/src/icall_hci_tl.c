@@ -2685,7 +2685,7 @@ static uint8_t processExtMsgL2CAP(uint8_t cmdID, hciExtCmd_t *pCmd, uint8_t *pRs
       break;
 #endif //(BLE_V41_FEATURES & L2CAP_COC_CFG)
 
-    case L2CAP_PARAM_UPDATE_REQ:
+    case L2CAP_CONNECTION_PARAMETER_UPDATE_REQ:
       stat = L2CAP_ParseParamUpdateReq(&cmd, &pBuf[2], pCmd->len-2);
       if (stat == SUCCESS)
       {
@@ -6281,6 +6281,18 @@ static uint8_t *processEventsL2CAP(l2capSignalEvent_t *pPkt, uint8_t *pOutMsg, u
           pOutMsg[msgLen++] = HI_UINT16(pCreditEvt->credits);
         }
         break;
+      case L2CAP_PEER_CREDIT_RECEIVED_EVT:
+      {
+        l2capFlowCtrlCredit_t *pCredit = &(pPkt->cmd.credit);
+
+        pOutMsg[msgLen++] = LO_UINT16(pCredit->CID);
+        pOutMsg[msgLen++] = HI_UINT16(pCredit->CID);
+
+        pOutMsg[msgLen++] = LO_UINT16(pCredit->credits);
+        pOutMsg[msgLen++] = HI_UINT16(pCredit->credits);
+      }
+      break;
+
 #endif //(BLE_V41_FEATURES & L2CAP_COC_CFG)
 
       default:

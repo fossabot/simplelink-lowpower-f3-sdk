@@ -49,14 +49,13 @@
  * INCLUDES
  */
 #include "ti/ble/stack_util/comdef.h"
+#include "ti/ble/stack_util/osal/osal.h"
 #include "ti/ble/app_util/config/ble_user_config.h"
-#include <ti/drivers/AESCCM.h>
-#include <ti/drivers/AESECB.h>
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_ae.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_adaptivity.h"
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKeyPlaintext.h>
 #include <ti/drivers/utils/Random.h>
 
-#include <ti/drivers/aesccm/AESCCMLPF3.h>
-#include <ti/drivers/aesecb/AESECBLPF3.h>
 #include <ti/drivers/RNG.h>
 
 #if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( CENTRAL_CFG | PERIPHERAL_CFG ) )
@@ -71,6 +70,9 @@
 #endif // CONTROLLER_ONLY
 #endif // SYSCFG
 
+#ifdef FREERTOS
+#include "FreeRTOSConfig.h"
+#endif // FREERTOS
 
 #ifdef CONFIG_ZEPHYR
 #include "rcl_settings_ble.h"
@@ -94,6 +96,8 @@
 // Default Tx Power dBm value
 #define DEFAULT_TX_POWER               0
 #endif // SYSCFG
+
+
 
 /*******************************************************************************
  * TYPEDEFS
@@ -154,7 +158,8 @@ const stackSpecific_t bleStackConfig =
   .rssiMonitorMaxRssiWeight             = 10,
   .pwrCtrlRssiLowThreshold              = -85,
   .pwrCtrlRssiHighThreshold             = 0,
-  .pwrCtrlDeltaStepDb                   = 10
+  .pwrCtrlDeltaStepDb                   = 10,
+  .llTaskPriority                       = LL_MAX_TASK_PRIORITY
 };
 
 uint16_t bleUserCfg_maxPduSize = MAX_PDU_SIZE;
@@ -272,9 +277,8 @@ void setBleUserConfig( icall_userCfg_t *userCfg )
     llUserConfig.rclPhyFeatureCodedS8 = RCL_PHY_FEATURE_CODED_TX_RATE_S8;
     llUserConfig.rclPhyFeatureCodedS2 = RCL_PHY_FEATURE_CODED_TX_RATE_S2;
 
-#ifdef SDAA_ENABLE
-    llUserConfig.sdaaCfgPtr = &sdaaCfgTable; // SDAA module configuration
-#endif
+    // Set the user configuration for the SDAA module
+    OPT_setSddaBleUserConfig();
 
     // save off the application's assert handler
     halAssertInit( **userCfg->appServiceInfo->assertCback, HAL_ASSERT_LEGACY_MODE_ENABLED );
@@ -289,13 +293,55 @@ void setBleUserConfig( icall_userCfg_t *userCfg )
   llUserConfig.useSrcClkLFOSC = SRC_CLK_IS_LFOSC;
   llUserConfig.cfgLFOSCExtraPPM = USER_CFG_LFOSC_EXTRA_PPM;
 
-#ifdef USE_AE
-  llUserConfig.useAE = TRUE;
-#else
+  // set the AE configuration
+  // Note: This is set to FALSE by default,
+  //       and can be set to TRUE by calling setAeBleUserConfig()
   llUserConfig.useAE = FALSE;
-#endif
+  OPT_setAeBleUserConfig();
 
   return;
+}
+
+/*******************************************************************************
+ * @fn          setSddaBleUserConfig
+ *
+ * @brief       sets the SDAA configuration for the BLE stack.
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None.
+ */
+void setSddaBleUserConfig(void)
+{
+   // SDAA module configuration
+   llUserConfig.sdaaCfgPtr = &sdaaCfgTable;
+}
+
+/*******************************************************************************
+ * @fn          setAeBleUserConfig
+ *
+ * @brief       sets the AE configuration for the BLE stack.
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None.
+ */
+void setAeBleUserConfig(void)
+{
+  // set the AE configuration
+  llUserConfig.useAE = TRUE;
 }
 
 /*******************************************************************************

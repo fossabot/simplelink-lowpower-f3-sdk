@@ -21,8 +21,8 @@
  */
 /* PURPOSE: Very simple lists operations (macros).
 */
-#ifndef LIST_H_ZB
-#define LIST_H_ZB 1
+#ifndef ZB_LIST_MACROS_H
+#define ZB_LIST_MACROS_H 1
 
 /*! @cond internals_doc */
 /**
@@ -497,4 +497,4 @@ while (0)
 /*! @} */
 /*! @endcond */
 
-#endif /* LIST_H_ZB */
+#endif /* ZB_LIST_MACROS_H */

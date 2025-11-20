@@ -93,11 +93,14 @@ typedef unsigned int  __UINT32;
 
 // Word (32 bit) read to address x in the LRF module. On some device revisions,
 // back-to-back memory reads to LRF does not read the correct value, this is
-// worked around by always inserting 2 NOPs before loading from address x.
+// worked around by always inserting 4 NOP.Ws before loading from address x.
+// NOP.W's will never be optimized out by the CPU.
 #define HWREG_READ_LRF(x) ({ \
     uint32_t tmpHwregReadLrfVal; \
-    __asm volatile("nop\n\t" \
-                   "nop\n\t" \
+    __asm volatile("nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
                    "ldr %[val], [%[adr]]" \
                    : [val] "=r" (tmpHwregReadLrfVal) \
                    : [adr] "r" (x)); \
@@ -105,11 +108,14 @@ typedef unsigned int  __UINT32;
 
 // Half word (16 bit) access to address x in the LRF module. On some device revisions,
 // back-to-back memory reads to LRF does not read the correct value, this is
-// worked around by always inserting 2 NOPs before loading from address x.
+// worked around by always inserting 4 NOP.Ws before loading from address x.
+// NOP.W's will never be optimized out by the CPU.
 #define HWREGH_READ_LRF(x) ({ \
     uint16_t tmpHwregReadLrfVal; \
-    __asm volatile("nop\n\t" \
-                   "nop\n\t" \
+    __asm volatile("nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
                    "ldrh %[val], [%[adr]]" \
                    : [val] "=r" (tmpHwregReadLrfVal) \
                    : [adr] "r" (x)); \
@@ -117,11 +123,14 @@ typedef unsigned int  __UINT32;
 
 // Byte (8 bit) access to address x in the LRF module. On some device revisions,
 // back-to-back memory reads to LRF does not read the correct value, this is
-// worked around by always inserting 2 NOPs before loading from address x.
+// worked around by always inserting 4 NOP.Ws before loading from address x.
+// NOP.W's will never be optimized out by the CPU.
 #define HWREGB_READ_LRF(x) ({ \
     uint8_t tmpHwregReadLrfVal; \
-    __asm volatile("nop\n\t" \
-                   "nop\n\t" \
+    __asm volatile("nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
                    "ldrb %[val], [%[adr]]" \
                    : [val] "=r" (tmpHwregReadLrfVal) \
                    : [adr] "r" (x)); \
@@ -129,10 +138,10 @@ typedef unsigned int  __UINT32;
 
 // Utility macro used by HWREGx_WRITE_LRF macros
 #define ASM_4_NOPS() \
-    __asm volatile("nop\n\t" \
-                   "nop\n\t" \
-                   "nop\n\t" \
-                   "nop\n\t")
+    __asm volatile("nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t" \
+                   "nop.w\n\t")
 
 // Word (32 bit) write to address x in the LRF module. On some device revisions,
 // back-to-back memory writes may not go through, this is worked around by always

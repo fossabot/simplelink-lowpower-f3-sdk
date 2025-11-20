@@ -327,7 +327,6 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_bm_free(...)                                           (icall_directAPI((uint32_t) IDX_HCI_bm_free , ##__VA_ARGS__))
 /* the following API are not available for now */
 
-#define HCI_TestAppTaskRegister(...)                               (AssertHandler(0,0)) // icall_directAPI((uint32_t) IDX_HCI_TestAppTaskRegister , ##__VA_ARGS__) // =>need taskId
 #define HCI_GAPTaskRegister(...)                                   (AssertHandler(0,0)) // icall_directAPI((uint32_t) IDX_HCI_GAPTaskRegister , ##__VA_ARGS__) // =>need taskId
 #define HCI_L2CAPTaskRegister(...)                                 (AssertHandler(0,0)) // icall_directAPI((uint32_t) IDX_HCI_L2CAPTaskRegister , ##__VA_ARGS__) // =>need taskId
 #define HCI_SMPTaskRegister(...)                                   (AssertHandler(0,0)) // icall_directAPI((uint32_t) IDX_HCI_SMPTaskRegister , ##__VA_ARGS__) // =>need taskId
@@ -633,7 +632,7 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_CS_SecurityEnable(...)                 (icall_directAPI((uint32_t) IDX_HCI_LE_CS_SecurityEnable , ##__VA_ARGS__))
 #define HCI_LE_CS_SetDefaultSettings(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_CS_SetDefaultSettings , ##__VA_ARGS__))
 #define HCI_LE_CS_ReadRemoteFAETable(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_CS_ReadRemoteFAETable , ##__VA_ARGS__))
-#define HCI_LE_CS_WriteRemoteFAETable(...)            (icall_directAPI((uint32_t) IDX_HCI_LE_CS_WriteRemoteFAETable , ##__VA_ARGS__))
+#define HCI_LE_CS_WriteCachedRemoteFAETable(...)      (icall_directAPI((uint32_t) IDX_HCI_LE_CS_WriteCachedRemoteFAETable , ##__VA_ARGS__))
 #define HCI_LE_CS_RemoveConfig(...)                   (icall_directAPI((uint32_t) IDX_HCI_LE_CS_RemoveConfig , ##__VA_ARGS__))
 #define HCI_LE_CS_SetChannelClassification(...)       (icall_directAPI((uint32_t) IDX_HCI_LE_CS_SetChannelClassification , ##__VA_ARGS__))
 #define HCI_LE_CS_SetProcedureParameters(...)         (icall_directAPI((uint32_t) IDX_HCI_LE_CS_SetProcedureParameters , ##__VA_ARGS__))

@@ -110,6 +110,7 @@ typedef struct zp_zdo_handle_s
   zb_bitbool_t tc_significance:1;           /*!< data for permit_joining */
   zb_bitbool_t channel_update_disabled:1;   /*!< if !0, Channel update is disabled */
   zb_bitbool_t tx_fail_debug_enabled:1;     /*!< if !0, ZC broadcasts zdo_unsol_enh_update_notify with tx failures info */
+  zb_bitbool_t local_leave_in_progress:1;   /*!< if !0, Local leave is in progress */
   zb_uint8_t permit_joining_param;          /*!< if !0, nlme-permit_joining will
                                              * be executed */
   zb_uint8_t permit_duration;               /*!< data for permit_joining */
@@ -130,6 +131,10 @@ typedef struct zp_zdo_handle_s
                                               * Used only for MAC-Split host*/
 #endif
  } zp_zdo_handle_t;
+
+#define ZB_ZDO_SET_LOCAL_LEAVE_IN_PROGRESS() (ZG->zdo.handle.local_leave_in_progress = ZB_TRUE)
+#define ZB_ZDO_CLR_LOCAL_LEAVE_IN_PROGRESS() (ZG->zdo.handle.local_leave_in_progress = ZB_FALSE)
+#define ZB_ZDO_GET_LOCAL_LEAVE_IN_PROGRESS() ZG->zdo.handle.local_leave_in_progress
 
 /* Flag to set and check if channel update is disabled */
 #define ZB_ZDO_NETWORK_MGMT_CHANNEL_UPDATE_IS_DISABLED() (ZG->zdo.handle.channel_update_disabled != 0U)
@@ -339,6 +344,8 @@ typedef struct zb_zdo_globals_s
 
 #if defined ZB_COORDINATOR_ROLE || defined ZB_ROUTER_ROLE
   zb_uint8_t      permit_join_time; /*!< LAst permit join time in seconds */
+  zb_bufid_t      permit_join_bufid; /*!< Buf id that is used to match zb_nlme_permit_joining_confirm with the request in order to avoid possible race condition */
+  zb_callback_t   permit_join_cb; /*!< Local permit join (cli) callback */
 #endif
 
 #ifdef ZB_ROUTER_ROLE

@@ -135,4 +135,9 @@ void OPT_LL_SDAA_PostProcess(void)
     LL_SDAA_PostProcess();
 }
 
+void OPT_setSddaBleUserConfig(void)
+{
+    setSddaBleUserConfig();
+}
+
 #endif /* defined(SDAA_ENABLE) */

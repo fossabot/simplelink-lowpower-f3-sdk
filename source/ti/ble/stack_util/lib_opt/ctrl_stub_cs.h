@@ -83,87 +83,91 @@
 #include "ti/ble/controller/ll/ll_cs_procedure.h"
 #include "ti/ble/controller/ll/ll_cs_ctrl_pkt_mgr.h"
 #include "ti/ble/controller/ll/ll_cs_rcl.h"
+#include "ti/ble/controller/ll/ll_cs_handover.h"
 
 // Function prototypes for the actual implementations
 extern csStatus_e LL_CS_ReadLocalSupportedCapabilites(llCsCapabilities_t* pLocalCapabilities);
 extern csStatus_e LL_CS_ReadRemoteSupportedCapabilities(uint16_t connId);
+extern csStatus_e LL_CS_WriteCachedRemoteSupportedCapabilities(uint16_t connId, llCsCapabilities_t* pPeerCapabilitiesRaw);
 extern csStatus_e LL_CS_CreateConfig(uint16_t connId, const csConfigurationSet_t* pConfig, uint8_t createContext);
 extern csStatus_e LL_CS_RemoveConfig(uint16_t connId, uint8_t configId);
 extern csStatus_e LL_CS_SecurityEnable(uint16_t connId);
 extern csStatus_e LL_CS_SetDefaultSettings(uint16_t connId, csDefaultSettings_t* defaultSettings);
 extern csStatus_e LL_CS_ReadLocalFAETable(csFaeTbl_t* pFaeTable);
 extern csStatus_e LL_CS_ReadRemoteFAETable(uint16_t connId);
-extern csStatus_e LL_CS_WriteRemoteFAETable(uint16_t connId, int8* pFaeTbl);
+extern csStatus_e LL_CS_WriteCachedRemoteFAETable(uint16_t connId, int8* pFaeTbl);
 extern csStatus_e LL_CS_SetChannelClassification(uint8_t* pChannelClassification);
 extern csStatus_e LL_CS_GetRole(uint16_t connId, uint8_t configId, uint8_t* role);
 extern csStatus_e LL_CS_SetProcedureParameters(uint16_t connId, uint8_t configId, csProcedureParams_t* csProcParams);
 extern csStatus_e LL_CS_ProcedureEnable(uint16_t connId, uint8_t configId, uint8_t enable);
-extern void HCI_CS_SubeventResultContinueCback(void* hdr, const void* data, uint16_t dataLength);
-extern csStatus_e llCsProcessCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
-extern uint8_t llCsProcessCsCtrlProcedures(llConnState_t* connPtr, uint8_t ctrlPkt);
+extern csStatus_e llCsReceiveCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
+extern uint8_t llCsTransmitCsCtrlProcedure(llConnState_t* connPtr, uint8_t ctrlPkt);
 extern uint8_t llCsInit(void);
-extern uint8_t llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
-extern uint8_t llCsDbGetProcedureDoneStatus(uint16_t connId);
+extern bool llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
 extern uint8_t llCsInitDb(void);
 extern void llCsClearConnProcedures(uint16_t connId);
 extern void llCsFreeAll(void);
 extern void llCsSetFeatureBit(void);
-extern csStatus_e llCsStartProcedure(llConnState_t* connPtr);
-extern uint8_t llCsStartStepListGen(uint16_t connId);
+extern void llCsStartProcedure(llConnState_t* connPtr);
 extern void llCsSubevent_PostProcess(void);
 extern void llCsSteps_PostProcess(void);
 extern void llCsCurrSubEventCont_PostProcess(void);
 extern void llCsNextSubEvent_PostProcess(void);
 extern void llCsResults_PostProcess(void);
-extern void llCsError_PostProcess(void);
+extern void llCsProcedureError(void);
 extern RCL_Command* llScheduler_FindPrimStartType(const taskInfo_t* pNextConnTask, uint8_t* startType);
 extern uint32_t llScheduler_getSwitchTime(uint16_t taskID);
 extern uint8_t hciCmdParserChannelSounding(uint8_t* pData, uint16_t cmdOpCode);
 extern RCL_Handle llScheduler_getHandle(uint16_t taskID);
-extern void llCsRcl_handleCsSubmitError(uint16_t taskID, RCL_Command * cmd);
 extern void llCsPrecal_postProcess(void);
 extern csStatus_e LL_CS_Handover_CnParseCnData(uint16 connHandle, const uint8_t * pParams);
 extern void LL_CS_Handover_SnPopulateSnData(uint16 connHandle, uint8_t * pParams);
+extern uint16 llConnGetMissCountMargin(void);
+extern bool LL_CS_isCsInProgress(uint16_t connId);
+extern bool llCsIsChannelClassificationAllowed(uint32_t currentTime);
+extern uint32_t LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
+
 
 // Wrapper functions for the feature implementations
 csStatus_e OPT_LL_CS_ReadLocalSupportedCapabilites(llCsCapabilities_t* pLocalCapabilities);
 csStatus_e OPT_LL_CS_ReadRemoteSupportedCapabilities(uint16_t connId);
+csStatus_e OPT_LL_CS_WriteCachedRemoteSupportedCapabilities(uint16_t connId, llCsCapabilities_t* pPeerCapabilitiesRaw);
 csStatus_e OPT_LL_CS_CreateConfig(uint16_t connId, const csConfigurationSet_t* pConfig, uint8_t createContext);
 csStatus_e OPT_LL_CS_RemoveConfig(uint16_t connId, uint8_t configId);
 csStatus_e OPT_LL_CS_SecurityEnable(uint16_t connId);
 csStatus_e OPT_LL_CS_SetDefaultSettings(uint16_t connId, csDefaultSettings_t* defaultSettings);
 csStatus_e OPT_LL_CS_ReadLocalFAETable(csFaeTbl_t* pFaeTable);
 csStatus_e OPT_LL_CS_ReadRemoteFAETable(uint16_t connId);
-csStatus_e OPT_LL_CS_WriteRemoteFAETable(uint16_t connId, int8* pFaeTbl);
+csStatus_e OPT_LL_CS_WriteCachedRemoteFAETable(uint16_t connId, int8* pFaeTbl);
 csStatus_e OPT_LL_CS_SetChannelClassification(uint8_t* pChannelClassification);
 csStatus_e OPT_LL_CS_GetRole(uint16_t connId, uint8_t configId, uint8_t* role);
 csStatus_e OPT_LL_CS_SetProcedureParameters(uint16_t connId, uint8_t configId, csProcedureParams_t* csProcParams);
 csStatus_e OPT_LL_CS_ProcedureEnable(uint16_t connId, uint8_t configId, uint8_t enable);
-void OPT_HCI_CS_SubeventResultContinueCback(void* hdr, const void* data, uint16_t dataLength);
-csStatus_e OPT_llCsProcessCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
-uint8_t OPT_llCsProcessCsCtrlProcedures(llConnState_t* connPtr, uint8_t ctrlPkt);
+csStatus_e OPT_llCsReceiveCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
+uint8_t OPT_llCsTransmitCsCtrlProcedure(llConnState_t* connPtr, uint8_t ctrlPkt);
 uint8_t OPT_llCsInit(void);
-uint8_t OPT_llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
-uint8_t OPT_llCsDbGetProcedureDoneStatus(uint16_t connId);
+bool OPT_llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
 uint8_t OPT_llCsInitDb(void);
 void OPT_llCsClearConnProcedures(uint16_t connId);
 void OPT_llCsFreeAll(void);
 void OPT_llCsSetFeatureBit(void);
-csStatus_e OPT_llCsStartProcedure(llConnState_t* connPtr);
-uint8_t OPT_llCsStartStepListGen(uint16_t connId);
+void OPT_llCsStartProcedure(llConnState_t* connPtr);
 void OPT_llCsSubevent_PostProcess(void);
 void OPT_llCsSteps_PostProcess(void);
 void OPT_llCsCurrSubEventCont_PostProcess(void);
 void OPT_llCsNextSubEvent_PostProcess(void);
 void OPT_llCsResults_PostProcess(void);
-void OPT_llCsError_PostProcess(void);
+void OPT_llCsProcedureError(void);
 RCL_Command* OPT_llScheduler_FindPrimStartType(const taskInfo_t* pNextConnTask, uint8_t* startType);
 uint32_t OPT_llScheduler_getSwitchTime(uint16_t taskID);
 uint8_t OPT_hciCmdParserChannelSounding(uint8_t* pData, uint16_t cmdOpCode);
 RCL_Handle OPT_llScheduler_getHandle(uint16_t taskID);
-void OPT_llCsRcl_handleCsSubmitError(uint16_t taskID, RCL_Command * cmd);
 void OPT_llCsPrecal_postProcess(void);
 csStatus_e OPT_LL_CS_Handover_CnParseCnData(uint16 connHandle, const uint8_t * pParams);
 void OPT_LL_CS_Handover_SnPopulateSnData(uint16 connHandle, uint8_t * pParams);
+uint16 OPT_llConnGetMissCountMargin(void);
+bool OPT_LL_CS_isCsInProgress(uint16_t connId);
+bool OPT_llCsIsChannelClassificationAllowed(uint32_t currentTime);
+uint32_t OPT_LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
 
 #endif /* CTRL_CS_H_ */

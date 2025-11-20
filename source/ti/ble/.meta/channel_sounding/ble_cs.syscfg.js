@@ -108,6 +108,18 @@ const config = {
             description: "Determines the results mode for Channel Sounding - raise only distance events or both distance and raw results events",
         },
         {
+            name: "rangingServer",
+            displayName: "Ranging Server (RRSP)",
+            default: false,
+            hidden: true
+        },
+        {
+            name: "rangingServerExtCtrlMode",
+            displayName: "Ranging Server External Control Mode",
+            default: false,
+            hidden: true,
+        },
+        {
             name: "rangingClient",
             displayName: "Ranging Client (RREQ)",
             default: false,
@@ -119,12 +131,6 @@ const config = {
             default: false,
             hidden: true,
         },
-        // {
-        //     name: "rangingServer",
-        //     displayName: "Ranging Server (RRSP)",
-        //     default: false,
-        //     hidden: true,
-        // }
     ]
 };
 
@@ -167,12 +173,6 @@ function onCsMeasureDistanceChange(inst, ui)
  */
 function validate(inst, validation)
 {
-    // Throw a "Preview" warning to Channel Sounding when enabled
-    if (inst.channelSounding)
-    {
-        validation.logWarning("Channel Sounding preview (Not yet certified)", inst, "channelSounding");
-    }
-
     if(inst.numAntennas > 1)
     {
         validation.logWarning("In order to enable multiple antennas, please make sure to enable PBEGPO2 and PBEGPO3 inside TI Drivers -> RCL Observables -> signals", inst, "numAntennas");
@@ -237,14 +237,28 @@ function getOpts(mod)
                 (inst.csMeasureDistance == true) && result.push("-DCS_MEASURE_DISTANCE=1");
         }
 
+        if(inst.rangingServer)
+        {
+            // Add the ranging server define
+            result.push("-DRANGING_SERVER")
+
+            if(inst.rangingServerExtCtrlMode)
+            {
+                // Add the ranging Server external control define
+                // This define is used to enable the external control mode of the ranging client and server
+                result.push("-DRANGING_SERVER_EXTCTRL_APP");
+            }
+        }
+
         if(inst.rangingClient)
         {
             // Add the ranging client define
             result.push("-DRANGING_CLIENT")
+
             if(inst.rangingClientExtCtrlMode)
             {
-                // Add the ranging client external control define
-                // This define is used to enable the external control mode of the ranging client
+                // Add the ranging Server external control define
+                // This define is used to enable the external control mode of the ranging client and server
                 result.push("-DRANGING_CLIENT_EXTCTRL_APP");
             }
         }

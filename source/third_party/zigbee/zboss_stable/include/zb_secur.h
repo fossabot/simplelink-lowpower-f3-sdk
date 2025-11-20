@@ -1290,17 +1290,7 @@ void bdb_link_key_transport_with_alarm(zb_uint8_t param2, zb_uint16_t param);
 
 #if defined ZB_COORDINATOR_ROLE && !defined ZB_LITE_NO_TRUST_CENTER_REQUIRE_KEY_EXCHANGE
 
-/**
- * Closes link key refresh alarm by ref.
- * Frees buffer in case it is not needed.
- * Returns buf if found scheduled alarm and buf needed.
- *
- * @param func alarm callback
- * @param param address ref to find device for that alarm was scheduled.
- * @param free_buf free buffer if alarm was found or not
- * @return zb_uint8_t ZB_BUF_INVALID if alarm wasn't found or `free_buf` flag was specified, bufid otherwise.
- */
-zb_bufid_t bdb_cancel_link_key_refresh_alarm(zb_callback_t func, zb_address_ieee_ref_t param, zb_bool_t free_buf);
+zb_uint8_t bdb_cancel_link_key_refresh_alarm(zb_callback_t func, zb_uint8_t param);
 
 void bdb_link_key_refresh_alarm(zb_uint8_t param);
 #endif

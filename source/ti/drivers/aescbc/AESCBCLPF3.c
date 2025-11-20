@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, Texas Instruments Incorporated
+ * Copyright (c) 2021-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
 #include <ti/drivers/cryptoutils/aes/AESCommonLPF3.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKey.h>
 #include <ti/drivers/cryptoutils/sharedresources/CryptoResourceLPF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
 
 #if (DeviceFamily_PARENT != DeviceFamily_PARENT_CC35XX)
@@ -1059,6 +1060,9 @@ static inline void AESCBCLPF3HSM_OneStepPostProcessing(uintptr_t arg0)
         HSMLPF3_getAESIV((void *)&object->iv[0]);
     }
 
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
+
     object->common.returnStatus = status;
 
     HSMLPF3_releaseLock();
@@ -1172,6 +1176,14 @@ static int_fast16_t AESCBCLPF3HSM_processData(AESCBC_Handle handle)
      */
     HSMLPF3_constructAESCBCOneStepPhysicalToken(object, keyMaterial);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->common.semaphoreTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return AESCBC_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->common.returnBehavior,
                                     AESCBCLPF3HSM_OneStepPostProcessing,
                                     (uintptr_t)handle);
@@ -1187,6 +1199,9 @@ static int_fast16_t AESCBCLPF3HSM_processData(AESCBC_Handle handle)
 
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         HSMLPF3_releaseLock();
     }
 

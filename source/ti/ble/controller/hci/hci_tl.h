@@ -87,7 +87,6 @@ extern "C"
  */
 
 #include "ti/ble/controller/hci/hci.h"
-#include "ti/ble/stack_util/osal/osal.h"
 #include "ti/ble/controller/hci/hci_data.h"
 #include "ti/ble/controller/hci/hci_event.h"
 
@@ -384,6 +383,11 @@ extern uint8 hciSmpTaskID;
 #define HCI_LE_READ_REMOTE_TRANSMIT_POWER_LEVEL           0x2077    //!< opcode of @ref HCI_LE_ReadRemoteTransmitPowerLevelCmd
 #define HCI_LE_SET_TRANSMIT_POWER_REPORTING_ENABLE        0x207A    //!< opcode of @ref HCI_LE_SetTransmitPowerReportingEnableCmd
 
+/* Periodic Advertising with responses */
+
+#define HCI_LE_SET_PERIODIC_ADV_RESPONSE_DATA             0x2083    //!< opcode of @ref HCI_LE_SetPeriodicAdvResponseDataCmd
+#define HCI_LE_SET_PERIODIC_SYNC_SUBEVENT                 0x2084    //!< opcode of @ref HCI_LE_SetPeriodicSyncSubeventCmd
+
 // V5.1
 // @cond NODOC
 #define HCI_LE_ENHANCED_CTE_RECEIVER_TEST                 0x204F    //!< opcode of @ref HCI_LE_EnhancedCteRxTestCmd
@@ -397,6 +401,13 @@ extern uint8 hciSmpTaskID;
 #define HCI_LE_SET_CONNECTION_CTE_RESPONSE_ENABLE         0x2057    //!< opcode of @ref HCI_LE_SetConnectionCteResponseEnable
 #define HCI_LE_READ_ANTENNA_INFORMATION                   0x2058    //!< opcode of @ref HCI_LE_ReadAntennaInformation
 #define HCI_LE_SET_PERIODIC_ADV_RECEIVE_ENABLE            0x2059    //!< opcode of @ref HCI_LE_SetPeriodicAdvReceiveEnableCmd
+
+// Periodic advertise Vendor Specific commands opcode
+#define HCI_LE_PADV_SYNC_TRANSFER_CMD                     0x205A    //!< opcode of @ref HCI_LE_PAdvSyncTransferCmd
+#define HCI_LE_PADV_SET_INFO_TRANSFER_CMD                 0x205B    //!< opcode of @ref HCI_LE_PAdvSetInfoTransferCmd
+#define HCI_LE_SET_PADV_SYNC_TRANSFER_PARAMS_CMD          0x205C    //!< opcode of @ref HCI_LE_SetPASTParamsCmd
+#define HCI_LE_SET_DEFAULT_PADV_SYNC_TRANSFER_PARAMS_CMD  0x205D    //!< opcode of @ref HCI_LE_SetDefaultPASTParamCmd
+
 // @endcond // NODOC
 // V5.2
 #define HCI_LE_GENERATE_DHKEY_V2                          0x205E    //!< opcode of @ref HCI_LE_GenerateDHKeyCmd_V2
@@ -529,15 +540,15 @@ extern uint8 hciSmpTaskID;
 #define HCI_BLE_DATA_LENGTH_CHANGE_EVENT                  0x07      //!< event of type @ref hciEvt_BLEDataLengthChange_t
 #define HCI_BLE_READ_LOCAL_P256_PUBLIC_KEY_COMPLETE_EVENT 0x08      //!< event of type @ref hciEvt_BLEReadP256PublicKeyComplete_t
 #define HCI_BLE_GENERATE_DHKEY_COMPLETE_EVENT             0x09      //!< event of type @ref hciEvt_BLEGenDHKeyComplete_t
-#define HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT        0x0A      //!< event of type @ref hciEvt_BLEEnhConnComplete_t
+#define HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT_V1     0x0A      //!< event of type @ref hciEvt_BLEEnhConnComplete_t
 #define HCI_BLE_DIRECT_ADVERTISING_REPORT_EVENT           0x0B      //!< direct advertising report...not used
 // V5.0
 #define HCI_BLE_PHY_UPDATE_COMPLETE_EVENT                 0x0C      //!< event of type @ref hciEvt_BLEPhyUpdateComplete_t
 
 /// @cond NODOC
 #define HCI_BLE_EXTENDED_ADV_REPORT_EVENT                 0x0D      //!< Extended Adv Report
-#define HCI_BLE_PERIODIC_ADV_SYNCH_ESTABLISHED_EVENT      0x0E      //!< Periodic Adv Synch Established
-#define HCI_BLE_PERIODIC_ADV_REPORT_EVENT                 0x0F      //!< Periodic Adv Report
+#define HCI_BLE_PADV_SYNC_ESTAB_V1_EVENT                  0x0E      //!< Periodic Adv Sync Established V1 Event ( device doesn't support PAwR )
+#define HCI_BLE_PADV_REPORT_V1_EVENT                      0x0F      //!< Periodic Adv Report Event V1( device doesn't support PAwR )
 #define HCI_BLE_PERIODIC_ADV_SYNCH_LOST_EVENT             0x10      //!< Periodic Adv Synch Lost
 /// @endcond //NODOC
 #define HCI_BLE_SCAN_TIMEOUT_EVENT                        0x11      //!< Scan Timeout
@@ -547,12 +558,19 @@ extern uint8 hciSmpTaskID;
 #define HCI_BLE_CONNECTIONLESS_IQ_REPORT_EVENT            0x15      //!< CTE sample connectionless report
 #define HCI_BLE_CONNECTION_IQ_REPORT_EVENT                0x16      //!< CTE sample connection report
 #define HCI_BLE_CTE_REQUEST_FAILED_EVENT                  0x17      //!< CTE sample failed
+#define HCI_BLE_PADV_SYNC_TRANSFER_RECEIVED_EVENT_V1      0x18      //!< Periodic Adv Sync transfer received v1
 
 /* Powe Control events
 ** Taken from BLE Core Specification Core_v6.0, Vol 4, Part E:
 ** Section 7.8.1
 */
 #define HCI_BLE_TRANSMIT_POWER_REPORTING_EVENT            0x21      //!< Power Control report event (sub event value)
+
+// PAwR events
+#define HCI_BLE_PADV_SYNC_ESTAB_V2_EVENT                  0x24      //!< Periodic Adv Sync Established V2 Event ( device support PAwR )
+#define HCI_BLE_PADV_REPORT_V2_EVENT                      0x25      //!< Periodic Adv Report Event V2( device support PAwR )
+#define HCI_BLE_PADV_SYNC_TRANSFER_RECEIVED_EVENT_V2      0x26      //!< Periodic Adv Sync transfer received v2
+#define HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT_V2     0x29      //!< Enhanced Connection complete V2 (PAwR supported)
 
 // CS events
 #define HCI_LE_CS_READ_REMOTE_SUPPORTED_CAPABILITIES_COMPLETE_EVENT 0x2C //!< CS event Remote capabilities complete
@@ -662,10 +680,11 @@ extern uint8 hciSmpTaskID;
 // Channel Sounding Commands
 #define HCI_LE_CS_READ_LOCAL_SUPPORTED_CAPABILITIES          0x2089    //!< opcode of @ref HCI_LE_CS_ReadLocalSupportedCapabilities
 #define HCI_LE_CS_READ_REMOTE_SUPPORTED_CAPABILITIES         0x208A    //!< opcode of @ref HCI_LE_CS_ReadRemoteSupportedCapabilities
+#define HCI_LE_CS_WRITE_CACHED_REMOTE_SUPPORTED_CAPABILITIES 0x208B    //!< opcode of @ref HCI_LE_CS_WriteCachedRemoteSupportedCapabilities
 #define HCI_LE_CS_SECURITY_ENABLE                            0x208C    //!< opcode of @ref HCI_LE_CS_SecurityEnable
 #define HCI_LE_CS_SET_DEFAULT_SETTINGS                       0x208D    //!< opcode of @ref HCI_LE_CS_SetDefaultSettings
 #define HCI_LE_CS_READ_REMOTE_FAE_TABLE                      0x208E    //!< opcode of @ref HCI_LE_CS_ReadRemoteFAETable
-#define HCI_LE_CS_WRITE_REMOTE_FAE_TABLE                     0x208F    //!< opcode of @ref HCI_LE_CS_WriteRemoteFAETable
+#define HCI_LE_CS_WRITE_CACHED_REMOTE_FAE_TABLE              0x208F    //!< opcode of @ref HCI_LE_CS_WriteCachedRemoteFAETable
 #define HCI_LE_CS_CREATE_CONFIG                              0x2090    //!< opcode of @ref HCI_LE_CS_CreateConfig
 #define HCI_LE_CS_REMOVE_CONFIG                              0x2091    //!< opcode of @ref HCI_LE_CS_RemoveConfig
 #define HCI_LE_CS_SET_CHANNEL_CLASSIFICATION                 0x2092    //!< opcode of @ref HCI_LE_CS_SetChannelClassification

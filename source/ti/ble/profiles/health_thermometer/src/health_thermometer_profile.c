@@ -189,7 +189,7 @@ static void HTP_measOnCccUpdateCB( char *pValue )
 
  * @return  SUCCESS or stack call status
  */
-bStatus_t HTP_sendMeasurement( uint32 tempMeasur, uint16 timeStamp, uint8 type )
+bStatus_t HTP_sendMeasurement( float tempMeasur, uint16 timeStamp, uint8 type )
 {
   uint8 status = SUCCESS;
   HTS_TempMeas_t measur = {0};

@@ -86,7 +86,7 @@
 #define BLE_CS_RXFIFO_BASE_ADDR         224
 #define BLE_CS_RXFIFO_LEN               160
 #define BLE_CS_FIRST_BATCH_SIZE         2
-#define BLE_CS_TONE_QUALITY_HIGH_THR    17
+#define BLE_CS_TONE_QUALITY_HIGH_THR    20
 #define BLE_CS_TONE_QUALITY_NA          255
 #define BLE_CS_RPL_HIGH_GAIN_THR        (-55)
 #define BLE_CS_RPL_LOW_GAIN_THR         (-35)
@@ -796,7 +796,14 @@ static void RCL_Handler_BLE_CS_fetchAndforwardNextStep(RCL_CmdBleCs* pCmd)
     if (pStepBuffer)
     {
         /* Flag the buffer */
-        pStepBuffer->state = RCL_BufferStateInUse;
+        if (pStepBuffer->state != RCL_BufferStateInUse)
+        {
+            /* Mark buffer that it is being consumed */
+            pStepBuffer->state = RCL_BufferStateInUse;
+
+            /* Update the total number of steps we are aware of at this point */
+            HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE) = pCmd->mode.val;
+        }
 
         /* Point to the beginning of step list */
         pStep = (RCL_CmdBleCs_Step *) &pStepBuffer->data[0];
@@ -819,6 +826,7 @@ static void RCL_Handler_BLE_CS_fetchAndforwardNextStep(RCL_CmdBleCs* pCmd)
 
             /* The step have been consumed */
             pCmd->stats->nStepsWritten++;
+
             pStepBuffer->headIndex += sizeof(RCL_CmdBleCs_Step);
 
             /* This buffer is exhausted, or end of subevent */
@@ -1194,13 +1202,7 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
     }
 
     /* Mode */
-    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE) = ( ((pCmd->mode.role << PBE_BLE_CS_RAM_MODE_ROLE_S) & PBE_BLE_CS_RAM_MODE_ROLE_M)
-                                                                 | ((pCmd->mode.phy << PBE_BLE_CS_RAM_MODE_PHY_S) & PBE_BLE_CS_RAM_MODE_PHY_M)
-                                                                 | ((pCmd->mode.repeatSteps << PBE_BLE_CS_RAM_MODE_REPEAT_STEPS_S) & PBE_BLE_CS_RAM_MODE_REPEAT_STEPS_M)
-                                                                 | ((pCmd->mode.chFilterEnable << PBE_BLE_CS_RAM_MODE_CHANNEL_FILTER_S) & PBE_BLE_CS_RAM_MODE_CHANNEL_FILTER_M)
-                                                                 | ((pCmd->mode.precal << PBE_BLE_CS_RAM_MODE_PRECAL_S) & PBE_BLE_CS_RAM_MODE_PRECAL_M)
-                                                                 | ((pCmd->mode.reserved << PBE_BLE_CS_RAM_MODE_RESERVED_S) & PBE_BLE_CS_RAM_MODE_RESERVED_M)
-                                                                 | ((pCmd->mode.nSteps << PBE_BLE_CS_RAM_MODE_NUM_STEPS_S) & PBE_BLE_CS_RAM_MODE_NUM_STEPS_M));
+    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE) = pCmd->mode.val;
 
     /* Antenna */
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_ANTN)   = antennaEntry->numPath;
@@ -1891,24 +1893,23 @@ static uint8_t RCL_Handler_BLE_CS_calcQ3(uint16_t qMin, uint16_t qMax, uint16_t 
  */
 static uint8_t RCL_Handler_BLE_CS_convertPctQuality(uint16_t qMin, uint16_t qMax, uint16_t qAvg, bool toneExtensionSlot, bool toneExpected, bool toneQualityOverride)
 {
-    /* Calculate Q3 scale. Avoid zero division. */
-    uint16_t Q3 = (qAvg)
-                ? (100 * (qMax - qMin)/qAvg)
-                : (100);
+    /* Calculate Q3 linear scale. */
+    uint8_t Q3 = RCL_Handler_BLE_CS_calcQ3(qMin, qMax, qAvg);
 
-    /* Classify based on threshold. */
+    /* Classify based on threshold. The lower the better. */
     uint8_t tnQ = (Q3 < BLE_CS_TONE_QUALITY_HIGH_THR)
                 ? (RCL_CmdBleCs_ToneQuality_High)
                 : (RCL_CmdBleCs_ToneQuality_Low);
 
-    /* Override to unavailable for initiator mode-3 w/o tone extension */
+    /* Override the value to unavailable for initiator mode-3 w/o second tone extension */
     if (toneQualityOverride)
     {
         tnQ = RCL_CmdBleCs_ToneQuality_Unavailable;
     }
-    else if (toneExtensionSlot)
-    {
+
     /* Add additional flag for the tone extension slot */
+    if (toneExtensionSlot)
+    {
         uint8_t toneExtensionFlag = (toneExpected)
                                   ? (RCL_CmdBleCs_ToneExtensionSlot_Enabled_ToneExpected)
                                   : (RCL_CmdBleCs_ToneExtensionSlot_Enabled_NoToneExpected);
@@ -2226,7 +2227,7 @@ RCL_Events RCL_Handler_BLE_CS(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Events
                 RCL_Handler_BLE_CS_configureS2R(pCmd);
 
                 /* Fill the first batch of step descriptors into the BUFRAM TX fifo */
-                RCL_Handler_BLE_CS_preFillTxBuffer(pCmd);
+                rclEvents.value |= RCL_Handler_BLE_CS_preFillTxBuffer(pCmd).value;
 
                 /* Post command */
                 LRF_waitForTopsmReady();
@@ -2234,7 +2235,7 @@ RCL_Events RCL_Handler_BLE_CS(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Events
                 HWREG_WRITE_LRF(LRFDPBE_BASE + LRFDPBE_O_API) = PBE_BLE_CS_REGDEF_API_OP_BLE_CS;
 
                 /* Forward fill more steps */
-                RCL_Handler_BLE_CS_preFillTxBuffer(pCmd);
+                rclEvents.value |= RCL_Handler_BLE_CS_preFillTxBuffer(pCmd).value;
             }
         }
     }
@@ -2505,4 +2506,3 @@ void RCL_Handler_BLE_CS_PrecalDefaultCallback(RCL_CmdBleCs_PrecalTable *table, u
         }
     }
 }
-

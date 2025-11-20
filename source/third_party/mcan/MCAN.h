@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -138,7 +138,7 @@ typedef uint32_t MCAN_MemType;
 #define MCAN_MEM_TYPE_BUF  (0U)
 /*!< MCAN Msg RAM buffers */
 #define MCAN_MEM_TYPE_FIFO (1U)
-/*!< MCAN Msg RAM FIFO/Queue */
+/*!< MCAN Msg RAM FIFO */
 /* @} */
 
 /*!
@@ -1405,15 +1405,14 @@ void MCAN_getNewDataStatus(MCAN_RxNewDataStatus *newDataStatus);
 void MCAN_clearNewDataStatus(const MCAN_RxNewDataStatus *newDataStatus);
 
 /*!
- *  @brief   Reads received message from message RAM.
+ *  @brief   Reads received message from specified Rx Buffer or Rx FIFO using current get index.
  *
  *  This function uses the MCAN_RxBufElementNoCpy structure element which has
  *  data as pointer instead of an array. Note that as the data is a pointer here
  *  hence corruption of data is possible when the payload size is exceeded.
  *
- *  @param   memType         Part of message ram to which given message to write.
- *                           Refer enum MCAN_MemType.
- *  @param   num             Buffer number or FIFO number from where message is to read.
+ *  @param   memType         Memory Type. Refer enum MCAN_MemType.
+ *  @param   num             Buffer number or FIFO number from where the message is to be read.
  *                           Refer enum MCAN_RxFifoNum if FIFO number. Must be valid per
  *                           the message RAM configuration.
  *  @param   elem            Pointer to Rx element.
@@ -1428,11 +1427,10 @@ void MCAN_clearNewDataStatus(const MCAN_RxNewDataStatus *newDataStatus);
 void MCAN_readRxMsgNoCpy(MCAN_MemType memType, uint32_t num, MCAN_RxBufElementNoCpy *elem);
 
 /*!
- *  @brief   Reads received message from message RAM.
+ *  @brief   Reads received message from specified Rx Buffer or Rx FIFO using current get index.
  *
- *  @param   memType         Part of message ram to which given message to write.
- *                           Refer enum MCAN_MemType.
- *  @param   num             Buffer number or FIFO number from where message is to read.
+ *  @param   memType         Memory Type. Refer enum MCAN_MemType.
+ *  @param   num             Buffer number or FIFO number from where the message is to be read.
  *                           Refer enum MCAN_RxFifoNum if FIFO number. Must be valid per
  *                           the message RAM configuration.
  *  @param   elem            Pointer to Rx element.
@@ -1445,6 +1443,22 @@ void MCAN_readRxMsgNoCpy(MCAN_MemType memType, uint32_t num, MCAN_RxBufElementNo
  *  @sa      #MCAN_readRxMsgNoCpy()
  */
 void MCAN_readRxMsg(MCAN_MemType memType, uint32_t num, MCAN_RxBufElement *elem);
+
+/*!
+ *  @brief   Reads a message from an Rx FIFO at the specified index.
+ *
+ *  @param   fifoNum         Rx FIFO number. Refer enum MCAN_RxFifoNum. Must be valid per
+ *                           the message RAM configuration.
+ *  @param   fifoIndex       Index within Rx FIFO from where the message is to be read.
+ *                           Must be less than the configured FIFO size.
+ *  @param   elem            Pointer to Rx element.
+ *                           Refer struct MCAN_RxBufElement.
+ *
+ *  @return  None.
+ *
+ *  @post    #MCAN_setRxFifoAck()
+ */
+void MCAN_readRxFifo(uint32_t fifoNum, uint32_t fifoIndex, MCAN_RxBufElement *elem);
 
 /*!
  *  @brief   Reads next available element from Tx Event FIFO.

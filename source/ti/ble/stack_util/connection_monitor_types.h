@@ -61,13 +61,12 @@
  * CONSTANTS
  */
 #define CM_DEFAULT_MAX_FAILED_SYNC_TRIES   6
-#define CM_DEFAULT_ADJUSTMENTS_EVT_TRIES   4
 
 /*******************************************************************************
  * TYPEDEFS
  */
 
-/*
+/** 
 * @brief Connection Monitor error codes
 */
 typedef enum
@@ -84,7 +83,7 @@ typedef enum
   CM_UNSUPPORTED               = 0x09, //!< Operation not supported
 } cmErrorCodes_e;
 
-/*
+/** 
 * @brief Connection Monitor connection update event Callback
 */
 typedef enum
@@ -92,9 +91,10 @@ typedef enum
   CM_PHY_UPDATE_EVT      = 0x00,  //!< Phy update event @ref cmPhyUpdateEvt_t
   CM_CHAN_MAP_UPDATE_EVT = 0x01,  //!< Channel map update event @ref cmChanMapUpdateEvt_t
   CM_PARAM_UPDATE_EVT    = 0x02,  //!< Parameter update event @ref cmParamUpdateEvt_t
+  CM_INVALID_UPDATE      = 0xFF,  //!< Invalid update event
 } cmConnUpdateEvtType_e;
 
-/*
+/** 
 * @brief Connection Monitor status event Callback
 */
 typedef enum
@@ -103,23 +103,7 @@ typedef enum
   CM_TRACKING_STOP_EVT   = 0x01,  //!< Stop monitor event @ref cmStopEvt_t
 } cmStatusEvtType_e;
 
-/*
-* @brief Connection Monitor Connection Role
-*
-* @note
-* This enum is used to determine which device the event relates to,
-* in addition this mask used by @cmStartMonitorParams_t as mask to
-* determine which role to report (can be both or one of them)
-*
-*/
-typedef enum
-{
-  CM_UNDETERMINED_ROLE     = 0x00,
-  CM_PERIPHERAL_ROLE       = 0x01,
-  CM_CENTRAL_ROLE          = 0x02,
-} cmConnectionMaskRole_e;
-
-/*
+/** 
 * @brief Connection Monitor stop reason
 */
 typedef enum
@@ -127,9 +111,10 @@ typedef enum
   CM_SUPERVISION_TIMEOUT       = 0x00,
   CM_USER_TERM                 = 0x01,
   CM_SYNC_FAILED               = 0x02,
+  CM_BAD_UPDATE_EVENT          = 0x03,
 } cmStopReason_e;
 
-/*
+/** 
 * @brief Connection Monitor Status event
 */
 typedef struct
@@ -138,7 +123,7 @@ typedef struct
   uint8_t*            pEvtData; //!< Pointer to the event data, from type @ref cmStartEvt_t or @ref cmStopEvt_t
 } cmStatusEvt_t;
 
-/*
+/** 
 * @brief Connection Monitor PHY Update event structure
 */
 typedef struct
@@ -146,7 +131,7 @@ typedef struct
   uint8_t  phy;              //!< The new PHY of the monitored connection
 } cmPhyUpdateEvt_t;
 
-/*
+/** 
 * @brief Connection Monitor Channel Map Update event structure
 */
 typedef struct
@@ -154,7 +139,7 @@ typedef struct
   uint8_t  channelMap[5];    //!< The new channel map of the monitored connection
 } cmChanMapUpdateEvt_t;
 
-/*
+/** 
 * @brief Connection Monitor Parameter Update event structure
 */
 typedef struct
@@ -166,7 +151,7 @@ typedef struct
   uint8_t  winSize;          //!< The new window size of the monitored connection
 } cmParamUpdateEvt_t;
 
-/*
+/** 
 * @brief Connection Monitor Update event structure which contains a union of the
 *        @ref cmPhyUpdateEvt_t, @ref cmChanMapUpdateEvt_t, @ref cmParamUpdateEvt_t
 */
@@ -183,7 +168,7 @@ typedef struct
     } updateEvt;
 } cmConnUpdateEvt_t;
 
-/*
+/** 
 * @brief Connection Monitor start event structure
 */
 typedef struct
@@ -206,24 +191,57 @@ typedef struct
   cmStopReason_e  stopReason;       //!< The reason the monitoring stopped
 } cmStopEvt_t;
 
-/*
-* @brief Connection Monitor Report event structure
+/**
+ * @brief Enumeration for Connection Monitor packet status.
+ *
+ * This enum defines the possible statuses for packets monitored during BLE connections.
+ * It helps distinguish whether a packet was received successfully, received but undetermined,
+ * or not received due to a timeout.
+ *
+ */
+typedef enum
+{
+  CM_PKT_STATUS_NOT_RECEIVED = 0x00, //!< Packet didn't receive
+  CM_PKT_VALID_CENTARL       = 0x01, //!< Central Packet received successfully
+  CM_PKT_VALID_PERIPHERAL    = 0x02, //!< Peripheral Packet received successfully
+  CM_PKT_STATUS_UNDETERMINED = 0x03, //!< Packet received and can't distinguish if it is peripheral or central
+} cmPacketStatus_e;
+
+/** 
+* @brief Connection Monitor Packet data event structure.
+*        The status of the packet will be intiated to @ref CM_PKT_STATUS_NOT_RECEIVED.
+*        - If the status of the packet is @ref CM_PKT_VALID_CENTARL it means that the
+*          this packet and the data is relevant to the central.
+*        - If the status of packet is @ref CM_PKT_VALID_PERIPHERAL it means that the
+*          this packet and the data is relevant to the peripheral.
+*        - If the status of packet is @ref CM_PKT_STATUS_UNDETERMINED it means that the
+*          the controller has recieved a packet but can't tell this packet related to
+*          which role.
 */
 typedef struct
 {
-  uint16_t connHandle;  //!< Connection handle of the monitored connection
-  uint16_t pktLength;   //!< The length of the received packet
-  uint8_t  status:2;    //!< The status of the event
-  uint8_t  connRole:2;  //!< Which peer device is the event relates to @ref cmConnectionMaskRole_e
-  uint8_t  pad:4;       //!< Padding, reserved for future use
-  int8_t   rssi;        //!< The RSSI of the received packet
-  uint8_t  channel:6;   //!< The channel the packet was received on
-  uint8_t  sn:1;        //!< The sequence number of the packet
-  uint8_t  nesn:1;      //!< The next sequence number of the packet
+  uint32_t          timestamp;   //!< Timestamp of the received packet
+  cmPacketStatus_e  status;      //!< The status of the event @ref cmPacketStatus_e
+  int8_t            rssi;        //!< The RSSI of the received packet
+  uint8_t           pktLength;   //!< The length of the received packet
+  uint8_t           sn:1;        //!< The sequence number of the packet
+  uint8_t           nesn:1;      //!< The next sequence number of the packet
+  uint8_t           pad:6;       //!< Padding, reserved for future use
+} cmPacketData_t;
+
+/** 
+* @brief Connection Monitor Report on event structure an open RX window 
+*/
+typedef struct
+{
+  uint32_t accessAddr;        //!< Access address of the monitored connection
+  uint16_t connHandle;        //!< Connection handle of the monitored connection
+  uint16_t connEvtCnt;        //!< The connection event counter of the monitored packets
+  uint8_t  channel;           //!< The channel the packet was received on
+  cmPacketData_t packets[2];  //!< The packets recieved within the Rx window (Up to two packets)
 } cmReportEvt_t;
 
-
-/*
+/** 
 * @brief Host Connection Monitor Serving connection update event Callback
 *
 * @note
@@ -247,7 +265,7 @@ typedef struct
   pfnCmsConnUpdateEvtCB_t     pfnCmsConnUpdateEvtCB;
 } cmsCBs_t;
 
-/*
+/** 
 * @brief Host Connection Monitor report event Callback
 *
 * @note
@@ -260,7 +278,7 @@ typedef struct
 */
 typedef void(*pfnCmReportEvtCB_t)(cmReportEvt_t *pReportEvt);
 
-/*
+/** 
 * @brief Host Connection Monitor status event Callback
 *
 * @note
@@ -288,24 +306,28 @@ typedef struct
  */
 typedef struct
 {
-  uint16_t dataSize;             //!< The allocated CM data size
-  uint8_t  *pCmData;             //!< Pointer to the buffer the application allocated
+  uint32_t accessAddr;           //!< The Access Addrress will be filled once @ref CMS_GetConnData called
+  uint8_t  dataSize;             //!< The size of the data buffer will be filled once @ref CMS_GetConnData called
+  uint8_t  *pCmData;             //!< Pointer to the buffer the application allocated and will
+                                 //!< be filled once @ref CMS_GetConnData called
 } cmsConnDataParams_t;
 
+//
+// The connection should be assigned before calling @ref ConnectionMonitor_GetConnData
+// The size of the data buffer will be filled once @ref ConnectionMonitor_GetConnData called
+// The data buffer will be filled once @ref ConnectionMonitor_GetConnData called
 /**
  * @brief Host Connection Monitor start monitor parameters
  */
 typedef struct
 {
   uint32_t                timeDeltaInUs;       //!< The time in us it took for the data to be transferred from node to another in the system
-  uint32_t                timeDeltaMaxErrInUs; //!< The maximum deviation time in us
-  uint32_t                connTimeout;         //!< The supervision connection timeout, 0 - take the supervision connection timeout
+  uint32_t                timeDeltaMaxErrInUs; //!< The maximum deviation time in us - Not yet implemented and will not affect functionality
+  uint32_t                connTimeout;         //!< The supervision connection timeout in ms ; if 0 given - take the supervision connection timeout
                                                //!< from the monitored link
-  uint8_t                 maxSyncAttempts;     //!< Number of attampts the device will try to follow before determining the monitoring
-                                               //!< process failed or not, 0 - try until connection supervision timeout
-  uint8_t                 adjustmentEvtTries;  //!< The number of adjustment events to search for the anchor before starting reporting the RSSI.
-  uint32_t                cmDataSize;          //!< The stack CM data size
-  cmConnectionMaskRole_e  connRole;            //!< Which connection role to report  @ref cmConnectionMaskRole_e
+  uint8_t                 maxSyncAttempts;     //!< Number of attempts the device will try to follow before determining the monitoring
+                                               //!< process failed or not.
+  uint8_t                 cmDataSize;          //!< The stack CM data size
   uint8_t                 *pCmData;            //!< Pointer to the buffer the application allocated
 } cmStartMonitorParams_t;
 

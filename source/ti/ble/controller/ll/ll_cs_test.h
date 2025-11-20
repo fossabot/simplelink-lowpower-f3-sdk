@@ -89,6 +89,9 @@
 #define CS_TEST_MODE_CONFIG_ID                 0 /* Config Id to be used for the DB */
 #define CS_REPORTED_CONN_ID_FOR_TEST_MODE      0x0FFF /* Conn Id defined by the spec to be reported in test mode */
 
+#define CS_TEST_MIN_MAIN_MODE_STEPS             6
+#define CS_TEST_MAX_MAIN_MODE_STEPS             10
+
 /*******************************************************************************
  * MACROS
  */
@@ -103,10 +106,8 @@
 /* CS Test Mode States */
 typedef enum csTestMode_e
 {
-    CS_TEST_MODE_ENABLE,
-    CS_TEST_MODE_TERMINATE,
-    CS_TEST_MODE_FINISHED,
     CS_TEST_MODE_DISABLE,
+    CS_TEST_MODE_ENABLE
 } csTestMode_e;
 
 /* Bitwise field that tells which config uses overrides */
@@ -135,14 +136,13 @@ typedef struct csTestOverrideData
     uint8* overrideParams;
     struct
     {
-        uint8 nMainModeSteps;
         uint8 toneExt;
         uint8 stablePhase;
         uint8 antennaPermutation;
         uint32_t aaTxInit;
         uint32_t aaTxRef;
         uint8 payloadPattern;
-        uint32_t userPayload[4];
+        uint8_t userPayload[CS_RNDM_SIZE];
     } parsedParams;
 } csTestOverrideData_t;
 
@@ -230,9 +230,8 @@ void llCsTestGetPayload(uint32_t* pPayloadDst, uint8 plPtrn);
  *
  * input parameters
  *
- * @param       configId - Configuration Id
  * @param       connId - Connection Id
- * @param       csConfig - Pointer to CS config
+ * @param       configId - Configuration Id
  *
  * output parameters
  *
@@ -240,7 +239,7 @@ void llCsTestGetPayload(uint32_t* pPayloadDst, uint8 plPtrn);
  *
  * @return      Status
  */
-uint8 llCsInitChanIdxArrWrapper(uint8 configId, uint16 connId, const uint8* csConfig);
+uint8 llCsInitChanIdxArrWrapper(uint16_t connId, uint8_t configId);
 
 /*******************************************************************************
  * @fn          llCsSelectStepChanWrapper
@@ -252,9 +251,9 @@ uint8 llCsInitChanIdxArrWrapper(uint8 configId, uint16 connId, const uint8* csCo
  *
  * input parameters
  *
- * @param       stepMode - CS Step mode
  * @param       connId - Connection Id
- * @param       config - Pointer to CS config
+ * @param       configId - Configuration Id
+ * @param       stepMode - CS Step mode
  *
  * output parameters
  *
@@ -262,7 +261,7 @@ uint8 llCsInitChanIdxArrWrapper(uint8 configId, uint16 connId, const uint8* csCo
  *
  * @return      Channel
  */
-uint8 llCsSelectStepChanWrapper(uint8 stepMode, uint16 connId, const uint8* config);
+uint8 llCsSelectStepChanWrapper(uint16 connId, uint8_t configId, uint8 stepMode);
 
 /*******************************************************************************
  * @fn          llCsSelectAAWrapper
@@ -273,6 +272,7 @@ uint8 llCsSelectStepChanWrapper(uint8 stepMode, uint16 connId, const uint8* conf
  *
  * input parameters
  *
+ * @param       connId - Connection Id
  * @param       csRole - CS Role
  * @param       aaRx - Pointer to Rx AA
  * @param       aaTx - Pointer to Tx AA
@@ -284,7 +284,7 @@ uint8 llCsSelectStepChanWrapper(uint8 stepMode, uint16 connId, const uint8* conf
  *
  * @return      None
  */
-void llCsSelectAAWrapper(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
+void llCsSelectAAWrapper(uint16 connId, uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
 
 /*******************************************************************************
  * @fn          llCsAAOverride
@@ -317,6 +317,7 @@ uint8 llCsAAOverride(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
  * Otherwise, the original Payload selection function is called
  * input parameters
  *
+ * @param       connId - Connection Id
  * @param       csRole - CS Role
  * @param       pTx - Pointer to Tx Payload
  * @param       pRx - Pointer to Rx Payload
@@ -329,7 +330,7 @@ uint8 llCsAAOverride(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
  *
  * @return      None
  */
-void llCsGetRandomSequenceWrapper(uint8 csRole, uint32_t* pTx, uint32_t* pRx, uint8 plLen);
+void llCsGetRandomSequenceWrapper(uint16 connId, uint8 csRole, uint32_t* pTx, uint32_t* pRx, uint8 plLen);
 
 /*******************************************************************************
  * @fn          llCsPayloadOverride
@@ -360,7 +361,7 @@ uint8 llCsPayloadOverride(uint8 csRole, uint32_t* pTx, uint32_t* pRx);
  *
  * input parameters
  *
- * @param       None
+ * @param       connId - Connection Id
  *
  * output parameters
  *
@@ -368,7 +369,7 @@ uint8 llCsPayloadOverride(uint8 csRole, uint32_t* pTx, uint32_t* pRx);
  *
  * @return      Tone Extension
  */
-uint8 llCsGetToneExtentionWrapper(void);
+uint8 llCsGetToneExtentionWrapper(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsToneExtentionOverride

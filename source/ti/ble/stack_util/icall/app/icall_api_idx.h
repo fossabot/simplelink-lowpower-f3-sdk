@@ -459,7 +459,7 @@
 #define IDX_HCI_LE_CS_SecurityEnable                        HCI_LE_CS_SecurityEnable
 #define IDX_HCI_LE_CS_SetDefaultSettings                    HCI_LE_CS_SetDefaultSettings
 #define IDX_HCI_LE_CS_ReadRemoteFAETable                    HCI_LE_CS_ReadRemoteFAETable
-#define IDX_HCI_LE_CS_WriteRemoteFAETable                   HCI_LE_CS_WriteRemoteFAETable
+#define IDX_HCI_LE_CS_WriteCachedRemoteFAETable             HCI_LE_CS_WriteCachedRemoteFAETable
 #define IDX_HCI_LE_CS_RemoveConfig                          HCI_LE_CS_RemoveConfig
 #define IDX_HCI_LE_CS_SetChannelClassification              HCI_LE_CS_SetChannelClassification
 #define IDX_HCI_LE_CS_SetProcedureParameters                HCI_LE_CS_SetProcedureParameters

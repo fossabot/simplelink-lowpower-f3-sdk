@@ -798,6 +798,210 @@
         ]
     },
     {
+        "location": "../../examples/rtos/LP_EM_CC2340R5/zigbee/mac_sensor/README.html",
+        "resourceType": "categoryInfo",
+        "name": "mac_sensor",
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R5"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2340R5/zigbee/mac_sensor/freertos/ticlang/mac_sensor_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+        "name": "mac_sensor",
+        "description": "mac_sensor",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "mac_sensor",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P10/zigbee/mac_sensor/README.html",
+        "resourceType": "categoryInfo",
+        "name": "mac_sensor",
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755P10"
+        ],
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2755P10/zigbee/mac_sensor/freertos/ticlang/mac_sensor_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+        "name": "mac_sensor",
+        "description": "mac_sensor",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "mac_sensor",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2340R53/zigbee/mac_sensor/README.html",
+        "resourceType": "categoryInfo",
+        "name": "mac_sensor",
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R53"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2340R53/zigbee/mac_sensor/freertos/ticlang/mac_sensor_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+        "name": "mac_sensor",
+        "description": "mac_sensor",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "mac_sensor",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
         "location": "../../examples/rtos/LP_EM_CC2340R5/zigbee/onoff_light/README.html",
         "resourceType": "categoryInfo",
         "name": "onoff_light",
@@ -2389,6 +2593,405 @@
         "subCategories": [
             "zigbee",
             "onoff_switch_ota_client_onchip",
+            "No RTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2340R5/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R5"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2340R5/zigbee/rf_test/freertos/ticlang/rf_test_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P10/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755P10"
+        ],
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2755P10/zigbee/rf_test/freertos/ticlang/rf_test_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2340R53/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R53"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "location": "../../examples/rtos/LP_EM_CC2340R53/zigbee/rf_test/freertos/ticlang/rf_test_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
+            "FreeRTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/nortos/LP_EM_CC2340R5/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R5"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R5"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "location": "../../examples/nortos/LP_EM_CC2340R5/zigbee/rf_test/ticlang/rf_test_LP_EM_CC2340R5_nortos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
+            "No RTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/nortos/LP_EM_CC2755P10/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755P10"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755P10"
+        ],
+        "devtools": [
+            "LP-EM-CC2755P10"
+        ],
+        "location": "../../examples/nortos/LP_EM_CC2755P10/zigbee/rf_test/ticlang/rf_test_LP_EM_CC2755P10_nortos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
+            "No RTOS",
+            "TI Clang Compiler"
+        ]
+    },
+    {
+        "location": "../../examples/nortos/LP_EM_CC2340R53/zigbee/rf_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "rf_test",
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee"
+        ],
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2340R53"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2340R53"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R53"
+        ],
+        "location": "../../examples/nortos/LP_EM_CC2340R53/zigbee/rf_test/ticlang/rf_test_LP_EM_CC2340R53_nortos_ticlang.projectspec",
+        "name": "rf_test",
+        "description": "rf_test",
+        "compiler": [
+            "ticlang"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "zigbee",
+            "rf_test",
             "No RTOS",
             "TI Clang Compiler"
         ]

@@ -56,7 +56,7 @@ add_library(ThirdPartyHSMDDKLib::hsmddk_cc35xx STATIC IMPORTED)
 
 set_target_properties(ThirdPartyHSMDDKLib::hsmddk_cc35xx PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/source"
-  INTERFACE_LINK_LIBRARIES "TOOLCHAIN_gcc_m33f;Driverlib::cc35xx"
+  INTERFACE_LINK_LIBRARIES "Drivers::drivers_cc35xx;TOOLCHAIN_gcc_m33f;Driverlib::cc35xx"
 )
 
 # Create imported target ThirdPartyHSMDDKLib::hsmddk_cc35xx_its
@@ -64,7 +64,7 @@ add_library(ThirdPartyHSMDDKLib::hsmddk_cc35xx_its STATIC IMPORTED)
 
 set_target_properties(ThirdPartyHSMDDKLib::hsmddk_cc35xx_its PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/source"
-  INTERFACE_LINK_LIBRARIES "TOOLCHAIN_gcc_m33f;Driverlib::cc35xx"
+  INTERFACE_LINK_LIBRARIES "Drivers::drivers_cc35xx;TOOLCHAIN_gcc_m33f;Driverlib::cc35xx"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,8 +68,10 @@ int_fast16_t CANMCAN_setBitTimingRaw(const CAN_BitRateTimingRaw *rawTiming);
  *  @brief  Configures the MCAN message RAM
  *
  *  Configures the MCAN message RAM. If CAN FD is enabled, buffers are configured
- *  to support a max payload size of 64-bytes. Otherwise, the buffers are
- *  configured to support a max payload size of 8-bytes for classic CAN.
+ *  to support a max payload size of 64 bytes. Otherwise, the buffers are
+ *  configured to support a max payload size of 8 bytes for classic CAN.
+ *  Rx FIFOs are configured for blocking mode to allow for message loss to be
+ *  detected and reported for proper error handling.
  *
  *  @param  config       A pointer to CAN_MsgRamConfig.
  *  @param  msgRamSize   Size of the message RAM in bytes.

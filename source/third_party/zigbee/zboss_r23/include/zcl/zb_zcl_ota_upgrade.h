@@ -635,7 +635,10 @@ enum zb_zcl_ota_upgrade_image_status_e
 #define ZB_ZCL_OTA_UPGRADE_MAX_INTERVAL 60
 
 /*! @brief Resend buffer delay */
-#define ZB_ZCL_OTA_UPGRADE_RESEND_BUFFER_DELAY ZB_TIME_ONE_SECOND * 45
+#define ZB_ZCL_OTA_UPGRADE_RESEND_BUFFER_DELAY ZB_TIME_ONE_SECOND * 15
+
+/*! @brief End Response timeout */
+#define ZB_ZCL_OTA_UPGRADE_END_RES_TIMEOUT ZB_TIME_ONE_SECOND * 90
 
 /*! @cond internals_doc
     @name OTA Upgrade cluster internals

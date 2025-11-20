@@ -873,7 +873,7 @@ zb_zcl_write_attr_req_t;
  */
 #define ZB_ZCL_GENERAL_GET_NEXT_WRITE_ATTR_REQ(data_ptr, data_len, write_attr_req)                 \
   {                                                                                                \
-    zb_uint8_t req_size = ZB_UINT8_MAX;                                                                   \
+    zb_uint16_t req_size = ZB_UINT16_MAX;                                                          \
     (write_attr_req) = (data_len) >= ZB_ZCL_WRITE_ATTR_REQ_SIZE                                    \
                            ? (zb_zcl_write_attr_req_t *)(void *)(data_ptr)                         \
                            : NULL;                                                                 \
@@ -882,9 +882,9 @@ zb_zcl_write_attr_req_t;
     {                                                                                              \
       /* substruct sizeof(zb_uint8_t) because its size */                                          \
       /* is already included into ZB_ZCL_WRITE_ATTR_REQ_SIZE */                                    \
-      ZB_ASSERT_COMPILE_TIME(ZB_ZCL_WRITE_ATTR_REQ_SIZE <= ZB_UINT8_MAX);                                 \
-      req_size = (zb_uint8_t)ZB_ZCL_WRITE_ATTR_REQ_SIZE - (zb_uint8_t)sizeof(zb_uint8_t)           \
-                 + zb_zcl_get_attribute_size((write_attr_req)->attr_type,                          \
+      ZB_ASSERT_COMPILE_TIME(ZB_ZCL_WRITE_ATTR_REQ_SIZE <= ZB_UINT8_MAX);                          \
+      req_size = (zb_uint16_t)ZB_ZCL_WRITE_ATTR_REQ_SIZE - (zb_uint16_t)sizeof(zb_uint8_t)         \
+                 + (zb_uint16_t)zb_zcl_get_attribute_size((write_attr_req)->attr_type,             \
                                              (write_attr_req)->attr_value);                        \
                                                                                                    \
       if (req_size <= (data_len))                                                                  \
@@ -1649,7 +1649,18 @@ zb_zcl_configure_reporting_res_t;
   ZB_ZCL_PACKET_PUT_DATA16_VAL(ptr, (max_interval));                       \
   if (zb_zcl_is_analog_data_type(attr_type))                               \
   {                                                                        \
-    (ptr) = zb_zcl_put_value_to_packet((ptr), (attr_type), report_change); \
+    /* Report change may be a NULL pointer/0 value */                      \
+    if (report_change == NULL)                                                \
+    {                                                                      \
+      /* Max size of an analog data type is 8 bytes */                     \
+      zb_uint64_t zero_attr_value = 0;                                     \
+      (ptr) = zb_zcl_put_value_to_packet((ptr), (attr_type),               \
+                                         (zb_uint8_t*) &zero_attr_value);  \
+    }                                                                      \
+    else                                                                   \
+    {                                                                      \
+      (ptr) = zb_zcl_put_value_to_packet((ptr), (attr_type), report_change);   \
+    }                                                                      \
   }                                                                        \
 }
 
@@ -1913,7 +1924,7 @@ typedef ZB_PACKED_PRE struct zb_zcl_read_reporting_cfg_rsp_s
 /** calculate size for command request: direction, attr_id */
 #define ZB_ZCL_READ_REPORTING_CFG_REQ_SIZE (sizeof(zb_uint8_t) + sizeof(zb_uint16_t))
 
-/** calculate size for unsuccess response version: status, direction, attr_id */
+/** calculate size for unsucccess response version: status, direction, attr_id */
 #define ZB_ZCL_READ_REPORTING_CFG_ERROR_SIZE (sizeof(zb_uint8_t)*2 + sizeof(zb_uint16_t))
 
 #define ZB_ZCL_READ_REPORTING_CFG_RES_SIZE (sizeof(zb_zcl_read_reporting_cfg_rsp_t))

@@ -104,8 +104,10 @@ applied, perform a factory reset of the device to  clear non-volatile storage.
 * **Image 1 -> Primary Image** -
     * Base Address: `MCUboot App -> Base Address`
     * Image Size: `MCUboot App -> Slot Size`
-* **Image 1 -> Secondary Image** -
-    * Base Address: `(MCUboot App -> Base Address) + (MCUboot App -> Slot Size)`
+* **Image 2 -> Secondary Image** -
+    * Base Address:
+        * On-Chip: `(MCUboot App -> Base Address) + (MCUboot App -> Slot Size)`
+        * Off-Chip: `0x00000000`
     * Image Size:
         * **If using Compression**: `MCUboot App -> Compressed Slot Size`
         * **If NOT using compression**: `MCUboot App -> Slot Size`

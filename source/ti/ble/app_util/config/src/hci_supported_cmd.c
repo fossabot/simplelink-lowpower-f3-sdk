@@ -140,6 +140,3 @@ void HCI_GetLocalSupportedCommands(uint8_t* pSupportedCmdBuf)
         memcpy(pSupportedCmdBuf, supportedCmdsArray, SUPPORTED_COMMAND_LEN);
     }
 }
-#ifdef __cplusplus
-}
-#endif

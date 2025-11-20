@@ -952,6 +952,47 @@ void MCAN_readRxMsg(MCAN_MemType memType, uint32_t num, MCAN_RxBufElement *elem)
 }
 
 /*
+ *  ======== MCAN_readRxFifo ========
+ */
+void MCAN_readRxFifo(uint32_t fifoNum, uint32_t fifoIndex, MCAN_RxBufElement *elem)
+{
+    uint32_t elemAddr;
+    uint32_t elemSize;
+    uint32_t elemSizeIdx;
+    uint32_t enableRead = 0U;
+    uint32_t startAddr;
+
+    switch (fifoNum)
+    {
+        case MCAN_RX_FIFO_NUM_0:
+            startAddr   = MCAN_READ_FIELD(MCAN_RXF0C, MCAN_RXF0C_F0SA);
+            elemSizeIdx = MCAN_READ_FIELD(MCAN_RXESC, MCAN_RXESC_F0DS);
+            enableRead  = 1U;
+            break;
+
+        case MCAN_RX_FIFO_NUM_1:
+            startAddr   = MCAN_READ_FIELD(MCAN_RXF1C, MCAN_RXF1C_F1SA);
+            elemSizeIdx = MCAN_READ_FIELD(MCAN_RXESC, MCAN_RXESC_F1DS);
+            enableRead  = 1U;
+            break;
+
+        default:
+            /* Invalid option */
+            break;
+    }
+
+    if (0U != enableRead)
+    {
+        /* Shift address field to correct position */
+        startAddr = (uint32_t)(startAddr << MCAN_START_ADDR_SHIFT);
+        elemSize  = MCAN_elementSizeWords[elemSizeIdx] << 2U; /* convert to bytes */
+        elemAddr  = startAddr + (elemSize * fifoIndex);
+        elemAddr += MCAN_getMRAMOffset();
+        MCAN_readMsg(elemAddr, elem);
+    }
+}
+
+/*
  *  ======== MCAN_readTxEventFifo ========
  */
 int_fast16_t MCAN_readTxEventFifo(MCAN_TxEventFifoElement *elem)

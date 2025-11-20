@@ -12,10 +12,13 @@ set(SOURCES_CC27XX
     batterymonitor/BatMonSupportLPF3.c
     CAN.c
     can/CANCC27XX.c
+    can/CANCC27XXX10.c # Should be added for CC27XXX10 devices only!
     can/common/CANMCAN.c
     ../../third_party/mcan/MCAN.c
     Comparator.c
     comparator/ComparatorLPF3LP.c
+    cryptoutils/sharedresources/HSMResourceXXF3.c
+    cryptoutils/sharedresources/CommonResourceXXF3.c
     dma/UDMALPF3.c
     GPIO.c
     gpio/GPIOLPF3.c

@@ -258,7 +258,11 @@ static void RCL_Handler_BLE5_setRfOperation(bool isNextOperationTx);
 /* Time from start of preamble to SYSTIM capture at sync found */
 #define TIMESTAMP_ADJUST_2MBPS 148U
 /* Time from start of preamble to SYSTIM capture at sync found */
+#ifdef DeviceFamily_CC27XX
+#define TIMESTAMP_ADJUST_CODED 1873U
+#else
 #define TIMESTAMP_ADJUST_CODED 1673U
+#endif
 /* Access address for advertising */
 #define ADV_ACCESS_ADDRESS 0x8E89BED6U
 /* Access address for DTM packets */

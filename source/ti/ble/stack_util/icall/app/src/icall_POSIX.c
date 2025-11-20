@@ -74,12 +74,14 @@
 #define BIOS_NO_WAIT (0U)
 
 #include "ti/ble/stack_util/osal/osal.h"
-#include <stdint.h>
-#include <stdio.h>
 #include "ti/ble/stack_util/icall/app/icall.h"
 #include "ti/ble/stack_util/icall/app/icall_platform.h"
+#include "ti/ble/app_util/config/ble_user_config.h"
+
 #include <stdarg.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #ifndef ICALL_FEATURE_SEPARATE_IMGINFO
 #include "ti/ble/stack_util/icall/app/icall_addrs.h"
@@ -224,13 +226,6 @@ typedef ICall_Errno (*ICall_PrimSvcFunc)(ICall_FuncArgsHdr *);
  * Note that function address must be odd number for Thumb mode functions.
  */
 extern const ICall_RemoteTaskEntry ICall_imgEntries[];
-/**
- * Array of task priorities of external images.
- * One task is created per image to start off the image entry function.
- * Each element of this array correspond to the task priority of
- * each entry function defined in @ref ICall_imgEntries.
- */
-extern const int ICall_imgTaskPriorities[];
 
 /**
  * Array of task stack sizes of external images.
@@ -253,7 +248,6 @@ extern const void *ICall_imgInitParams[];
 extern const uint_least8_t ICall_numImages;
 
 #define icall_threadEntries ICall_imgEntries
-#define ICall_threadPriorities ICall_imgTaskPriorities
 #define ICall_threadStackSizes ICall_imgTaskStackSizes
 #define ICall_getInitParams(_i) (ICall_imgInitParams[i])
 #define ICALL_REMOTE_THREAD_COUNT ICall_numImages
@@ -267,11 +261,6 @@ static const ICall_RemoteTaskEntry icall_threadEntries[] = ICALL_ADDR_MAPS;
 /** @internal external image count */
 #define ICALL_REMOTE_THREAD_COUNT \
   (sizeof(icall_threadEntries)/sizeof(icall_threadEntries[0]))
-
-
-/** @internal thread priorities to be assigned to each remote thread */
-static const int ICall_threadPriorities[] = ICALL_TASK_PRIORITIES;
-
 
 /** @internal thread stack max depth for each remote thread */
 static const size_t ICall_threadStackSizes[] = ICALL_TASK_STACK_SIZES;
@@ -393,9 +382,10 @@ void ICall_heapMgrGetMetrics(uint32_t *pBlkMax,
  * Worker Thread entity definition
  *
 */
-/* keep the worker thread priority lower than the icall task (5)
-   and higher than the app task (1) */
-#define ICALL_WORKER_THREAD_PRIORITY    2
+/* keep the worker thread priority lower than the BLE stack task by 1 
+   this will ensure that the worker thread is in higher priority than
+   the application, but lower than the stack itself */
+#define ICALL_WORKER_THREAD_PRIORITY    LL_MAX_TASK_PRIORITY - 1
 /* worker thread stack size was selected after the ECC SW operation
    usage was determined (~800 bytes) */
 #define ICALL_WORKER_THREAD_STACKSIZE   1024
@@ -568,7 +558,7 @@ static const ICall_RemoteTaskArg ICall_taskEntryFuncs =
  * @param arg1  ignored
  */
 
-TaskP_Handle RemoteTask;
+TaskP_Handle RemoteTask = NULL;
 TaskP_Params remoteTaskParams;
 
 struct argsForPosixTaskStart
@@ -621,12 +611,21 @@ void ICall_init(void)
  *          This task waits forever on queue message
  *          and executes a requested function call.
  */
+#ifdef CONFIG_ZEPHYR
+extern void TaskP_setTaskResourcePool(struct k_heap *heap);
+K_HEAP_DEFINE(worker_resource_pool, 128);
+#endif
+
 void ICall_workerThreadEntry(void *arg)
 {
   ICall_WorkerThreadMsg_t msg;
 
   typedef void (*ICall_workerThreadFuncArg)(void *arg);
   typedef void (*ICall_workerThreadFunc)(void);
+
+#ifdef CONFIG_ZEPHYR
+  TaskP_setTaskResourcePool(&worker_resource_pool);
+#endif
 
   workerThreadEntity.queueHandle = MessageQueueP_create(sizeof(ICall_WorkerThreadMsg_t),
                                                         ICALL_WORKER_THREAD_QUEUE_SIZE);
@@ -755,7 +754,7 @@ void ICall_createRemoteTasks(void)
 
   for (i = 0; i < ICALL_REMOTE_THREAD_COUNT; i++)
   {
-    remoteTaskTable[i].imgTaskPriority = ICall_threadPriorities[i];
+    remoteTaskTable[i].imgTaskPriority = bleStackConfig.llTaskPriority;
     remoteTaskTable[i].imgTaskStackSize = ICall_threadStackSizes[i];
     remoteTaskTable[i].startupEntry = icall_threadEntries[i];
     remoteTaskTable[i].ICall_imgInitParam = (void *) ICall_getInitParams(i);
@@ -767,7 +766,14 @@ void ICall_createRemoteTasks(void)
 
 bool BLE_isInvokeRequired(void)
 {
-  return (TaskP_getCurrentTask() != RemoteTask);
+    if (RemoteTask == NULL)
+    {
+        return false;
+    }
+    else
+    {
+        return (TaskP_getCurrentTask() != RemoteTask);
+    }
 }
 
 /**
@@ -1047,6 +1053,9 @@ void *ICall_allocMsg(size_t size)
 void *ICall_allocMsgLimited(size_t size)
 {
   void * msg;
+#ifdef CONFIG_ZEPHYR
+  msg = ICall_allocMsg(size);
+#else
   ICall_heapStats_t pStats;
   ICall_getHeapStats(&pStats);
   if(pStats.totalFreeSize - (uint32_t)size > ICALL_POSIX_HEAP_THRESHOLD_U)
@@ -1057,7 +1066,7 @@ void *ICall_allocMsgLimited(size_t size)
   {
     msg = NULL;
   }
-
+#endif
   return msg;
 }
 
@@ -1358,10 +1367,11 @@ void ICall_heapGetStats(ICall_heapStats_t *pStats)
   pStats->totalSize = configTOTAL_HEAP_SIZE;
   pStats->largestFreeSize = pHeapStats.xSizeOfLargestFreeBlockInBytes;
 }
+
 #elif defined(CONFIG_ZEPHYR)
 // ZEPHYR
-
-K_HEAP_DEFINE(ll_heap, CONFIG_BT_LL_HEAP_SIZE);
+extern struct k_heap ll_heap;
+// K_HEAP_DEFINE(ll_heap, CONFIG_BT_LL_HEAP_SIZE);
 /**
  * Allocates a memory block.
  * @param size   size of the block in bytes.
@@ -1401,9 +1411,9 @@ void ICall_heapGetStats(ICall_heapStats_t *pStats)
 //  int sys_heap_runtime_stats_get(struct sys_heap *heap,
 //                  struct sys_memory_stats *stats);
 
-  pStats->totalFreeSize   = CONFIG_BT_LL_HEAP_SIZE;
-  pStats->totalSize       = CONFIG_BT_LL_HEAP_SIZE;
-  pStats->largestFreeSize = CONFIG_BT_LL_HEAP_SIZE;
+  // pStats->totalFreeSize   = CONFIG_BT_LL_HEAP_SIZE;
+  // pStats->totalSize       = CONFIG_BT_LL_HEAP_SIZE;
+  // pStats->largestFreeSize = CONFIG_BT_LL_HEAP_SIZE;
 }
 
 #else
@@ -1438,8 +1448,12 @@ void ICall_free(void *msg)
 
 void *ICall_mallocLimited(uint_least16_t size)
 {
-  ICall_heapStats_t pStats;
   void *msg;
+#ifdef CONFIG_ZEPHYR
+  msg = ICall_heapMalloc(size);
+#else
+  ICall_heapStats_t pStats;
+
   ICall_getHeapStats(&pStats);
   if(pStats.totalFreeSize - (uint32_t)size > ICALL_POSIX_HEAP_THRESHOLD_U)
   {
@@ -1449,7 +1463,7 @@ void *ICall_mallocLimited(uint_least16_t size)
   {
     msg = NULL;
   }
-
+#endif
   return msg;
 }
 
@@ -1610,7 +1624,7 @@ uint8 ICall_IsQueueEmpty()
 {
   TaskP_Handle taskhandle = ICall_taskSelf();
   ICall_TaskEntry *taskentry = ICall_searchTask(taskhandle);
-  if(taskentry->queue == NULL)
+  if( (taskentry == NULL) || (taskentry->queue == NULL))
       return true;
   else
       return false;
@@ -1990,7 +2004,7 @@ ICall_pwrDispense(ICall_PwrBitmap_t bitmap)
 bool
 ICall_pwrIsStableXOSCHF(void)
 {
-  ICall_GetBoolArgs args;
+  ICall_GetBoolArgs args = {0};
   (void) ICallPlatform_pwrIsStableXOSCHF(&args);
   return (args.value);
 }
@@ -2016,7 +2030,7 @@ ICall_pwrSwitchXOSCHF(void)
 uint32_t
 ICall_pwrGetXOSCStartupTime(uint_fast32_t timeUntilWakeupInMs)
 {
-  ICall_PwrGetXOSCStartupTimeArgs args;
+  ICall_PwrGetXOSCStartupTimeArgs args = {0};
   args.timeUntilWakeupInMs = timeUntilWakeupInMs;
   (void) ICallPlatform_pwrGetXOSCStartupTime(&args);
   return (args.value);
@@ -2555,7 +2569,6 @@ uint32_t icall_directAPIva(icall_lite_id_t id, va_list argp)
   uint32_t res;
   icallLiteMsg_t liteMsg;
 
-  BLE_LOG_INT_INT(0, BLE_LOG_MODULE_APP, "APP : icall_directAPI to BLE func=0x%x, status=%d\n", id, 0);
   // Create the message that will be send to the BLE service.
   liteMsg.hdr.len = sizeof(icallLiteMsg_t);
   liteMsg.hdr.next = NULL;

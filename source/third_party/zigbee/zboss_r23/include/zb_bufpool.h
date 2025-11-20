@@ -164,7 +164,18 @@ zb_uint8_t *zb_buf_data0_func(TRACE_PROTO zb_bufid_t buf);
    @return buffer id
  */
 zb_bufid_t zb_buf_from_data0_func(TRACE_PROTO void *ptr);
-#define zb_buf_from_data0(a) zb_buf_from_data0_func(TRACE_CALL (a));
+#define zb_buf_from_data0(a) zb_buf_from_data0_func(TRACE_CALL (a))
+
+
+/**
+   Convert any pointer inside a buffer  into bufid.
+   In practice buffer begin ptr is usually used.
+
+   @param ptr - pointer inside the buffer array
+   @return buffer id
+ */
+zb_bufid_t zb_buf_from_begin_func(TRACE_PROTO void *ptr);
+#define zb_buf_from_begin(a) zb_buf_from_begin_func(TRACE_CALL (a))
 
 /**
  * Copy payload if a pointer points to a buffer and the buffer has enough space for it

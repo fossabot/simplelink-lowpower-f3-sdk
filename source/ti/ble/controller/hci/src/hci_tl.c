@@ -232,17 +232,6 @@ uint32 HCI_ProcessEvent( uint8 task_id, uint32 events )
  *
  * Public function defined in hci.h.
  */
-void HCI_TestAppTaskRegister( uint8 taskID )
-{
-  hciTestTaskID = taskID;
-}
-
-
-/*******************************************************************************
- * Register GAP task ID with HCI.
- *
- * Public function defined in hci.h.
- */
 void HCI_GAPTaskRegister( uint8 taskID )
 {
   hciGapTaskID = taskID;

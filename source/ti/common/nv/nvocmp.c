@@ -208,7 +208,14 @@ Requires API's in a crc.h to implement CRC functionality.
     #endif
 
     #ifdef NVOCMP_MIN_VDD_FLASH_MV
-        #include <driverlib/aon_batmon.h>
+        #if !defined(DeviceFamily_CC23X0R5) && !defined(DeviceFamily_CC23X0R53) && !defined(DeviceFamily_CC23X0R2) && \
+            !defined(DeviceFamily_CC23X0R22) && !defined(DeviceFamily_CC27XX)
+            #include <driverlib/aon_batmon.h>
+        #else
+            #include DeviceFamily_constructPath(inc/hw_types.h)
+            #include DeviceFamily_constructPath(inc/hw_memmap.h)
+            #include DeviceFamily_constructPath(inc/hw_pmud.h)
+        #endif
     #endif
 #endif
 
@@ -743,6 +750,10 @@ static bool (*NVOCMP_voltCheckFptr)(void);
 static uint16_t NVOCMP_badCRCCount = 0;
 #endif // NVOCMP_STATS
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+volatile uint32_t writeEraseInProgressFlag = 0;
+#endif
+
 NVOCMP_initAction_t gAction;
 uint8_t NVOCMP_size;
 
@@ -775,6 +786,10 @@ static uint32_t NVOCMP_getFreeNvApi(void);
 
 #ifdef ENABLE_SANITY_CHECK
 static uint32_t NVOCMP_sanityCheckApi(void);
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+uint32_t NVOCMP_writeEraseInProgressApi(void);
 #endif
 
 //*****************************************************************************
@@ -868,6 +883,9 @@ void NVOCMP_loadApiPtrs(NVINTF_nvFuncts_t *pfn)
 #ifdef ENABLE_SANITY_CHECK
     pfn->sanityCheck = &NVOCMP_sanityCheckApi;
 #endif
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    pfn->writeEraseInProgress = &NVOCMP_writeEraseInProgressApi;
+#endif
 }
 
 /**
@@ -903,6 +921,9 @@ void NVOCMP_loadApiPtrsMin(NVINTF_nvFuncts_t *pfn)
 #ifdef ENABLE_SANITY_CHECK
     pfn->sanityCheck = &NVOCMP_sanityCheckApi;
 #endif
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    pfn->writeEraseInProgress = &NVOCMP_writeEraseInProgressApi;
+#endif
 }
 
 /**
@@ -936,6 +957,9 @@ void NVOCMP_loadApiPtrsExt(NVINTF_nvFuncts_t *pfn)
     pfn->getFreeNV    = &NVOCMP_getFreeNvApi;
 #ifdef ENABLE_SANITY_CHECK
     pfn->sanityCheck = &NVOCMP_sanityCheckApi;
+#endif
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    pfn->writeEraseInProgress = &NVOCMP_writeEraseInProgressApi;
 #endif
 }
 
@@ -999,6 +1023,9 @@ extern void NVOCMP_setLowVoltageCb(lowVoltCbFptr funcPtr)
  */
 static bool NVOCMP_checkVoltage(void)
 {
+#if !defined(DeviceFamily_CC23X0R5) && !defined(DeviceFamily_CC23X0R53) && !defined(DeviceFamily_CC23X0R2) && \
+    !defined(DeviceFamily_CC23X0R22) && !defined(DeviceFamily_CC27XX)
+
     uint32_t voltage = AONBatMonBatteryVoltageGet();
     voltage          = (voltage * 1000) >> AON_BATMON_BAT_FRAC_W;
     if (voltage < NVOCMP_MIN_VDD_FLASH_MV)
@@ -1012,6 +1039,42 @@ static bool NVOCMP_checkVoltage(void)
     }
 
     return (true);
+#else
+    static bool isInit = false;
+    uint32_t voltage;
+
+    if (!isInit) {
+        HWREG(PMUD_BASE + PMUD_O_CTL) = PMUD_CTL_CALC_EN | PMUD_CTL_MEAS_EN | PMUD_CTL_HYST_EN_DIS;
+        while ((HWREG(PMUD_BASE + PMUD_O_BATUPD) & PMUD_BATUPD_STA_M) != PMUD_BATUPD_STA_UPD);
+        isInit = true;
+    }
+
+    /* The voltage on LPF3 is stored in a 32-bit register
+     * containing a 3-bit unsigned integer part and a 8-bit unsigned fractional
+     * part.
+     */
+
+    // Voltage in 3.8 fixed-point format (in Volts)
+    voltage = HWREG(PMUD_BASE + PMUD_O_BAT) & (PMUD_BAT_INT_M | PMUD_BAT_FRAC_M);
+
+    // Convert to mV by multiplying by 1000
+    voltage *= 1000U;
+
+    // Round to nearest integer and discard fractional part
+    voltage = (voltage + ((uint32_t)1U << (PMUD_BAT_INT_S - 1U))) >> PMUD_BAT_INT_S;
+
+    if (voltage < NVOCMP_MIN_VDD_FLASH_MV)
+    {
+        // Measured device voltage is below threshold
+        if (NVOCMP_lowVoltCbFptr)
+        {
+            NVOCMP_lowVoltCbFptr(voltage);
+        }
+        return (false);
+    }
+
+    return(true);
+#endif
 }
 #endif
 
@@ -1036,6 +1099,10 @@ static uint8_t NVOCMP_initNvApi(void *param)
     NVOCMP_ALERT(false, "NVOCMP Init. Called!")
     NVOCMP_failW = NVOCMP_failF;
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     if (NVOCMP_failF == NVINTF_NOTREADY)
     {
 #ifdef NVOCMP_POSIX_MUTEX
@@ -1054,6 +1121,10 @@ static uint8_t NVOCMP_initNvApi(void *param)
         if (pthread_mutexattr_init(&attr) != 0)
         {
             NVOCMP_failF = NVINTF_FAILURE;
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+            writeEraseInProgressFlag = 0;
+#endif
             return (NVOCMP_failF);
         }
 
@@ -1065,6 +1136,10 @@ static uint8_t NVOCMP_initNvApi(void *param)
         if (pthread_mutex_init(&NVOCMP_gPosixMutex, &attr) != 0)
         {
             NVOCMP_failF = NVINTF_FAILURE;
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+            writeEraseInProgressFlag = 0;
+#endif
             return (NVOCMP_failF);
         }
 #elif defined(NVOCMP_POSIX_SEM)
@@ -1107,6 +1182,11 @@ static uint8_t NVOCMP_initNvApi(void *param)
         {
             NVOCMP_failF = NVINTF_FAILURE;
             NVOCMP_EXCEPTION(pg, NVINTF_FAILURE)
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+            writeEraseInProgressFlag = 0;
+#endif
+
             return (NVOCMP_failF);
         }
 
@@ -1116,6 +1196,10 @@ static uint8_t NVOCMP_initNvApi(void *param)
             NVOCMP_failF = NVINTF_FAILURE;
             NVOCMP_ASSERT(false, "NVS HANDLE IS NULL")
             NVOCMP_EXCEPTION(pg, NVINTF_NOTREADY);
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+            writeEraseInProgressFlag = 0;
+#endif
             return (NVOCMP_failF);
         }
 
@@ -1150,6 +1234,10 @@ static uint8_t NVOCMP_initNvApi(void *param)
 #endif // NVOCMP_STATS
     }
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
+#endif
+
     return (NVOCMP_failW);
 }
 
@@ -1176,6 +1264,10 @@ static uint8_t NVOCMP_eraseNvApi(void)
 
     NVOCMP_LOCK();
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     // Erase All pages before start
     for (pg = 0; pg < NVOCMP_NVSIZE; pg++)
     {
@@ -1197,6 +1289,10 @@ static uint8_t NVOCMP_eraseNvApi(void)
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -1260,6 +1356,11 @@ static uint8_t NVOCMP_compactNvApi(uint16_t minAvail)
 
     // Prevent RTOS thread contention
     NVOCMP_LOCK();
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     NVOCMP_ALERT(false, "API Compaction Request.")
     err = NVOCMP_failF;
     // Check for a fatal error
@@ -1290,6 +1391,10 @@ static uint8_t NVOCMP_compactNvApi(uint16_t minAvail)
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -1338,6 +1443,10 @@ static uint8_t NVOCMP_createItemApi(NVINTF_itemID_t id, uint32_t len, void *pBuf
     // Prevent RTOS thread contention
     NVOCMP_LOCK();
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     err = NVOCMP_findItem(&NVOCMP_nvHandle,
                           NVOCMP_nvHandle.actPage,
                           NVOCMP_nvHandle.actOffset,
@@ -1370,6 +1479,10 @@ static uint8_t NVOCMP_createItemApi(NVINTF_itemID_t id, uint32_t len, void *pBuf
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -1414,6 +1527,10 @@ static uint8_t NVOCMP_updateItemApi(NVINTF_itemID_t id, uint32_t len, void *pBuf
     // Prevent RTOS thread contention
     NVOCMP_LOCK();
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     err = NVOCMP_findItem(&NVOCMP_nvHandle,
                           NVOCMP_nvHandle.actPage,
                           NVOCMP_nvHandle.actOffset,
@@ -1448,6 +1565,10 @@ static uint8_t NVOCMP_updateItemApi(NVINTF_itemID_t id, uint32_t len, void *pBuf
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -1493,6 +1614,10 @@ static uint8_t NVOCMP_deleteItemApi(NVINTF_itemID_t id)
     // Prevent RTOS thread contention
     NVOCMP_LOCK();
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     err = NVOCMP_findItem(&NVOCMP_nvHandle,
                           NVOCMP_nvHandle.actPage,
                           NVOCMP_nvHandle.actOffset,
@@ -1524,6 +1649,10 @@ static uint8_t NVOCMP_deleteItemApi(NVINTF_itemID_t id)
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -1722,6 +1851,10 @@ static uint8_t NVOCMP_writeItemApi(NVINTF_itemID_t id, uint16_t len, void *pBuf)
     // Prevent RTOS thread contention
     NVOCMP_LOCK();
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
+
     // Create a new item
     err = NVOCMP_addItem(&NVOCMP_nvHandle, &iHdr, pBuf, NVOCMP_WRITE);
     if ((err == NVINTF_SUCCESS) && (iHdr.hofs > 0))
@@ -1737,6 +1870,10 @@ static uint8_t NVOCMP_writeItemApi(NVINTF_itemID_t id, uint16_t len, void *pBuf)
     {
         NV_LINUX_save();
     }
+#endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
 #endif
 
     NVOCMP_UNLOCK(err);
@@ -4145,8 +4282,12 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
     NVOCMP_FLASHACCESS(err)
     if (err)
     {
-        return (0);
+        return (err);
     }
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
 
     srcPg        = pNvHandle->headPage;
     dstPg        = pNvHandle->tailPage;
@@ -4181,6 +4322,9 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
 
     if ((allActivePages == NVOCMP_NVSIZE - 1) && !pNvHandle->forceCompact)
     {
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+        writeEraseInProgressFlag = 0;
+#endif
         return (0);
     }
 
@@ -4250,6 +4394,10 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
 
             pNvHandle->forceCompact = 0;
     #endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+            writeEraseInProgressFlag = 0;
+#endif
             return (0);
         }
 
@@ -4326,6 +4474,11 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
     NVOCMP_changePageState(pNvHandle, pNvHandle->tailPage, NVOCMP_PGXDST);
 
     pNvHandle->forceCompact = 0;
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
+#endif
+
     return (FLASH_PAGE_SIZE - pNvHandle->compactInfo.xDstOffset);
 }
 #else
@@ -4360,8 +4513,12 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
     NVOCMP_FLASHACCESS(err)
     if (err)
     {
-        return (0);
+        return (err);
     }
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 1;
+#endif
 
     #if (NVOCMP_NVPAGES == NVOCMP_NVONEP)
     srcPg                            = 0;
@@ -4376,6 +4533,9 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
     NVOCMP_read(srcPg, NVOCMP_PGHDROFS, (uint8_t *)&pageHdr, NVOCMP_PGHDRLEN);
     if ((NVOCMP_ALLACTIVE == pageHdr.allActive) && !pNvHandle->forceCompact)
     {
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+        writeEraseInProgressFlag = 0;
+#endif
         return (0);
     }
 
@@ -4424,6 +4584,11 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
 
         pNvHandle->forceCompact = 0;
     #endif
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+        writeEraseInProgressFlag = 0;
+#endif
+
         return (0);
     }
 
@@ -4458,6 +4623,11 @@ static int16_t NVOCMP_compactPage(NVOCMP_nvHandle_t *pNvHandle, uint16_t nBytes)
     #endif
 
     pNvHandle->forceCompact = 0;
+
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+    writeEraseInProgressFlag = 0;
+#endif
+
     return (FLASH_PAGE_SIZE - pNvHandle->actOffset);
 }
 #endif
@@ -4648,6 +4818,10 @@ static NVOCMP_compactStatus_t NVOCMP_compact(NVOCMP_nvHandle_t *pNvHandle)
                     // item in the page, break the loop so that any valid items
                     // that were collected up to this point get written to the
                     // destination page.
+                    // Since could not find signature till the end of page,
+                    // srcOff should be set to NVOCMP_PGDATAOFS
+                    // before exit
+                    srcOff = NVOCMP_PGDATAOFS;
                     NVOCMP_ALERT(foundSig, "Attempt to find signature failed.")
                     break;
                 }
@@ -4872,6 +5046,10 @@ static NVOCMP_compactStatus_t NVOCMP_compact(NVOCMP_nvHandle_t *pNvHandle)
                     // item in the page, break the loop so that any valid items
                     // that were collected up to this point get written to the
                     // destination page.
+                    // Since could not find signature till the end of page,
+                    // srcOff should be set to NVOCMP_PGDATAOFS
+                    // before exit
+                    srcOff = NVOCMP_PGDATAOFS;
                     NVOCMP_ALERT(foundSig, "Attempt to find signature failed.")
                     break;
                 }
@@ -5247,6 +5425,10 @@ static uint32_t NVOCMP_sanityCheckApi(void)
                     // If we get here and foundSig is false, we never found another
                     // item in the page, break the loop and report that corruption
                     // has been detected
+                    // Since could not find signature till the end of page,
+                    // srcOff should be set to NVOCMP_PGDATAOFS
+                    // before exit
+                    srcOff = NVOCMP_PGDATAOFS;
                     NVOCMP_ALERT(foundSig, "Attempt to find signature failed.")
                     ret |= (1 << NVINTF_NO_SIG);
                     break;
@@ -5282,4 +5464,21 @@ static uint32_t NVOCMP_sanityCheckApi(void)
 }
 #endif
 
+#ifdef ENABLE_WRITE_ERASE_IN_PROGRESS_FLAG
+/******************************************************************************
+ * @fn      NVOCMP_writeEraseInProgressApi
+ *
+ * @brief   Global function to check if a write/erase operation is in progress.
+ *
+ * @param   none
+ *
+ * @return  0: Write/Erase not in progress.
+ *          1: Write/Erase in progress.
+ */
+uint32_t NVOCMP_writeEraseInProgressApi(void)
+{
+    return writeEraseInProgressFlag;
+}
+
+#endif
 //*****************************************************************************

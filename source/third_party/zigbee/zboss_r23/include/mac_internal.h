@@ -72,9 +72,6 @@ So, it is in our intermal time units
 */
 #define ZB_MAC_TRANSACTION_PERSISTENCE_TIME 0x01f4U
 
-#define ZB_MAC_SECURITY_LEVEL 5U
-#define ZB_MAC_KEY_ID_MODE    1U
-
 
 /**
    Defines max scan duration
@@ -171,15 +168,53 @@ void zb_orphan_notification_command(zb_uint8_t param);
 */
 void zb_mlme_send_association_req_cmd(zb_uint8_t param);
 
+/* NS Multi-PAN uses this function to construct outgoing Ack frame */
+#if !defined(ZB_AUTO_ACK_TX) || (defined(ZB_NSNG) && defined(ZB_MULTIPAN_DEVICE))
+/**
+  Fills Immediate Ack payload
+  @param ack_dsn - frame sequence number to acknowledge
+  @param frame_version - frame version to put in frame header
+  @param out_ack_data - pointer to Ack buffer
+*/
+void zb_mac_fill_ack_data(zb_uint8_t ack_dsn, zb_uint8_t frame_version, zb_uint8_t *out_ack_data);
+#endif /* !ZB_AUTO_ACK_TX || ZB_NSNG */
+
 #ifndef ZB_AUTO_ACK_TX
 /**
   sends acknowledgement
   @param ack_dsn - frame sequence number to acknowledge
 */
-
 void zb_mac_send_ack(zb_uint8_t ack_dsn);
 #endif /* ZB_AUTO_ACK_TX */
 
+/**
+ * @brief Parses MAC frame header from buffer
+ *
+ * @param buf buffer id
+ * @param tail_size frame tail size
+ *  (TODO: remove "tail_size" after ZB MAC HL refactoring,
+ *  when buffer parameter will be used instead of tail).
+ * @param[out] out_mhr MAC header
+ * @param[out] out_cmd_ptr Frame payload
+ * @return zb_ret_t RET_OK if header is parsed
+ */
+zb_ret_t mac_parse_frame_hdr(zb_bufid_t buf, zb_uint8_t tail_size, zb_mac_mhr_t *out_mhr, zb_uint8_t **out_cmd_ptr);
+
+/**
+ * @brief Checks if the frame can be accepted by its MAC header and payload pointer
+ *
+ * @param mhr frame's MAC header
+ * @param payload_ptr frame's payload pointer
+ * @return zb_bool_t ZB_TRUE if the frame can be accepted
+ */
+zb_bool_t mac_can_accept_frame_by_hdr(const zb_mac_mhr_t *mhr, const zb_uint8_t *payload_ptr);
+
+/**
+ * @brief Checks if the frame in buffer can be accepted
+ *
+ * @param buf buffer id with the frame
+ * @return zb_bool_t ZB_TRUE if the frame can be accepted
+ */
 zb_bool_t mac_can_accept_frame(zb_bufid_t buf);
 
 /**

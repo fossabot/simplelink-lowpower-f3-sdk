@@ -36,6 +36,7 @@
 #include <ti/drivers/trng/TRNGLPF3HSM.h>
 #include <ti/drivers/RNG.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/hsm/HSMLPF3.h>
 #include <ti/drivers/cryptoutils/hsm/HSMLPF3Utility.h>
 #include <ti/drivers/dpl/SemaphoreP.h>
@@ -230,6 +231,14 @@ static int_fast16_t RNGLPF3HSM_generateEntropy(RNG_Handle handle, void *randomBy
         return RNG_STATUS_RESOURCE_UNAVAILABLE;
     }
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->timeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return RNG_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     Power_setConstraint(PowerLPF3_DISALLOW_STANDBY);
 
     if (randomBytesSize < HSM_DRBG_RNG_BLOCK_SIZE)
@@ -269,6 +278,9 @@ static int_fast16_t RNGLPF3HSM_generateEntropy(RNG_Handle handle, void *randomBy
             }
         }
     }
+
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     HSMLPF3_releaseLock();
 

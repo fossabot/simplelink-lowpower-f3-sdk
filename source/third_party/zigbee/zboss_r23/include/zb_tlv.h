@@ -622,6 +622,11 @@ zb_ret_t zb_tlv_parse_value_selected_key_neg_method(zb_uint8_t *tlv_ptr,
                                                     zb_ieee_addr_t ieee_addr,
                                                     zb_uint8_t *selected_key_neg_method,
                                                     zb_uint8_t *selected_psk_secret);
+
+#endif /* ZB_JOIN_CLIENT */
+
+#if defined ZB_COORDINATOR_ROLE || defined ZB_ROUTER_ROLE
+
 /**
  * Parse Key Negotiation Req Selected Key Negotiation Method TLV. For Zigbee Direct
  *
@@ -638,7 +643,7 @@ zb_ret_t zb_tlv_direct_parse_value_selected_key_neg_method(const zb_uint8_t *tlv
                                                            zb_uint8_t *selected_key_neg_method,
                                                            zb_uint8_t *selected_secret);
 
-#endif /* ZB_JOIN_CLIENT */
+#endif /* ZB_COORDINATOR_ROLE || ZB_ROUTER_ROLE */
 
 #if defined ZB_COORDINATOR_ROLE || defined ZB_ROUTER_ROLE
 

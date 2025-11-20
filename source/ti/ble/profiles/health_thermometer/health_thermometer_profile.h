@@ -64,8 +64,8 @@ extern "C"
 /************************************
  ********** HTP Measurement *********
  ************************************/
-#define HTP_MEAS_MIN_TEMP         -273.15         // Minimum Temperature Measurement value
-#define HTP_MEAS_MAX_TEMP         327.67          // Maximum Temperature Measurement value
+#define HTP_MEAS_MIN_TEMP  (float)-273.15         // Minimum Temperature Measurement value
+#define HTP_MEAS_MAX_TEMP  (float)327.67          // Maximum Temperature Measurement value
 #define HTP_MEAS_MIN_TYPE         0               // Minimum Temperature Type value
 #define HTP_MEAS_MAX_TYPE         255             // Maximum Temperature Type value
 #define HTP_MEAS_MIN_TIME_STAMP   0
@@ -130,7 +130,7 @@ bStatus_t HTP_start( HTP_cb_t *appCallbacks, HTP_timeStamp* htp_timeStamp);
  * @param   sensorStatus - device status, not mandatory.
  * @return  SUCCESS or stack call status
  */
-bStatus_t HTP_sendMeasurement( uint32 tempMeasur,uint16  timeStamp, uint8 type );
+bStatus_t HTP_sendMeasurement( float tempMeasur,uint16  timeStamp, uint8 type );
 
 #ifdef __cplusplus
 }

@@ -169,14 +169,14 @@ extern "C"
  * @{
  */
 // Supported
-#define L2CAP_CMD_REJECT                   0x01 //!< Command Reject Response
-#define L2CAP_DISCONNECT_REQ               0x06 //!< Disconnection Request
-#define L2CAP_DISCONNECT_RSP               0x07 //!< Disconnection Response
-#define L2CAP_PARAM_UPDATE_REQ             0x12 //!< Connection Parameter Update Request
-#define L2CAP_PARAM_UPDATE_RSP             0x13 //!< Connection Parameter Update Response
-#define L2CAP_CONNECT_IND                  0x14 //!< LE Credit Based Connection Indication
-#define L2CAP_CONNECT_RSP                  0x15 //!< LE Credit Based Connection Response
-#define L2CAP_FLOW_CTRL_CREDIT             0x16 //!< LE Flow Control Credit
+#define L2CAP_CMD_REJECT                      0x01 //!< Command Reject Response
+#define L2CAP_DISCONNECT_REQ                  0x06 //!< Disconnection Request
+#define L2CAP_DISCONNECT_RSP                  0x07 //!< Disconnection Response
+#define L2CAP_CONNECTION_PARAMETER_UPDATE_REQ 0x12 //!< Connection Parameter Update Request
+#define L2CAP_PARAM_UPDATE_RSP                0x13 //!< Connection Parameter Update Response
+#define L2CAP_CONNECT_IND                     0x14 //!< LE Credit Based Connection Indication
+#define L2CAP_CONNECT_RSP                     0x15 //!< LE Credit Based Connection Response
+#define L2CAP_FLOW_CTRL_CREDIT                0x16 //!< LE Flow Control Credit
 
 // Not supported
 #define L2CAP_CONNECTION_REQ               0x02 //!< Connection Request
@@ -205,6 +205,7 @@ extern "C"
 #define L2CAP_PEER_CREDIT_THRESHOLD_EVT  0x63 //!< Peer Credit Threshold Event
 #define L2CAP_SEND_SDU_DONE_EVT          0x64 //!< Send SDU Done Event
 #define L2CAP_NUM_CTRL_DATA_PKT_EVT      0x65 //!< Available Ctrl Data Packets Event
+#define L2CAP_PEER_CREDIT_RECEIVED_EVT   0x66 //!< Peer Credit Received Event
 
 /** @} End L2CAP_EVENT_CODES_DEFINES */
 
@@ -470,11 +471,11 @@ typedef struct
   uint16 srcCID; //!< Identifies CID on device receiving response
 } l2capDisconnectRsp_t;
 
-/// @brief Flow Control Credit format.
+/// @brief L2CAP_FLOW_CTRL_CREDIT or L2CAP_PEER_CREDIT_RECEIVED_EVT payload's message format.
 typedef struct
 {
   uint16 CID;     //!< Represents Source CID of device sending credit packet
-  uint16 credits; //!< Number of LE-frames that can be sent to local device
+  uint16 credits; //!< Number of LE-frames that can be sent to local device (credits received)
 } l2capFlowCtrlCredit_t;
 
 /// @brief PSM information format.

@@ -56,7 +56,7 @@ add_library(ThirdPartyHSMDDKLib::hsmddk_cc27xx STATIC IMPORTED)
 
 set_target_properties(ThirdPartyHSMDDKLib::hsmddk_cc27xx PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/source"
-  INTERFACE_LINK_LIBRARIES "TOOLCHAIN_iar_m33f;Driverlib::cc27xx"
+  INTERFACE_LINK_LIBRARIES "Drivers::drivers_cc27xx;TOOLCHAIN_iar_m33f;Driverlib::cc27xx"
 )
 
 # Create imported target ThirdPartyHSMDDKLib::hsmddk_cc27xx_its
@@ -64,7 +64,7 @@ add_library(ThirdPartyHSMDDKLib::hsmddk_cc27xx_its STATIC IMPORTED)
 
 set_target_properties(ThirdPartyHSMDDKLib::hsmddk_cc27xx_its PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/source"
-  INTERFACE_LINK_LIBRARIES "TOOLCHAIN_iar_m33f;Driverlib::cc27xx"
+  INTERFACE_LINK_LIBRARIES "Drivers::drivers_cc27xx;TOOLCHAIN_iar_m33f;Driverlib::cc27xx"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)
@@ -103,7 +103,7 @@ unset(_IMPORT_CHECK_TARGETS)
 # Make sure the targets which have been exported in some other
 # export set exist.
 unset(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets)
-foreach(_target "Driverlib::cc27xx" )
+foreach(_target "Drivers::drivers_cc27xx" "Driverlib::cc27xx" )
   if(NOT TARGET "${_target}" )
     set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets "${${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets} ${_target}")
   endif()

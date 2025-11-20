@@ -89,10 +89,13 @@
 /*******************************************************************************
  * CONSTANTS
  */
+//!< CS Subevent Result Event Opcode
+#define CS_SUBEVENT_RESULT_OPCODE          RCL_CMD_BLE_CS_SUBEVENT_RESULTS_OPCODE
+//!< CS Continue Subevent Result Event Opcode
+#define CS_CONTINUE_SUBEVENT_RESULT_OPCODE RCL_CMD_BLE_CS_SUBEVENT_RESULTS_CONTINUE_OPCODE
 
-#define CS_MAX_CHANNEL_REPETITIONS         3      //! CS Max Channel Map repetitions
-#define CS_SUBEVENT_RESULT_OPCODE          0x31   //!< CS Subevent Result Event Opcode
-#define CS_CONTINUE_SUBEVENT_RESULT_OPCODE 0x32   //!< CS Continue Subevent Result Event Opcode
+#define CS_PREVIOUS_PROCEDURE_VALID        0
+#define CS_PREVIOUS_PROCEDURE_INVALID      1
 
 /*******************************************************************************
  * EXTERNS
@@ -131,6 +134,26 @@
  *              CS_SUCCESS
  */
 uint8 llCsInit(void);
+
+/*******************************************************************************
+ * @fn          llCsNewSubEvent_getSubEventType
+ *
+ * @brief       This function returns the type of the subevent, based on the status of the csStepBufferList.
+ * In case it empty - we are starting a new subevent, otherwise we are continuing an existing one.
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      CS_NEW_SUBEVENT
+ *              CS_CONTINUE_SUBEVENT
+ *
+ */
+csSubeventType_e llCsNewSubEvent_getSubEventType(void);
 
 /*******************************************************************************
  * @fn          llCsClearConnProcedures
@@ -184,25 +207,21 @@ void llCsFreeAll(void);
 void llCsSetFeatureBit(void);
 
 /*******************************************************************************
- * @fn          llCsCalculateSubeventSteps
+ * @fn          llCsIsHostFeatureBitSet
  *
- * @brief       Calculate the number of steps for the subevent
- * And the number of steps remaining for the procedure.
- * Resets the subevent counter.
+ * @brief       Check if CS Host Feature bit is set.
  *
  * input parameters
  *
- * @param       connId - Connection Id
- * @param       configId - Configuration ID of the CS procedure to run
- * @param       numMainModeSteps - Number of main mode steps in the procedure
+ * @param       None
  *
  * output parameters
  *
- * @param      None
+ * @param       None
  *
- * @return      None
-*/
-void llCsCalculateSubeventSteps(uint16 connId, uint8 configId, uint16 numMainModeSteps);
+ * @return      True if CS Host Feature bit is set, False otherwise
+ */
+bool llCsIsHostFeatureBitSet(void);
 
 /*******************************************************************************
  * @fn          llCsInitSubevent
@@ -225,12 +244,10 @@ void llCsCalculateSubeventSteps(uint16 connId, uint8 configId, uint16 numMainMod
 void llCsInitSubevent(uint16 connId, uint8 configId);
 
 /*******************************************************************************
- * @fn          llCsInitProcedure
+ * @fn          llCsStartStepListGen
  *
- * @brief       Initializes the Channel Sounding Procedure
- * This function initializes the CS procedure by building the Channel Arrays,
- * initializing StepList and Results buffers, initialzied the first subevent
- * of the procedure. Sets the number of needed to complete the procedure.
+ * @brief       If a CS_START procedure was completed or next procedure should
+ *              begin, generate step list for the upcoming procedure.
  *
  * @design      BLE_LOKI-506
  *
@@ -248,7 +265,7 @@ void llCsInitSubevent(uint16 connId, uint8 configId);
  *              LL_CS_STATUS_INVALID_CONN_PTR - invalid connection pointer
  *              LL_CS_STATUS_SUCCESS
  */
-csStatus_e llCsInitProcedure(uint16 connId, uint8 configId);
+csStatus_e llCsStartStepListGen(uint16 connId, uint8 configId);
 
 /*******************************************************************************
  * @fn          llCsInitSubeventStepBuffers
@@ -306,14 +323,15 @@ void llCsSetupStepBuffers(uint16 connId, uint8 configId, csSubeventType_e isNewS
  * input parameters
  *
  * @param       connPtr - Pointer to the current connection
+
  *
  * output parameters
  *
  * @param       None.
  *
- * @return      Status
+ * @return      None.
  */
-csStatus_e llCsStartProcedure(llConnState_t* connPtr);
+void llCsStartProcedure(llConnState_t* connPtr);
 
 /*******************************************************************************
  * @fn          llCsStartTestProcedure
@@ -352,22 +370,24 @@ csStatus_e llCsStartTestProcedure(void);
 void llCsStopTestProcedure(void);
 
 /*******************************************************************************
- * @fn          llCsStartStepListGen
+ * @fn          llCsNewSubEvent_getSubEventType
  *
- * @brief       If a CS_START procedure was completed or next procedure should
- *              begin, generate step list for the upcoming procedure.
+ * @brief       This function returns the type of the subevent, based on the status of the csStepBufferList.
+ * In case it empty - we are starting a new subevent, otherwise we are continuing an existing one.
  *
  * input parameters
  *
- * @param       connId - connection Identifier
+ * @param       None
  *
  * output parameters
  *
  * @param       None.
  *
- * @return      None
+ * @return      CS_NEW_SUBEVENT
+ *              CS_CONTINUE_SUBEVENT
+ *
  */
-uint8 llCsStartStepListGen(uint16 connId);
+csSubeventType_e llCsNewSubEvent_getSubEventType(void);
 
 /*******************************************************************************
  * @fn          llCsDisableProcedure
@@ -404,9 +424,9 @@ void llCsDisableProcedure(uint16 connId, uint8 configId, uint8 status);
  *
  * input parameters
  *
- * @param       stepMode - step mode (0, 1, 2, 3)
  * @param       connId - connection ID
- * @param       csConfig - pointer to CS config
+ * @param       configId - Configuration Identifier
+ * @param       stepMode - step mode (0, 1, 2, 3)
  *
  * output parameters
  *
@@ -414,7 +434,7 @@ void llCsDisableProcedure(uint16 connId, uint8 configId, uint8 status);
  *
  * @return      Selected Channel Index
  */
-uint8 llCsSelectStepChannel(uint8 stepMode, uint16 connId, const csConfigurationSet_t* csConfig);
+uint8 llCsSelectStepChannel(uint16 connId, uint8_t configId, uint8 stepMode);
 
 /*******************************************************************************
  * @fn         llCsShuffleIndexArray
@@ -425,6 +445,7 @@ uint8 llCsSelectStepChannel(uint8 stepMode, uint16 connId, const csConfiguration
  *
  * input parameters
  *
+ * @param       connId - connection ID
  * @param       mode - cs step mode (0 or non-0)
  * @param       numchan - number of channels (array size)
  * @param       chanArr - struct with info about the channel array
@@ -436,7 +457,7 @@ uint8 llCsSelectStepChannel(uint8 stepMode, uint16 connId, const csConfiguration
  *
  * @return      None
  */
-uint8 llCsShuffleIndexArray(uint8 mode, uint8 numChan,
+uint8 llCsShuffleIndexArray(uint16 connId, uint8 mode, uint8 numChan,
                             modeSpecificChanInfo_t* chanArr,
                             uint8* filteredArr);
 
@@ -447,6 +468,7 @@ uint8 llCsShuffleIndexArray(uint8 mode, uint8 numChan,
  *
  * input parameters
  *
+ * @param       connId - connection ID
  * @param       csRole - CS role initiator or reflector
  * @param       aaRx - pointer to the first part of the access address
  * @param       aaTx - pointer to the second part of the access address
@@ -458,7 +480,7 @@ uint8 llCsShuffleIndexArray(uint8 mode, uint8 numChan,
  *
  * @return      None
  */
-void llCsSelectAA(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
+void llCsSelectAA(uint16 connId, uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
 
 /*******************************************************************************
  * @fn          llCsSetTswByACI
@@ -469,8 +491,8 @@ void llCsSelectAA(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
  *
  * input parameters
  *
- * @param       configId - CS config ID
  * @param       connId - connection ID
+ * @param       role - CS role
  * @param       ACI - ACI value to be considered when setting the T_SW value
  *
  * output parameters
@@ -479,7 +501,7 @@ void llCsSelectAA(uint8 csRole, uint32_t* aaRx, uint32_t* aaTx);
  *
  * @return      None
  */
-void llCsSetTswByACI(uint8 configId, uint16 connId, csACI_e ACI);
+void llCsSetTswByACI(uint16 connId, uint8 role, csACI_e ACI);
 
 /*******************************************************************************
  * @fn          llCsGetRandomSequence
@@ -488,6 +510,7 @@ void llCsSetTswByACI(uint8 configId, uint16 connId, csACI_e ACI);
  *
  * input parameters
  *
+ * @param       connId - connection ID
  * @param       csRole - CS role
  * @param       pTx - pointer to transmitted Random Sequence
  * @param       pRx - pointer to the recvd Random Sequence
@@ -499,7 +522,7 @@ void llCsSetTswByACI(uint8 configId, uint16 connId, csACI_e ACI);
  *
  * @return      None
  */
-void llCsGetRandomSequence(uint8 csRole, uint32_t* pTx, uint32_t* pRx,
+void llCsGetRandomSequence(uint16 connId, uint8 csRole, uint32_t* pTx, uint32_t* pRx,
                            uint8 payloadLen);
 
 /*******************************************************************************
@@ -509,7 +532,7 @@ void llCsGetRandomSequence(uint8 csRole, uint32_t* pTx, uint32_t* pRx,
  *
  * input parameters
  *
- * @param       None
+ * @param       connId - connection ID
  *
  * output parameters
  *
@@ -517,7 +540,7 @@ void llCsGetRandomSequence(uint8 csRole, uint32_t* pTx, uint32_t* pRx,
  *
  * @return      Tone extension bit
  */
-uint8 llCsGetToneExtention(void);
+uint8 llCsGetToneExtention( uint16 connId );
 
 /*******************************************************************************
  * @fn          llCsGetNextAntennaPermutation
@@ -526,6 +549,7 @@ uint8 llCsGetToneExtention(void);
  *
  * input parameters
  *
+ * @param       connId - connection ID
  * @param       ACI - Antenna Configuration Index
  *
  * output parameters
@@ -534,7 +558,65 @@ uint8 llCsGetToneExtention(void);
  *
  * @return      Antenna permutation Index (0...24)
  */
-uint8 llCsGetNextAntennaPermutation(csACI_e ACI);
+uint8 llCsGetNextAntennaPermutation(uint16 connId, csACI_e ACI);
+
+/*******************************************************************************
+ * @fn          llCsGenerateAntennaGpioValues
+ *
+ * @brief       Generates the final antennas GPIO values to be used by the RCL for
+ *              antenna switching, based on a preferred antenna parameter and
+ *              a given mux values per antenna.
+ *              In addition, stores a mapping for each antenna index to its final
+ *              index as set in the output array into the DB.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       configId - Configuration Id
+ *
+ * @return      None
+ */
+void llCsGenerateAntennaGpioValues(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsDbResetCsSyncAntennaSelectionLoop
+ *
+ * @brief       This function resets CS Sync Antenna Selection in procedureInfo
+ *              to its initial value based on the default settings for the given
+ *              connection.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id to be used for the reset
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbResetCsSyncAntennaSelectionLoop(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsGetCsSyncAntennaSelection
+ *
+ * @brief       Get the CS Sync Antenna Selection value for a CS step.
+ *              If repeat is configured:
+ *                  1. The next value will be returned.
+ *                  2. Updates the value in the DB.
+ *
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id to get the value for
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      CS Sync Antenna Selection value
+ */
+uint8_t llCsGetCsSyncAntennaSelection(uint16_t connId);
 
 /*******************************************************************************
  * @fn          llCsInitChanIdxArr
@@ -547,9 +629,8 @@ uint8 llCsGetNextAntennaPermutation(csACI_e ACI);
  *
  * input parameters
  *
- * @param       configId - CS config ID
  * @param       connId - connection ID
- * @param       csConfig - pointer to CS config
+ * @param       configId - CS config ID
  *
  * output parameters
  *
@@ -557,9 +638,7 @@ uint8 llCsGetNextAntennaPermutation(csACI_e ACI);
  *
  * @return      status
  */
-csStatus_e llCsInitChanIdxArr(uint8 configId, uint16 connId,
-                              const csConfigurationSet_t* csConfig);
-
+csStatus_e llCsInitChanIdxArr(uint16_t connId, uint8_t configId);
 
 /*******************************************************************************
  * @fn          llCsInitStepAndResultBuffers
@@ -600,12 +679,14 @@ void llCsInitStepAndResultBuffers(void);
  */
 void llCs_finishAndResetProcedure(uint16_t connId, uint8_t configId);
 
+
 /*******************************************************************************
- * @fn          llCsProcedureCleanup
+ * @fn          llCs_finishAndIncrementProcedure
  *
- * @brief       Clears all CS DB indications related to procedure cleanup.
- * Might be called as a successful procedure completion, as well as a procedure
- * failure.
+ * @brief       Handles cleanup of the procedure in case of error in starting
+ *              the procedure. Must be called ONLY in case the procedure didn't complete the init.
+ * Increments the ProcedureCount and runs backtracking.
+ * Calls llCs_finishAndResetProcedure
  *
  * input parameters
  *
@@ -618,6 +699,253 @@ void llCs_finishAndResetProcedure(uint16_t connId, uint8_t configId);
  *
  * @return      None
  */
-void llCsProcedureCleanup( uint8 connId, uint8 configId);
+void llCs_finishAndIncrementProcedure(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsProcedureCleanup
+ *
+ * @brief       Clears all CS DB indications related to procedure cleanup.
+ *              This should be called when CS Start Procedure is complete.
+ *
+ * input parameters
+ *
+ * @param       connId  - Connection ID
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsProcedureCleanup( uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsCalculateSubEventLen
+ *
+ * @brief       Clears all CS DB indications related to procedure cleanup.
+ *              This should be called when CS Start Procedure is complete.
+ *
+ * input parameters
+ *
+ * @param       connId  - Connection ID
+ * @param       configId - Configuration ID
+ * @param       subEventLen - Proposed subEvent lenght
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Calculated subEvent Lentgh
+ */
+uint32 llCsCalculateSubEventLen(int16 connId, uint8 configId, uint32 subEventLen);
+
+/*******************************************************************************
+ * @fn          llCsProcedureError_SendResultsAndCleanup
+ *
+ * @brief       Processes error conditions during a Channel Sounding procedure by properly
+ *              terminating the active procedure and returning the system to normal BLE
+ *              operation. This function marks the procedure as failed, cleans up resources,
+ *              and ensures the connection returns to standard operation.
+ *
+ *              The function sends CS results with an error status in the procedure status
+ *              field to notify higher layers about the failure.
+ *
+ * input parameters
+ *
+ * @param       connId  - Connection ID
+ * @param       configId - Configuration ID
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsProcedureError_SendResultsAndCleanup(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsProcedureError
+ *
+ * @brief       Error processing for the CS procedure
+ *              This function only has effect when called from within the CS task context.
+ *              It verifies that a CS task is currently allocated and active before
+ *              performing any operations.
+ *              Then, it calls to llCsProcedureError_SendResultsAndCleanup
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+extern void llCsProcedureError(void);
+
+void llCsStartProcedure(llConnState_t* connPtr);
+
+/*******************************************************************************
+ * @fn          llCsRealignProceduresRepetition
+ *
+ * @brief       Realign to the next procedure in case there were missed procedures.
+ *              If the procedure count exceeds the maximum allowed, it will realign
+ *              the parameters to the last procedure and finish the CS.
+ *
+ * input parameters
+ *
+ * @param       connPtr  - Pointer to the current connection
+ * @param       configId - Configuration ID
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None.
+ */
+void llCsRealignProceduresRepetition(llConnState_t* connPtr, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsPrepareNextProcedure
+ *
+ * @brief       Prepare the relevant parameters needed for the next procedure.
+ *
+ * input parameters
+ *
+ * @param       connId   - Connection Id
+ * @param       configId - Configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      TRUE in case the procedure was terminated
+                FALSE otherwiase
+*/
+bool llCsPrepareNextProcedure(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsSetLastStepGenConnEventCount
+ *
+ * @brief       Set the last connection event count that we were able to generate steps
+ *
+ * input parameters
+ *
+ * @param       connId   - Connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsSetLastStepGenConnEventCount(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsTerminateCsProcedure
+ *
+ * @brief       Handle the CS termination process. This includes align the procedure
+ *              counter, finish and reset, and notify the host
+ *
+ * input parameters
+ *
+ * @param       connId     - Connection Id
+ * @param       configId   - Configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsTerminateCsProcedure(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+* @fn          llCsHandleProcedureDesync
+*
+* @brief       Handle procedure desynchronization
+*
+* @details     Manages the procedure desynchronization based on
+*              synchronization history. If two consecutive procedures fail to
+*              synchronize, initiates termination of procedure repetitions
+*              according to specification requirements.
+*
+*              The function tracks procedure validity state and maintains history
+*              to properly detect consecutive synchronization failures.
+*
+* input parameters
+*
+* @param       connId - connection Id
+* @param       configId - configuration Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      TRUE in case the procedure was terminated
+               FALSE otherwiase
+*/
+bool llCsHandleProcedureDesync(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsProcIsTestModeEnabled
+ *
+ * @brief       Check if Test Mode is enabled
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      TRUE - if CS Test mode is ON
+ *              FALSE - otherwise
+ */
+bool llCsProcIsTestModeEnabled(void);
+
+/*******************************************************************************
+ * @fn          llCsProcGetActiveConnId
+ *
+ * @brief      Get active connection ID
+ *
+ * @design      BLE_LOKI-506
+ *
+ * input parameters
+ *
+ * @param       none
+ *
+ * output parameters
+ *
+ * @param       ConnId.
+ *
+ * @return      None
+ */
+uint16 llCsProcGetActiveConnId(void);
+
+/*******************************************************************************
+ * @fn          llCsProcGetReportedConnId
+ *
+ * @brief       Get Reported Connection ID
+ * This function is needed because in test mode we assume a connId = 0
+ * However, the spec specifies connID = 0xFFFF
+ * We can't use this value in the rest of the code because the llCs DB
+ * is based on the maxNumConns (1-8). 0xFFFF would create an attempt to
+ * access beyond the boundaries of the llCs
+ * So only when it comes to reporting the connId, it will be reported as 0xFFFF
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      ConnId
+ */
+uint16 llCsProcGetReportedConnId(void);
 
 #endif // LL_CS_PROCEDURE_H

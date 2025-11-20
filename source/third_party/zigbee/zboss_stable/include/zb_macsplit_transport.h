@@ -456,8 +456,6 @@ typedef struct zb_macsplit_transport_context_s
 #endif
 #if defined ZB_MACSPLIT_HOST
   zb_macsplit_device_trace_cb_t    device_trace_cb;
-  zb_bufid_t                       device_boot_ind_param;
-  zb_bufid_t                       skip_startup_signal_param;
 #endif
 
 #if defined ZB_MACSPLIT_HOST && defined ZB_LIMIT_VISIBILITY

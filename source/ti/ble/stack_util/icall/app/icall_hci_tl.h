@@ -56,6 +56,7 @@ extern "C"
  * INCLUDES
  */
 
+#include "ti/ble/stack_util/icall/app/icall.h"
 #include "ti/ble/stack_util/icall/app/icall_ble_apimsg.h"
 
 /*********************************************************************

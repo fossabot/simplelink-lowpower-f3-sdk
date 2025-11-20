@@ -19,15 +19,18 @@ users by packaging essential software components, such as:
 
 ## What's New
 
-This is version 9.12.00.19 of the LPF3 SDK. This release includes:
+This is version 9.14.00.39 of the LPF3 SDK. This release includes:
 
-* Production-ready release for CC2745R10-Q1 E1, CC2744R7-Q1, CC2755R10,
-  CC2745R7-Q1, CC2745P10-Q1 and CC2340R53-Q1 including finalized characterized
-  RF settings.
-* Bluetooth LE Channel Sounding preview.
+* Bluetooth® LE Version 6 Qualification
+* Improvements to Channel Sounding ranginglib Algorithms
+* Bluetooth® LE Thread Priority Configuration
+* Zigbee Certification for CC27xx Device Family
+* Production-ready release for CC2340R53 WCSP including finalized characterized RF settings
+* New HSM Firmware Version 3.1.1
+* SDK Support for CC2755R10 WCSP
 
 More details, including supported devices, IDEs, and toolchains are provided in
-the [LPF3 9.12.00.19 SDK release notes][sdk release notes].
+the [LPF3 9.14.00.39 SDK release notes][sdk release notes].
 
 ## About this Repository
 
@@ -48,7 +51,7 @@ it available as a Git repository to cater to various use cases:
 * **Simplified workflow for rebasing**: Git makes it simpler for you to rebase
   your changes to new releases.
 
-One temporary, notable difference in this LPF3 9.12.00.19 SDK GitHub
+One temporary, notable difference in this LPF3 9.14.00.39 SDK GitHub
 distribution when compared to the classic installer above, is the exclusion of
 the **tools/ble/ble_agent/ble_toolbox/** directory. This has been temporarily
 done as the ble_toolbox executable currently exceeds GitHub's file size limit.
@@ -119,8 +122,8 @@ Dependency download locations:
 
 Please consider creating a post on [TI's E2E forum](https://e2e.ti.com).
 
-[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.12.00.19
-[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.12.00.19
+[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.00.39
+[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.00.39
 [sysconfig download]: https://www.ti.com/tool/SYSCONFIG
 [ticlang download]: https://www.ti.com/tool/download/ARM-CGT-CLANG
 [gcc download]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads

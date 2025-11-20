@@ -125,6 +125,30 @@
             "label": "TX output power",
             "type": "tx_power",
             "value": "5"
+          },
+          {
+            "name": "regulatoryDomain",
+            "label": "Regulatory domain",
+            "type": "string",
+            "value": "none",
+            "enum": [
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "etsi",
+                "label": "ETSI (Europe)"
+              },
+              {
+                "value": "fcc",
+                "label": "FCC (USA)"
+              },
+              {
+                "value": "miit",
+                "label": "MIIT (China)"
+              }
+            ]
           }
         ]
       },

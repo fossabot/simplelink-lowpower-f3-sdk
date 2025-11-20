@@ -56,17 +56,22 @@
 #include <float.h>
 
 /**
- * Type/Data structure Definitions
- * Utilize RCL as much as possible for type consistency but can be redefined for extension
+ * Type/Data structure definitions
  */
 #define PCT_LEN         75  /*!< Maximum length of PCT vector*/
 #define MAX_NUM_ANTPATH 4   /*!< Maximum number of antenna path*/
 #define MAX_RANGE       150 /*!< Maximum range can be estimated*/
+#define MAX_NNCC_BIN    64
+#define MAX_WINDOW_SIZE 128
 
-typedef uint16_t BleCsRanging_Return_t;
+typedef uint16_t BleCsRanging_Return_t; /*!< Function return code, see BleCsRanging_Status_e */
+
+typedef int8_t BleCsRanging_PathLoss_t; /*!< Path loss, dB */
+
+typedef int8_t BleCsRanging_RPL_t; /*!< Reference Power Level, dBm */
 
 /**
- *
+ * @brief Container format for IQ samples (measured PCT)
  */
 typedef struct
 {
@@ -92,10 +97,10 @@ typedef struct BleCsRanging_Tone_t
  */
 typedef enum
 {
-    BleCsRanging_Algorithm_Ifft,
-    BleCsRanging_Algorithm_Music,
-    BleCsRanging_Algorithm_NN,
-    BleCsRanging_Algorithm_Adaptive
+    BleCsRanging_Algorithm_Ifft,    /*!< IFFT based algorithm */
+    BleCsRanging_Algorithm_Music,   /*!< MUltiple SIgnal Classificatoin (MUSIC) based algorithm */
+    BleCsRanging_Algorithm_NN,      /*!< Neural Network (NN) based algorithm */
+    BleCsRanging_Algorithm_Adaptive /*!< Adaptive algorithm using a fusion algorithm */
 } BleCsRanging_Algorithm_e;
 
 /**
@@ -105,7 +110,8 @@ typedef enum BleCsRanging_DistanceFusion_e
 {
     BleCsRanging_DistanceFusion_Min,
     BleCsRanging_DistanceFusion_Median,
-    BleCsRanging_DistanceFusion_Ranking
+    BleCsRanging_DistanceFusion_Ranking,
+    BleCsRanging_DistanceFusion_MinAvg,
 } BleCsRanging_DistanceFusion_e;
 
 /**
@@ -114,7 +120,8 @@ typedef enum BleCsRanging_DistanceFusion_e
 typedef enum BleCsRanging_GapInterp_e
 {
     BleCsRanging_GapInterp_Linear,
-    BleCsRanging_GapInterp_Spline,
+    BleCsRanging_GapInterp_Circle,
+    BleCsRanging_GapInterp_Spline, /*!< Not implemented. For future use! */
     BleCsRanging_GapInterp_OMP
 } BleCsRanging_GapInterp_e;
 
@@ -127,18 +134,52 @@ typedef enum BleCsRanging_MAP_e
     BleCsRanging_MAP_Averaging
 } BleCsRanging_MAP_e;
 
+/**
+ * @brief Filter chain
+ *
+ * This enum defines the different filter chains to be used.
+ */
+typedef enum
+{
+    BleCsRanging_FilterChain_None,         /*!< No filter chain */
+    BleCsRanging_FilterChain_Average,      /*!< Average filter chain */
+    BleCsRanging_FilterChain_Kalman,       /*!< Kalman filter chain */
+    BleCsRanging_FilterChain_AverageKalman /*!< Average + Kalman filter chain */
+} BleCsRanging_FilterChain_e;
+
+/**
+ * @brief Enumerator of adaptive profile
+ *
+ * This enum defines the different adaptive profiles that can be used
+ */
+typedef enum
+{
+    BleCsRanging_AdaptiveProfile_Low,
+    BleCsRanging_AdaptiveProfile_Medium,
+    BleCsRanging_AdaptiveProfile_High
+} BleCsRanging_AdaptiveProfile_e;
+
+/**
+ * @brief Configuration for BLE CS ranging algorithm method
+ */
 typedef struct BleCsRanging_Config_t
 {
-    uint16_t maxDistance;                     /*!< Maximum Distance to measure in meter, must less than 150m*/
-    uint16_t numAntPath;                      /*!< Number of antenna path, must less than 5*/
-    uint16_t numChannels;                     /*!< Number of actual steps, must less than 75*/
-    uint16_t qq3Thresh;                       /*!< Quality Threshold to select algorithm dynamically-very good signal*/
-    uint16_t qq3Thresh2;                      /*!< Second Quality Threshold to select algorithm dynamically-very bad signal*/
-    float distanceOffset;                     /*!< Distance Offset from Calibration in meters*/
-    BleCsRanging_MAP_e sumAntPath;            /*!< Individutal or Summation before estimating distance*/
-    BleCsRanging_GapInterp_e gapInterp;       /*!< Interplation method for gap*/
-    BleCsRanging_Algorithm_e algorithm;       /*!< Enum to select the algorithm for distance*/
-    BleCsRanging_DistanceFusion_e distFusion; /*!< Combine Antenna Path Method*/
+    uint16_t maxDistance;               /*!< Maximum distance to measure in meter, must less than 150m */
+    uint16_t numAntPath;                /*!< Number of antenna paths, max 4 */
+    uint16_t numChannels;               /*!< Number of actual CS steps, up to 75 */
+    uint16_t qq3Thresh;                 /*!< Quality threshold to select algorithm dynamically-very good signal */
+    uint16_t qq3Thresh2;                /*!< Second quality threshold to select algorithm dynamically-very bad signal */
+    int8_t NnPathLossThres;             /*!< When PathLoss = txPower - RSSI < NnPathLossThres for debugging purposes */
+    float distanceOffset;               /*!< Distance offset from calibration, in meters */
+    BleCsRanging_MAP_e sumAntPath;      /*!< Individual or Summation before estimating distance */
+    BleCsRanging_GapInterp_e gapInterp; /*!< Interpolation method for gap */
+    BleCsRanging_Algorithm_e algorithm; /*!< Enum to select the algorithm for distance */
+    BleCsRanging_DistanceFusion_e distFusion;       /*!< Combine Antenna Path Method */
+    BleCsRanging_FilterChain_e antFilter;           /*!< Antenna Path Filtering Method */
+    BleCsRanging_AdaptiveProfile_e adaptiveProfile; /*!< NLOS adaptive profile */
+    float tqiThresh;                                /*!< TQI threshold */
+    float peakEnergyThresh;                         /*!< Peak energy threshold */
+    uint16_t peakDiffThresh;                        /*!< Peak distance difference threshold */
 } BleCsRanging_Config_t;
 
 /**
@@ -148,28 +189,44 @@ typedef struct BleCsRanging_Config_t
  */
 typedef enum
 {
-    BleCsRanging_Status_Success,       /*!< BleCsRanging_AlgorithmStatus_Success */
-    BleCsRanging_Status_InvalidInput,  /*!< BleCsRanging_AlgorithmStatus_InvalidInput */
-    BleCsRanging_Status_InvalidOutput, /*!< BleCsRanging_AlgorithmStatus_InvalidOutput */
-    BleCsRanging_Status_APUFail        /*!< BleCsRanging_AlgorithmStatus_APUFail */
+    BleCsRanging_Status_Success = 0,   /*!< Success */
+    BleCsRanging_Status_InvalidInput,  /*!< Invalid input argument error */
+    BleCsRanging_Status_InvalidOutput, /*!< Invalid output argument error */
+    BleCsRanging_Status_APUError,      /*!< APU access error */
+    BleCsRanging_Status_MemAllocError, /*!< Dynamic memory allocation on heap failed */
+    BleCsRanging_Status_Undefined      /*!< Undefined, used as uninitialized value, application should never see this. */
 } BleCsRanging_Status_e;
 
 typedef struct
 {
-    float distanceMusic[MAX_NUM_ANTPATH]; /*!< distance MUSIC of each antenna path*/
-    float distanceNN[MAX_NUM_ANTPATH];    /*!< distance NN of each antenna path*/
-    uint16_t numMPC[MAX_NUM_ANTPATH];     /*!< number of multipath-component (MPC) of each antenna path*/
-    float quality[MAX_NUM_ANTPATH];       /*!< quality metric QQ3 of each antenna path*/
-    float confidence[MAX_NUM_ANTPATH];    /*!< confidence of each antenna path*/
+    float distanceMusic[MAX_NUM_ANTPATH];  /*!< Distance MUSIC algo of each antenna path */
+    float distanceNN[MAX_NUM_ANTPATH];     /*!< Distance NN algo of each antenna path */
+    float distanceIFFT[MAX_NUM_ANTPATH];   /*!< Distance IFFT algo of each antenna path */
+    float confidence[MAX_NUM_ANTPATH];     /*!< Confidence metric of each antenna path. Reserved for future use. */
+    uint16_t numMPC[MAX_NUM_ANTPATH];      /*!< Number of MUSIC multipath-components of each antenna path */
+    float quality[MAX_NUM_ANTPATH];        /*!< Quality metric QQ3 of each antenna path */
+    float zoneProfile[MAX_NUM_ANTPATH][5]; /*!< Debug information: Reserved for future use */
+    float normDistance[MAX_NUM_ANTPATH];   /*!< Debug information: Reserved for future use */
+    float normTerm[MAX_NUM_ANTPATH];       /*!< Debug information: Reserved for future use */
+    float tqi_score[MAX_NUM_ANTPATH];      /*!< Debug information: Reserved for future use */
+    float peak_diff[MAX_NUM_ANTPATH];      /*!< Debug information: Reserved for future use */
+    float dcand[MAX_NUM_ANTPATH];          /*!< Debug information: Reserved for future use */
+    float cf[MAX_NUM_ANTPATH];             /*!< Debug information: Reserved for future use */
+    float LOSd[MAX_NUM_ANTPATH];           /*!< Debug information: Reserved for future use */
+    float d_var[MAX_NUM_ANTPATH];          /*!< Debug information: Reserved for future use */
+    uint16_t class[MAX_NUM_ANTPATH];       /*!< Debug information: Reserved for future use */
+    float runtime_ms;                      /*!< Debug information: Reserved for future use */
+    float powerDelayProfile[MAX_NUM_ANTPATH][MAX_NNCC_BIN]; /*!< Debug information: Reserved for future use */
+    float runtimeProfile[10];                               /*!< Debug information: Reserved for future use */
 } BleCsRanging_DebugResult_t;
 
 typedef struct
 {
-    float distance;                           /*!< estimated distance*/
-    float quality;                            /*!< quality metric QQ3 of the estimated distance*/
-    float confidence;                         /*!< confidence of the estimation*/
-    uint16_t numMPC;                          /*!< number of multipath-component (MPC) of the estimated distance*/
-    BleCsRanging_DebugResult_t *pDebugResult; /*!< debug result*/
+    float distance;                           /*!< Estimated distance, meters */
+    float quality;                            /*!< Quality metric QQ3 of the estimated distance */
+    float confidence;                         /*!< Confidence of the estimation */
+    uint16_t numMPC;                          /*!< Number of multipath-component (MPC) of the estimated distance */
+    BleCsRanging_DebugResult_t *pDebugResult; /*!< Debug results (optional) */
 } BleCsRanging_Result_t;
 
 /***********************************************************************************
@@ -180,17 +237,34 @@ typedef struct
  * NOTE: Current version assumed input is stored as
  *  [tone_ant0[PCT_LEN], tone_ant1[PCT_LEN], tone_ant2[PCT_LEN], tone_ant3[PCT_LEN]]
  * Future version will relax this assumption
+ *
+ * @param pResult Result struct
+ * @param pTone_i Tone with TQI from Initiator
+ * @param pTone_r Tone with TQI from Reflector
+ * @param pathLoss pathLoss = txPower-RSSI for each pConfig.numAntPath, set to NULL to disable NN selection based on
+ * pConfig.NnPathLossThres
+ * @param pConfig General config
+ *
+ * @return Status of distance estimation
+ *
+ * @retval BleCsRanging_Status_Success          Success. The result in @pResult is valid.
+ * @retval BleCsRanging_Status_InvalidInput     Invalid input error. The result in @pResult is invalid.
+ * @retval BleCsRanging_Status_MemAllocError    Dynamic memory allocation on heap failed. Not enough memory. The result in @pResult is invalid.
+ * @retval BleCsRanging_Status_Undefined        Undefined error.
  */
+
 BleCsRanging_Status_e BleCsRanging_estimatePbr(BleCsRanging_Result_t *pResult,
-                                               BleCsRanging_Tone_t *pTone_i,  // Tone with TQI from Initiator
-                                               BleCsRanging_Tone_t *pTone_r,  // Tone with TQI from Reflector
-                                               BleCsRanging_Config_t *pConfig // General config
-);
+                                               BleCsRanging_Tone_t *pTone_i,
+                                               BleCsRanging_Tone_t *pTone_r,
+                                               BleCsRanging_PathLoss_t *pathLoss,
+                                               BleCsRanging_RPL_t *pRPL_i, // RPL initiator
+                                               BleCsRanging_RPL_t *pRPL_r, // RPL reflector
+                                               BleCsRanging_Config_t *pConfig);
 
 /**
  * A default funciton to init the default config
  * NOTE: Declared as ((weak)) for backward-compatible and open to be override
  */
-extern BleCsRanging_Return_t __attribute__((weak)) BleCsRanging_initConfig(BleCsRanging_Config_t *pConfig);
+extern BleCsRanging_Status_e __attribute__((weak)) BleCsRanging_initConfig(BleCsRanging_Config_t *pConfig);
 
 #endif //_BLECSRANGING_H_

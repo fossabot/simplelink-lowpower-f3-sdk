@@ -402,19 +402,6 @@ void zdo_device_nwk_addr_res(zb_uint8_t param, zb_uint8_t fc);
 */
 void zdo_device_ieee_addr_res(zb_uint8_t param, zb_uint8_t fc);
 
-typedef struct zb_zdo_ed_scan_param_s
-{
-  zb_callback_t cb;
-  zb_nlme_ed_scan_request_t nwk_param;
-}
-zb_zdo_ed_scan_param_t;
-
-/**
-   Performs energy scan.
-   @param param - index of buffer
-*/
-void zb_zdo_ed_scan_request(zb_uint8_t param);
-
 /**
    Sends update notify command
    @param param - index of buffer
@@ -874,15 +861,8 @@ void zb_send_no_active_links_left_signal(zb_uint8_t param);
 #define ZB_ZDO_CB_DEFAULT_COUNTER     0xFEU    /* Default value (just for check) */
 
 #define ZB_ZDO_CB_KILLER_QUANT          (5U * ZB_TIME_ONE_SECOND)
-
-#ifdef ZB_CONFIGURABLE_RETRIES
-#define ZB_ZDO_CB_KILLER_CRITICAL_TIME(_rx_on_when_idle)  \
-  (2U*ZB_AIB().max_frame_retries * ZB_N_APS_ACK_WAIT_DURATION(_rx_on_when_idle))
-#else
 #define ZB_ZDO_CB_KILLER_CRITICAL_TIME(_rx_on_when_idle)  \
   (2U*ZB_N_APS_MAX_FRAME_RETRIES * ZB_N_APS_ACK_WAIT_DURATION(_rx_on_when_idle))
-#endif /* ZB_CONFIGURABLE_RETRIES */
-
 #define ZB_ZDO_CB_CLOCK_COUNTER(_rx_on_when_idle) \
   (ZB_ZDO_CB_KILLER_CRITICAL_TIME(_rx_on_when_idle) / ZB_ZDO_CB_KILLER_QUANT + 1U)
 
@@ -1560,9 +1540,11 @@ void zb_zdo_key_neg_methods_put_tlv(zb_uint8_t param);
 
 void zb_zdo_upd_key_req_put_tlvs(zb_uint8_t param, zb_uint8_t selected_method, zb_uint8_t selected_secret);
 
+#ifdef ZB_JOIN_CLIENT
 zb_ret_t zb_zdo_upd_key_req_process_tlv(zb_uint8_t *tlv_ptr,
                                         zb_uint8_t tlv_data_len,
                                         zb_uint16_t src_short_addr);
+#endif /* ZB_JOIN_CLIENT */
 
 #if defined ZB_COORDINATOR_ROLE || defined ZB_ROUTER_ROLE
 zb_ret_t zb_zdo_select_key_neg_method(zb_ieee_addr_t partner_ieee_addr,
@@ -1639,6 +1621,12 @@ zb_ret_t zb_zdo_put_tlv_by_id(zb_uint8_t param, zb_uint8_t id);
 void zdo_load_production_config(void);
 void zb_send_no_autostart_signal(zb_uint8_t param);
 void zb_nlme_leave_indication_cont(zb_uint8_t param_buf);
+void zb_nlme_leave_handle_child(zb_uint8_t addr_ref, zb_uint8_t rejoin);
+
+#if defined(ZB_ROUTER_ROLE) && defined(ZB_LEAVE_RESPONSE_TIMEOUT_ENABLED)
+void zdo_mgmt_leave_without_rejoin_no_resp(zb_uint8_t addr_ref);
+void zdo_mgmt_leave_with_rejoin_no_resp(zb_uint8_t addr_ref);
+#endif /* ZB_ROUTER_ROLE && ZB_LEAVE_RESPONSE_TIMEOUT_ENABLED */
 
 /**
  * Returns if the device is authenticated in the network.

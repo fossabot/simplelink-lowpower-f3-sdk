@@ -1,6 +1,6 @@
 %%{
 /*
- * Copyright (c) 2023, Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated - http://www.ti.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
     let CAN = args[0];
     let Common    = system.getScript("/ti/drivers/Common.js");
     let instances = CAN.$instances;
+    let deviceId = system.deviceData.deviceId;
 
     if (instances.length == 0) return;
 
@@ -136,3 +137,21 @@ const CAN_Config CAN_config[`countDef`] = {
 
 `declarations`
 const uint_least8_t CAN_count = `countDef`;
+
+% if (deviceId.match(/CC2745[A-Z](7|10)/)) {
+#include <ti/drivers/can/CANCC27XX.h>
+#include <FreeRTOS.h>
+
+#define CANCC27XX_TASK_STACK_SIZE `instances[0].taskStackSize`
+
+static uint32_t CANCC27XX_taskStack[CANCC27XX_TASK_STACK_SIZE / 4];
+
+/*
+ *  ======== CANCC27XXX10_config ========
+ */
+const CANCC27XXX10_Config CANCC27XXX10_config = {
+    .taskPri       = `instances[0].irqTaskPriority.toString()`,
+    .taskStack     = CANCC27XX_taskStack,
+    .taskStackSize = CANCC27XX_TASK_STACK_SIZE,
+};
+% }

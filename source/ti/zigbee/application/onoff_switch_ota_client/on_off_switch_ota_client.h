@@ -64,7 +64,7 @@
 
 #define DL_INIT_OTA_IMAGE_TYPE          0x0012
 
-#define DL_INIT_OTA_MIN_BLOCK_REQUE             10
+#define DL_INIT_OTA_MIN_BLOCK_REQUE             0 // ms
 #define DL_INIT_OTA_IMAGE_STAMP         ZB_ZCL_OTA_UPGRADE_IMAGE_STAMP_MIN_VALUE
 #define DL_OTA_IMAGE_BLOCK_DATA_SIZE_MAX        32
 #define DL_OTA_UPGRADE_SERVER                   { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@
 
 #include <third_party/mcan/MCAN.h>
 
+#include <ti/devices/DeviceFamily.h>
+
 /* Externally defined device-specific functions */
 extern int_fast16_t CAN_initDevice(uint_least8_t index, CAN_Params *params);
 extern int_fast16_t CAN_deinitDevice(void);
@@ -66,7 +68,7 @@ void CAN_Params_init(CAN_Params *params)
 /*
  *  ======== CAN_init ========
  */
-__attribute__((weak)) void CAN_init(void)
+void CAN_init(void)
 {
     /* Do nothing */
 }
@@ -127,16 +129,6 @@ CAN_Handle CAN_open(uint_least8_t index, CAN_Params *params)
 }
 
 /*
- *  ======== CAN_close ========
- */
-__attribute__((weak)) void CAN_close(CAN_Handle handle)
-{
-    CAN_Object *object = handle->object;
-
-    object->isOpen = false;
-}
-
-/*
  *  ======== CAN_read ========
  */
 int_fast16_t CAN_read(CAN_Handle handle, MCAN_RxBufElement *buf)
@@ -152,6 +144,8 @@ int_fast16_t CAN_read(CAN_Handle handle, MCAN_RxBufElement *buf)
     return status;
 }
 
+/* CC27XX devices have their own implementation of CAN_write() and CAN_writeBuffer() */
+#if (DeviceFamily_PARENT != DeviceFamily_PARENT_CC27XX)
 /*
  *  ======== CAN_write ========
  */
@@ -219,6 +213,7 @@ int_fast16_t CAN_writeBuffer(CAN_Handle handle, uint32_t bufIdx, const MCAN_TxBu
 
     return status;
 }
+#endif
 
 /*
  *  ======== CAN_readTxEvent ========

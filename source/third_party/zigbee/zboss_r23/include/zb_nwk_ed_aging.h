@@ -139,7 +139,6 @@ void zb_nwk_src_match_add_ent(zb_uint8_t param, zb_address_ieee_ref_t addr_ref, 
 void zb_nwk_src_match_delete(zb_uint8_t param, zb_uint16_t ieee_ref);
 void zb_nwk_src_match_drop(zb_uint8_t param);
 void zb_nwk_src_match_restore(zb_uint8_t param);
-void zb_nwk_src_match_mac_child_update(zb_uint8_t param, zb_uint16_t addr_ref);
 #endif  /* ZB_MAC_PENDING_BIT_SOURCE_MATCHING */
 
 void zb_nwk_ed_timeout_resp_recv_fail_trig(zb_uint8_t unused);

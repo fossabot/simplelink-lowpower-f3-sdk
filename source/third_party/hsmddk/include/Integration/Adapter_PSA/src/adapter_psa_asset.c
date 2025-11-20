@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (c) 2024, Texas Instruments Incorporated
+ * Copyright (c) 2024-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,9 @@
 #include <third_party/hsmddk/include/Integration/Adapter_PSA/incl/adapter_psa_asset.h>          // the API to implement
 #include <third_party/hsmddk/include/Integration/Adapter_PSA/incl/adapter_psa_system.h>
 #include <third_party/hsmddk/include/Integration/Adapter_PSA/incl/adapter_psa_exchangetoken.h>
+
+#include <ti/drivers/dpl/SemaphoreP.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #ifdef PSA_LOG_LOWLEVEL_ERROR
 #include <inttypes.h>
 #endif
@@ -251,13 +254,16 @@ psaInt_AssetLoadPlaintext(const PsaAssetId_t TargetAssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
 
         Eip130Token_Command_AssetLoad_Plaintext(&commandToken, TargetAssetId);
-        Eip130Token_Command_AssetLoad_SetInput(&commandToken, 
-                                              (uintptr_t)Data_p, 
+        Eip130Token_Command_AssetLoad_SetInput(&commandToken,
+                                              (uintptr_t)Data_p,
                                               (uint32_t)DataSize);
 
         status = HSMSAL_SubmitPhysicalToken(&commandToken);
@@ -288,6 +294,8 @@ psaInt_AssetLoadPlaintext(const PsaAssetId_t TargetAssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
 
     return funcres;
@@ -324,6 +332,9 @@ psaInt_AssetLoadPlaintextExport(const PsaAssetId_t TargetAssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
@@ -332,12 +343,12 @@ psaInt_AssetLoadPlaintextExport(const PsaAssetId_t TargetAssetId,
 
         Eip130Token_Command_AssetLoad_Export(&commandToken, KekAssetId);
 
-        Eip130Token_Command_AssetLoad_SetAad(&commandToken, 
+        Eip130Token_Command_AssetLoad_SetAad(&commandToken,
                                              (const uint8_t *)gl_PSA_ADLabelKeyblob,
                                              (uint32_t)(sizeof(gl_PSA_ADLabelKeyblob) - 1U));
 
-        Eip130Token_Command_AssetLoad_SetInput(&commandToken, 
-                                               (uintptr_t)Data_p, 
+        Eip130Token_Command_AssetLoad_SetInput(&commandToken,
+                                               (uintptr_t)Data_p,
                                                (uint32_t)DataSize);
         Eip130Token_Command_AssetLoad_SetOutput(&commandToken,
                                                 (uintptr_t)KeyBlob_p,
@@ -381,6 +392,8 @@ psaInt_AssetLoadPlaintextExport(const PsaAssetId_t TargetAssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
 
     return funcres;
@@ -412,20 +425,23 @@ psaInt_AssetLoadImport(const PsaAssetId_t TargetAssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
 
         Eip130Token_Command_AssetLoad_Import(&commandToken,
                                              TargetAssetId,
-                                             KekAssetId);     
+                                             KekAssetId);
 
-        Eip130Token_Command_AssetLoad_SetAad(&commandToken, 
+        Eip130Token_Command_AssetLoad_SetAad(&commandToken,
                                              (const uint8_t *)gl_PSA_ADLabelKeyblob,
-                                             (uint32_t)(sizeof(gl_PSA_ADLabelKeyblob) - 1U)); 
+                                             (uint32_t)(sizeof(gl_PSA_ADLabelKeyblob) - 1U));
 
-        Eip130Token_Command_AssetLoad_SetInput(&commandToken, 
-                                              (uintptr_t)KeyBlob_p, 
+        Eip130Token_Command_AssetLoad_SetInput(&commandToken,
+                                              (uintptr_t)KeyBlob_p,
                                               (uint32_t)KeyBlobSize);
 
         status = HSMSAL_SubmitPhysicalToken(&commandToken);
@@ -456,6 +472,8 @@ psaInt_AssetLoadImport(const PsaAssetId_t TargetAssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
     return funcres;
 }
@@ -548,6 +566,9 @@ psaInt_AssetLoadRandomExport(const PsaAssetId_t TargetAssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
@@ -556,10 +577,10 @@ psaInt_AssetLoadRandomExport(const PsaAssetId_t TargetAssetId,
 
         Eip130Token_Command_AssetLoad_Export(&commandToken, KekAssetId);
 
-        Eip130Token_Command_AssetLoad_SetAad(&commandToken, 
+        Eip130Token_Command_AssetLoad_SetAad(&commandToken,
                                              (const uint8_t *)gl_PSA_ADLabelKeyblob,
                                              (uint32_t)(sizeof(gl_PSA_ADLabelKeyblob) - 1U));
-        
+
         Eip130Token_Command_AssetLoad_SetOutput(&commandToken,
                                                 (uintptr_t)KeyBlob_p,
                                                 (uint32_t)*KeyBlobSize_p);
@@ -602,6 +623,8 @@ psaInt_AssetLoadRandomExport(const PsaAssetId_t TargetAssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
     return funcres;
 }
@@ -642,6 +665,9 @@ psaInt_AssetLoadDerive(const PsaAssetId_t TargetAssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
@@ -689,6 +715,8 @@ psaInt_AssetLoadDerive(const PsaAssetId_t TargetAssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
 
     return funcres;
@@ -721,6 +749,9 @@ psaInt_PublicDataRead(const PsaAssetId_t AssetId,
     else
 #endif
     {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
         /* Format service request */
         t_cmd.OpCode = (uint32_t)VEXTOKEN_OPCODE_ASSETMANAGEMENT;
         t_cmd.SubCode = (uint32_t)VEXTOKEN_SUBCODE_PUBLICDATA;
@@ -759,6 +790,8 @@ psaInt_PublicDataRead(const PsaAssetId_t AssetId,
         {
             /* MISRA - Intentially empty */
         }
+
+        CommonResourceXXF3_releaseLock();
     }
 
     return funcres;
@@ -793,9 +826,9 @@ psaInt_AssetSearch(const uint16_t StaticAssetNumber,
         /* Format service request */
         (void)memset(&commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&resultToken, 0, sizeof(Eip130Token_Result_t));
-        
+
         Eip130Token_Command_AssetSearch(&commandToken, StaticAssetNumber);
-        
+
         status = HSMSAL_SubmitPhysicalToken(&commandToken);
 
         if (status == HSMSAL_SUCCESS)
@@ -808,8 +841,8 @@ psaInt_AssetSearch(const uint16_t StaticAssetNumber,
 
                 if ((tokenResult & MASK_8_BITS) == EIP130TOKEN_RESULT_SUCCESS)
                 {
-                    Eip130Token_Result_AssetSearch(&resultToken, 
-                                                   AssetId_p, 
+                    Eip130Token_Result_AssetSearch(&resultToken,
+                                                   AssetId_p,
                                                    (uint32_t *)AssetSize_p);
                     funcres = PSA_SUCCESS;
                 }
@@ -852,11 +885,11 @@ psaInt_AssetGetKeyBlobKEK(PsaAssetId_t * const KekAssetId)
      * provision it. If that is the case, the error code describes it.
      */
     funcres = psaInt_AssetSearch(PSA_ASSETNUMBER_HUK, &RootKeyAssetId, NULL);
-    
-    /* The conditions for the if statement come together - one cannot be true 
+
+    /* The conditions for the if statement come together - one cannot be true
      * without the other
      */
-    if ((funcres == PSA_SUCCESS) && 
+    if ((funcres == PSA_SUCCESS) &&
         (RootKeyAssetId != PSA_ASSETID_INVALID))
     {
         PsaPolicyMask_t KekAssetPolicy = EIP130_ASSET_POLICY_SYM_WRAP |
@@ -958,7 +991,7 @@ psaInt_AsymEccInstallCurve(const uint8_t CurveFamily,
         *AssetId_p = PSA_ASSETID_INVALID;
 
         /* Format service request */
-        funcres = psaInt_AssetAlloc(EIP130_ASSET_POLICY_ASYM_KEYPARAMS, 
+        funcres = psaInt_AssetAlloc(EIP130_ASSET_POLICY_ASYM_KEYPARAMS,
                                     CurveParamsSize,
                                     &AssetID);
 

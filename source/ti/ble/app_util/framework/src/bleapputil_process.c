@@ -65,7 +65,7 @@ Target Device: cc23xx
 #define BLEAPPUTIL_GATT_TABLE_SIZE              38
 
 #define BLEAPPUTIL_L2CAP_SIGNAL_EVENTS_OFFSET   0x60
-#define BLEAPPUTIL_L2CAP_SIGNAL_TABLE_SIZE      6
+#define BLEAPPUTIL_L2CAP_SIGNAL_TABLE_SIZE      7
 
 /*********************************************************************
 * CONSTANTS
@@ -182,7 +182,8 @@ const uint32_t l2capSignalEventsLookupTable[BLEAPPUTIL_L2CAP_SIGNAL_TABLE_SIZE] 
     BLEAPPUTIL_L2CAP_OUT_OF_CREDIT_EVT,
     BLEAPPUTIL_L2CAP_PEER_CREDIT_THRESHOLD_EVT,
     BLEAPPUTIL_L2CAP_SEND_SDU_DONE_EVT,
-    BLEAPPUTIL_L2CAP_NUM_CTRL_DATA_PKT_EVT
+    BLEAPPUTIL_L2CAP_NUM_CTRL_DATA_PKT_EVT,
+    BLEAPPUTIL_L2CAP_PEER_CREDIT_RECEIVED_EVT
 };
 
 /*********************************************************************

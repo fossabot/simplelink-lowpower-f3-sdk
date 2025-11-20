@@ -89,6 +89,18 @@ typedef enum
 #define MENU_MODULE_LONG_PRESS_DURATION     400
 #define MENU_MODULE_DEBOUNCE_DURATION       100
 
+// Buttons indexes
+#if defined(CONFIG_BUTTON_0)
+#define MENU_MODULE_BUTTON_LEFT            CONFIG_BUTTON_0
+#else
+#define MENU_MODULE_BUTTON_LEFT            0xFF
+#endif
+#if defined(CONFIG_BUTTON_1)
+#define MENU_MODULE_BUTTON_RIGHT           CONFIG_BUTTON_1
+#else
+#define MENU_MODULE_BUTTON_RIGHT           0xFF
+#endif
+
 /******************************************************************************
  Globals
  *****************************************************************************/
@@ -167,8 +179,11 @@ bStatus_t MenuModule_doInit(const MenuModule_MenuObject_t *mainMenu, MenuModule_
         return FAILURE;
     }
 
-    // Do the following only if menu is used
-    if(pParams->mode != MenuModule_Mode_PRINTS_ONLY)
+    // Do the following only if menu is used and
+    // Verify the buttons exist before setting it
+    if(pParams->mode != MenuModule_Mode_PRINTS_ONLY &&
+       MENU_MODULE_BUTTON_LEFT != 0xFF &&
+       MENU_MODULE_BUTTON_RIGHT != 0xFF)
     {
         // Since the menu is used, start the prints from the following line
         MenuModule_printStartingRow = MENU_MODULE_INITIAL_STATUS_OFFSET;
@@ -185,6 +200,10 @@ bStatus_t MenuModule_doInit(const MenuModule_MenuObject_t *mainMenu, MenuModule_
         MenuModule_printMenuNavBar();
         // Print the main menu
         MenuModule_goToRoot();
+    }
+    else
+    {
+        return FAILURE;
     }
 
     return SUCCESS;
@@ -520,8 +539,8 @@ bStatus_t MenuModule_initButtons(void)
     params.debounceDuration = MENU_MODULE_DEBOUNCE_DURATION;
 
     // Open the buttons
-    handle_left = Button_open(CONFIG_BUTTON_0, &params);
-    handle_right = Button_open(CONFIG_BUTTON_1, &params);
+    handle_left = Button_open(MENU_MODULE_BUTTON_LEFT, &params);
+    handle_right = Button_open(MENU_MODULE_BUTTON_RIGHT, &params);
 
     if(handle_left == NULL || handle_right == NULL)
     {

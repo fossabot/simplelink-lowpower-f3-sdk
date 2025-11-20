@@ -85,15 +85,15 @@
 
 #include "ti/ble/controller/ll/ll_cs_common.h"
 #include "ti/ble/controller/ll/ll_cs_procedure.h"
+#include "ti/ble/controller/ll/ll_cs_db.h"
 #include "ti/ble/host/cs/cs.h"
+#include <ti/log/Log.h>
 
 extern uint8 hciPTMenabled;
 
 /*
 ** Prototypes
 */
-void hciCsSubeventResultProcess(RCL_CmdBleCs_SubeventResults *subeventRes, uint16 dataLength);
-void hciCsSubeventResultContProcess(RCL_CmdBleCs_SubeventResultsContinue *subeventRes, uint16 dataLength);
 
 /*
 ** HCI Events
@@ -357,7 +357,7 @@ void HCI_HardwareErrorEvent( uint8 hwErrorCode )
  */
 void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
                                                  uint16 connHandle,
-                                                 llCsCapabilities_t* peerCapabilities)
+                                                 const llCsCapabilities_t* peerCapabilities)
 {
   uint16_t dataLen = sizeof(CS_readRemoteCapabEvt_t);
 
@@ -405,10 +405,10 @@ void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
  * @brief       Callback to send CS Config Complete event.
  *
  * input parameters
+ * @param       connHandle - connection handle
+ * @param       configId   - config Id
  *
  * @param       status     - status
- * @param       connHandle - connection handle
- * @param       csConfig   - Pointer to the CS configuration set.
  *
  * output parameters
  *
@@ -416,43 +416,49 @@ void HCI_CS_ReadRemoteSupportedCapabilitiesCback(uint8 status,
  *
  * @return      None
  */
-void HCI_CS_ConfigCompleteCback(uint8 status,
-                                uint16 connHandle,
-                                const csConfigurationSet_t* csConfig)
+void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8 configId, uint8 status)
 {
+  const csConfigurationSet_t* csConfig = NULL;
+
   uint16_t dataLen = sizeof(CS_configCompleteEvt_t);
 
   CS_configCompleteEvt_t *pMsg = (CS_configCompleteEvt_t *)MAP_osal_mem_alloc(dataLen);
 
   if (pMsg != NULL)
   {
+    memset (pMsg, 0, sizeof(CS_configCompleteEvt_t));
+
     // Fill message
     pMsg->csEvtOpcode        = CS_CONFIG_COMPLETE_EVENT;
     pMsg->connHandle         = connHandle;
     pMsg->csStatus           = status;
-    pMsg->configId           = csConfig->configId;
-    pMsg->state              = csConfig->state;
-    pMsg->mainMode           = csConfig->mainMode;
-    pMsg->subMode            = csConfig->subMode;
-    pMsg->mainModeMinSteps   = csConfig->mainModeMinSteps;
-    pMsg->mainModeMaxSteps   = csConfig->mainModeMaxSteps;
-    pMsg->mainModeRepetition = csConfig->mainModeRepetition;
-    pMsg->modeZeroSteps      = csConfig->modeZeroSteps;
-    pMsg->role               = csConfig->role;
-    pMsg->rttType            = csConfig->rttType;
-    pMsg->csSyncPhy          = csConfig->csSyncPhy;
-    pMsg->chMRepetition      = csConfig->chMRepetition;
-    pMsg->chSel              = csConfig->chSel;
-    pMsg->ch3cShape          = csConfig->ch3cShape;
-    pMsg->ch3CJump           = csConfig->ch3CJump;
-    pMsg->rfu0               = csConfig->rfu0;
-    pMsg->tIP1               = csConfig->tIP1;
-    pMsg->tIP2               = csConfig->tIP2;
-    pMsg->tFCs               = csConfig->tFCs;
-    pMsg->tPM                = csConfig->tPM;
-    pMsg->rfu1               = csConfig->rfu1;
-    osal_memcpy(&pMsg->channelMap, &csConfig->channelMap, CS_CHM_SIZE);
+    pMsg->configId           = configId;
+    if ( CS_IS_CONFIG_ID_VALID(configId) )
+    {
+      csConfig = llCsDbGetConfiguration(connHandle, configId);
 
+      pMsg->state              = csConfig->action;
+      pMsg->mainMode           = csConfig->mainMode;
+      pMsg->subMode            = csConfig->subMode;
+      pMsg->mainModeMinSteps   = csConfig->mainModeMinSteps;
+      pMsg->mainModeMaxSteps   = csConfig->mainModeMaxSteps;
+      pMsg->mainModeRepetition = csConfig->mainModeRepetition;
+      pMsg->modeZeroSteps      = csConfig->modeZeroSteps;
+      pMsg->role               = csConfig->role;
+      pMsg->rttType            = csConfig->rttType;
+      pMsg->csSyncPhy          = csConfig->csSyncPhy;
+      pMsg->chMRepetition      = csConfig->chMRepetition;
+      pMsg->chSel              = csConfig->chSel;
+      pMsg->ch3cShape          = csConfig->ch3cShape;
+      pMsg->ch3CJump           = csConfig->ch3CJump;
+      pMsg->rfu0               = csConfig->rfu0;
+      pMsg->tIP1               = csConfig->tIP1;
+      pMsg->tIP2               = csConfig->tIP2;
+      pMsg->tFCs               = csConfig->tFCs;
+      pMsg->tPM                = csConfig->tPM;
+      pMsg->rfu1               = csConfig->rfu1;
+      osal_memcpy(&pMsg->channelMap, &csConfig->channelMap, CS_CHM_SIZE);
+    }
     /* We are directly addressing the CS host module via HCI. This is done
     because the CS controller module directly calls HCI callbacks, otherwise,
     it would make sense to register the callbacks from host to controller directly */
@@ -564,6 +570,8 @@ void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
   CS_procEnableCompleteEvt_t *pMsg = (CS_procEnableCompleteEvt_t *)
                                       MAP_osal_mem_alloc(dataLen);
 
+  Log_printf(BLE_CS, Log_VERBOSE, "Send HCI Procedure Enable Event, status = 0x%x, connHandle = %d, enable = %d", status, connHandle, enable);
+
   if (pMsg != NULL)
   {
     // Fill message
@@ -573,7 +581,7 @@ void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
     pMsg->enable               = enable;
     pMsg->configId             = enableData->configId;
     pMsg->ACI                  = enableData->ACI;
-    pMsg->pwrDelta             = enableData->pwrDelta;
+    pMsg->selectedTxPower      = llCsGetSelectedTxPower(connHandle); // Get the selected Tx Power for this connection
     pMsg->subEventLen          = enableData->subEventLen;
     pMsg->subEventsPerEvent    = enableData->subEventsPerEvent;
     pMsg->eventInterval        = enableData->eventInterval;
@@ -589,7 +597,7 @@ void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
 }
 
 /*******************************************************************************
- * @fn    hciCsSubeventResultProcess
+ * @fn    HCI_CS_SubeventResultsProcess
  *
  * @brief Processes the HCI CS Subevent Result event.
  *
@@ -602,15 +610,19 @@ void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
  *
  * @return None
  */
-void hciCsSubeventResultProcess(RCL_CmdBleCs_SubeventResults *subeventRes, uint16 dataLength)
+void HCI_CS_SubeventResultsProcess(const RCL_CmdBleCs_SubeventResults *subeventRes, uint16_t dataLength)
 {
-  if( subeventRes != NULL && dataLength >= HCI_CS_SUBEVENT_RESULTS_HDR_LEN )
+  if(subeventRes != NULL)
   {
-    uint16_t resultsLen = dataLength - HCI_CS_SUBEVENT_RESULTS_HDR_LEN;
-    uint16_t msgLen = sizeof(CS_subeventResultsEvt_t) + resultsLen;
+    uint16_t resultsLen = 0;
+    uint16_t msgLen = 0;
+    if (dataLength >= sizeof(RCL_CmdBleCs_SubeventResults))
+    {
+      resultsLen = dataLength - sizeof(RCL_CmdBleCs_SubeventResults);
+    }
+    msgLen = sizeof(CS_subeventResultsEvt_t) + resultsLen;
 
-    CS_subeventResultsEvt_t *pMsg =
-            (CS_subeventResultsEvt_t *) MAP_osal_mem_alloc(msgLen);
+    CS_subeventResultsEvt_t *pMsg = (CS_subeventResultsEvt_t *) MAP_osal_mem_alloc(msgLen);
 
     if (pMsg != NULL)
     {
@@ -628,7 +640,7 @@ void hciCsSubeventResultProcess(RCL_CmdBleCs_SubeventResults *subeventRes, uint1
       pMsg->numAntennaPath          = subeventRes->numAntennaPath;
       pMsg->numStepsReported        = subeventRes->numStepsReported;
 
-      osal_memcpy(pMsg->data, subeventRes->data, resultsLen);
+      memcpy(pMsg->data, subeventRes->data, resultsLen);
 
       /* We are directly addressing the CS host module via HCI. This is done
       because the CS controller module directly calls HCI callbacks, otherwise,
@@ -639,7 +651,7 @@ void hciCsSubeventResultProcess(RCL_CmdBleCs_SubeventResults *subeventRes, uint1
 }
 
 /*******************************************************************************
- * @fn    hciCsSubeventResultContProcess
+ * @fn    HCI_CS_SubeventContResultsProcess
  *
  * @brief Processes the HCI CS Subevent Result Continue event.
  *
@@ -652,15 +664,19 @@ void hciCsSubeventResultProcess(RCL_CmdBleCs_SubeventResults *subeventRes, uint1
  *
  * @return None
  */
-void hciCsSubeventResultContProcess(RCL_CmdBleCs_SubeventResultsContinue *subeventRes, uint16 dataLength)
+void HCI_CS_SubeventContResultsProcess(const RCL_CmdBleCs_SubeventResultsContinue *subeventRes, uint16_t dataLength)
 {
-  if( subeventRes != NULL && dataLength >= HCI_CS_CONT_SUBEVENT_RESULTS_HDR_LEN )
+  if(subeventRes != NULL)
   {
-    uint16_t resultsLen = dataLength - HCI_CS_CONT_SUBEVENT_RESULTS_HDR_LEN;
-    uint16_t msgLen = sizeof(CS_subeventResultsContinueEvt_t) + resultsLen;
+    uint16_t resultsLen = 0;
+    uint16_t msgLen = 0;
+    if (dataLength >= sizeof(RCL_CmdBleCs_SubeventResultsContinue))
+    {
+      resultsLen = dataLength - sizeof(RCL_CmdBleCs_SubeventResultsContinue);
+    }
+    msgLen = sizeof(CS_subeventResultsContinueEvt_t) + resultsLen;
 
-    CS_subeventResultsContinueEvt_t *pMsg =
-            (CS_subeventResultsContinueEvt_t *) MAP_osal_mem_alloc(msgLen);
+    CS_subeventResultsContinueEvt_t *pMsg = (CS_subeventResultsContinueEvt_t *) MAP_osal_mem_alloc(msgLen);
 
     if (pMsg != NULL)
     {
@@ -674,50 +690,12 @@ void hciCsSubeventResultContProcess(RCL_CmdBleCs_SubeventResultsContinue *subeve
       pMsg->numAntennaPath      = subeventRes->numAntennaPath;
       pMsg->numStepsReported    = subeventRes->numStepsReported;
 
-      osal_memcpy((uint8_t *)pMsg->data, subeventRes->data, resultsLen);
+      memcpy((uint8_t *)pMsg->data, subeventRes->data, resultsLen);
 
       /* We are directly addressing the CS host module via HCI. This is done
       because the CS controller module directly calls HCI callbacks, otherwise,
       it would make sense to register the callbacks from host to controller directly */
       CS_ProcessEvent((csEvtHdr_t *) pMsg);
-    }
-  }
-}
-
-/*******************************************************************************
- * @fn          HCI_CS_SubeventResultCback
- *
- * @brief       Subevent results callback
- *
- * input parameters
- *
- * @param       pRes - pointer to results data
- * @param       dataLength - length of data
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void HCI_CS_SubeventResultCback(void* pRes, uint16 dataLength)
-{
-  if (pRes != NULL)
-  {
-    // Extract opcode that indicates if its a continue event or not
-    uint8_t opcode = ((csEvtHdr_t *) pRes)->opcode;
-
-    if (opcode == CS_SUBEVENT_RESULT_OPCODE)
-    {
-      hciCsSubeventResultProcess((RCL_CmdBleCs_SubeventResults *) pRes, dataLength);
-    }
-    else if (opcode == CS_CONTINUE_SUBEVENT_RESULT_OPCODE)
-    {
-      hciCsSubeventResultContProcess((RCL_CmdBleCs_SubeventResultsContinue *) pRes, dataLength);
-    }
-    else
-    {
-        // Handle invalid opcode
     }
   }
 }
@@ -1112,6 +1090,8 @@ void LL_GenerateDHKeyCompleteEventCback( uint8  status,
  * @param       peripheralLatency  - Peripheral latency.
  * @param       connTimeout   - Connection timeout.
  * @param       clockAccuracy - Sleep clock accuracy (from Central only).
+ * @param       advHandle     - Not in used - for controller only
+ * @param       syncHandle    - Not in used - for controller only
  *
  * output parameters
  *
@@ -1129,14 +1109,16 @@ void LL_EnhancedConnectionCompleteCback( uint8   reasonCode,
                                          uint16  connInterval,
                                          uint16  peripheralLatency,
                                          uint16  connTimeout,
-                                         uint8   clockAccuracy )
+                                         uint8   clockAccuracy,
+                                         uint8   advHandle,
+                                         uint16  syncHandle)
 {
   uint8 enhanceConn = FALSE;
   uint8 hciEvtType;
 
   if(MAP_HCI_CheckEventMaskLe(LE_EVT_ENH_CONN_COMPLETE_BIT))
   {
-    hciEvtType = HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT;
+    hciEvtType = HCI_BLE_ENHANCED_CONNECTION_COMPLETE_EVENT_V1;
     enhanceConn = TRUE;
   }
   else if(MAP_HCI_CheckEventMaskLe(LE_EVT_CONN_COMPLETE_BIT))
@@ -1760,53 +1742,10 @@ void HCI_EXT_RssiMon_ReportCB(uint8_t handle, int8_t threshPass)
   HCI_VendorSpecifcCommandCompleteEvent(HCI_EXT_RSSI_MON_CB_EVENT, HCI_EXT_RSSI_MON_EVENT_LEN, data);
 }
 
-/*********************************************************************
- * @fn      HCI_PeriodicAdvSyncEstablishedEvent
- *
- * @brief   This event indicates the scanner that the Controller has received
- *          the first periodic advertising packet from an advertiser after the
- *          HCI_LE_Periodic_Advertising_Create_Sync command has been sent to the Controller.
- *
- * @design  /ref did_286039104
- *
- * input parameters
- *
- * @param   status           - Periodic advertising sync HCI status
- * @param   syncHandle       - Handle identifying the periodic advertising train assigned by the Controller
- *                             (Range: 0x0000 to 0x0EFF)
- * @param   advSid           - Value of the Advertising SID subfield in the ADI field of the PDU
- * @param   advAddrType      - Advertiser address type
- *                             0x00 - Public
- *                             0x01 - Random
- *                             0x02 - Public Identity Address
- *                             0x03 - Random Identity Address
- * @param   advAddress       - Advertiser address
- * @param   advPhy           - Advertiser PHY
- *                             0x01 - LE 1M
- *                             0x02 - LE 2M
- *                             0x03 - LE Coded
- * @param   periodicAdvInt   - Periodic advertising interval Range: 0x0006 to 0xFFFF
- *                             Time = N * 1.25 ms (Time Range: 7.5 ms to 81.91875 s)
- * @param   advClockAccuracy - Accuracy of the periodic advertiser's clock
- *                             0x00 - 500 ppm
- *                             0x01 - 250 ppm
- *                             0x02 - 150 ppm
- *                             0x03 - 100 ppm
- *                             0x04 - 75 ppm
- *                             0x05 - 50 ppm
- *                             0x06 - 30 ppm
- *                             0x07 - 20 ppm
- *
- * @return  void
+/*******************************************************************************
+ * Public function defined in ll.h
  */
-void HCI_PeriodicAdvSyncEstablishedEvent( uint8  status,
-                                          uint16 syncHandle,
-                                          uint8  advSid,
-                                          uint8  advAddrType,
-                                          uint8  *advAddress,
-                                          uint8  advPhy,
-                                          uint16 periodicAdvInt,
-                                          uint8  advClockAccuracy )
+void HCI_PadvSyncEstabEventV1( uint8 status, uint8_t* llPadvSEstEventParams)
 {
   // check if LE Meta-Events are enabled and this event is enabled
   if (HCI_CheckEventMaskLe(LE_EVT_PERIODIC_ADV_SYNC_ESTABLISHED_BIT))
@@ -1814,25 +1753,22 @@ void HCI_PeriodicAdvSyncEstablishedEvent( uint8  status,
     hciEvt_BLEPeriodicAdvSyncEstablished_t *msg =
       (hciEvt_BLEPeriodicAdvSyncEstablished_t *)MAP_osal_msg_allocate(sizeof( hciEvt_BLEPeriodicAdvSyncEstablished_t ));
 
-    if( msg )
+    if ( msg )
     {
       // message header
       msg->hdr.event  = HCI_GAP_EVENT_EVENT;
       msg->hdr.status = HCI_LE_EVENT_CODE; // use status field to pass the HCI Event code
 
       // event packet
-      msg->BLEEventCode = HCI_BLE_PERIODIC_ADV_SYNCH_ESTABLISHED_EVENT;
-      msg->status       = status;
-      msg->syncHandle   = syncHandle;
-      msg->sid          = advSid;
-      msg->addrType     = advAddrType;
-      if (advAddress != NULL)
-      {
-        (void)MAP_osal_memcpy( msg->address, advAddress, B_ADDR_LEN );
-      }
-      msg->phy          = advPhy;
-      msg->periodicInterval = periodicAdvInt;
-      msg->clockAccuracy = advClockAccuracy;
+      msg->BLEEventCode   = HCI_BLE_PADV_SYNC_ESTAB_V1_EVENT;
+      msg->status         = status;
+      MAP_osal_memcpy( &msg->syncHandle,  llPadvSEstEventParams, 2);
+      msg->sid            = llPadvSEstEventParams[2];
+      msg->addrType       = llPadvSEstEventParams[3];
+      MAP_osal_memcpy( msg->address, &llPadvSEstEventParams[4], B_ADDR_LEN);
+      msg->phy            = llPadvSEstEventParams[10];
+      MAP_osal_memcpy( &msg->periodicInterval,  &llPadvSEstEventParams[11], 2);
+      msg->clockAccuracy  = llPadvSEstEventParams[13];
 
       // send the message
       (void)MAP_osal_msg_send( hciGapTaskID, (uint8 *)msg );
@@ -1840,39 +1776,19 @@ void HCI_PeriodicAdvSyncEstablishedEvent( uint8  status,
   }
 }
 
-/*********************************************************************
- * @fn      HCI_LE_PeriodicAdvertisingReportEvent
- *
- * @brief   This event indicates the scanner that the Controller has
- *          received a Periodic Advertising packet.
- *
- * @design  /ref did_286039104
- *
- * @param   syncHandle - Handle identifying the periodic advertising train
- * @param   txPower    - Tx Power information (Range: -127 to +20)
- * @param   rssi       - RSSI value for the received packet (Range: -127 to +20)
- *                       If the packet contains CTE, this value is not available
- * @param   cteType    - Constant Tone Extension type
- *                       0x00 - AoA Constant Tone Extension
- *                       0x01 - AoD Constant Tone Extension with 1us slots
- *                       0x02 - AoD Constant Tone Extension with 2us slots
- *                       0xFF - No Constant Tone Extension
- * @param   dataStatus - Data status
- *                       0x00 - Data complete
- *                       0x01 - Data incomplete, more data to come
- *                       0x02 - Data incomplete, data truncated, no more to come
- * @param   dataLen    - Length of the Data field (Range: 0 to 247)
- * @param   data       - Data received from a Periodic Advertising packet
- *
- * @return  void
+/*******************************************************************************
+ * Public function defined in ll.h
  */
-void HCI_PeriodicAdvReportEvent( uint16 syncHandle,
-                                 int8   txPower,
-                                 int8   rssi,
-                                 uint8  cteType,
-                                 uint8  dataStatus,
-                                 uint8  dataLen,
-                                 uint8  *data )
+void HCI_PadvSyncEstabEventV2( uint8 status, uint8_t* llPadvSEstEventParams)
+{
+    // Currently no support for PAwR host
+    return;
+}
+
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PeriodicAdvReportEventV1( uint8_t* periodicEvtParams, uint8_t dataStatus, uint8 dataLen, uint8 *data )
 {
   // check if LE Meta-Events are enabled and this event is enabled
   if (HCI_CheckEventMaskLe(LE_EVT_PERIODIC_ADV_REPORT_BIT))
@@ -1887,13 +1803,14 @@ void HCI_PeriodicAdvReportEvent( uint16 syncHandle,
       msg->hdr.status = HCI_LE_EVENT_CODE; // use status field to pass the HCI Event code
 
       // event packet
-      msg->BLEEventCode = HCI_BLE_PERIODIC_ADV_REPORT_EVENT;
-      msg->syncHandle   = syncHandle;
-      msg->txPower      = txPower;
-      msg->rssi         = rssi;
-      msg->cteType      = cteType;
-      msg->dataStatus   = dataStatus;
-      msg->dataLen      = dataLen;
+      msg->BLEEventCode = HCI_BLE_PADV_REPORT_V1_EVENT;
+      MAP_osal_memcpy( &msg->syncHandle,  periodicEvtParams, 2);
+      msg->txPower                  = periodicEvtParams[2];
+      msg->rssi                     = periodicEvtParams[3];
+      msg->cteType                  = periodicEvtParams[4];
+      msg->dataStatus               = dataStatus;
+      msg->dataLen                  = dataLen;
+
       if ((data != NULL) && (dataLen > 0))
       {
         msg->data = ((uint8 *)(msg)) + sizeof( hciEvt_BLEPeriodicAdvReport_t );
@@ -1906,6 +1823,14 @@ void HCI_PeriodicAdvReportEvent( uint16 syncHandle,
   }
 }
 
+/*******************************************************************************
+ * Public function defined in ll.h
+ */
+void HCI_PeriodicAdvReportEventV2( uint8_t* periodicEvtParams, uint8_t dataStatus, uint8 dataLen, uint8 *data )
+{
+  // Currently no support for PAwR host
+  return;
+}
 /*********************************************************************
  * @fn      HCI_PeriodicAdvSyncLostEvent
  *

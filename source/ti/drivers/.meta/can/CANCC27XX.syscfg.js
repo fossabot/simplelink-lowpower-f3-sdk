@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (c) 2023-2025 Texas Instruments Incorporated - http://www.ti.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,16 @@
 
 /* Get Common /ti/drivers utility functions */
 let Common = system.getScript("/ti/drivers/Common.js");
+let logError = Common.logError;
+let logWarning = Common.logWarning;
+
+const deviceId = system.deviceData.deviceId;
+
+/* The default task stack size is based on worst case usage which is currently
+ * dictated by FreeRTOS with GCC compiler with ~110B headroom. Size must be a
+ * word multiple. For CC2745 768k/1M flash devices only.
+ */
+const defaultTaskStackSize = 512;
 
 let intPriority = Common.newIntPri()[0];
 intPriority.name = "interruptPriority";
@@ -50,9 +60,42 @@ intPriority.description = "CAN peripheral interrupt priority";
  *  Device-specific extensions to be added to base CAN configuration
  */
 let devSpecific = {
-    config: [
-        intPriority
-    ],
+    config: (function() {
+        let configArr = [intPriority];
+
+        /* Add task configs for CC2745 768k/1M flash devices only */
+        if (deviceId.match(/CC2745[A-Z](7|10)/)) {
+            let freertosModule = system.modules["/freertos/FreeRTOS"];
+            let defaultTaskPriority = 4; /* Arbitrary mid-priority value */
+
+            if (freertosModule !== undefined) {
+                /* The default task priority is the second highest FreeRTOS task
+                 * priority to process IRQ in a timely manner.
+                 */
+                defaultTaskPriority = freertosModule.$static.maxPriorities - 2;
+            }
+
+            configArr.push({
+                name: "irqTaskPriority",
+                displayName: "Interrupt Task Priority",
+                description: "Priority of the interrupt handling task.",
+                longDescription: "Higher numbers denote higher priority. The max value depends on the RTOS configuration. " +
+                    "It is recommended to use a high priority to ensure timely processing of CAN interrupts.",
+                default: defaultTaskPriority
+            });
+
+            configArr.push({
+                name: "taskStackSize",
+                displayName: "IRQ Task Stack Size",
+                description: "Stack size (in bytes) for the CAN interrupt handling task.",
+                longDescription: "Configures the stack size for the interrupt handling task. Adjust as needed for your " +
+                    "application's event callback stack usage.",
+                default: defaultTaskStackSize
+            });
+        }
+
+        return configArr;
+    })(),
 
     /* Override generic requirements with device-specific reqs (if any) */
     pinmuxRequirements: pinmuxRequirements,
@@ -191,6 +234,59 @@ function moduleInstances(inst) {
 }
 
 /*
+ *  ======== validate ========
+ *  Validate this instance's configuration
+ *
+ *  @param inst       - instance to be validated
+ *  @param validation - object to hold detected validation issues
+ *  @param $super     - needed to call the generic module's functions
+ */
+function validate(inst, validation, $super)
+{
+    let message;
+    let freertosModule = system.modules["/freertos/FreeRTOS"];
+
+    /* Validate task configs for CC2745 768k/1M flash devices only */
+    if (deviceId.match(/CC2745[A-Z](7|10)/)) {
+        if (freertosModule === undefined) {
+            message = 'FreeRTOS module is required for the CAN driver';
+            validation.logError(message, inst);
+        }
+        else {
+            let maxPriority = freertosModule.$static.maxPriorities - 1;
+
+            if (inst.irqTaskPriority < 0) {
+                message = 'Task priority cannot be negative';
+                logError(validation, inst, "irqTaskPriority", message);
+            }
+            else if (inst.irqTaskPriority > maxPriority) {
+                message = 'Task priority cannot be greater than ' + maxPriority;
+                logError(validation, inst, "irqTaskPriority", message);
+            }
+            else if (inst.irqTaskPriority < (maxPriority / 2)) {
+                message = 'It is recommended to use a higher task priority';
+                logWarning(validation, inst, "irqTaskPriority", message);
+            }
+        }
+
+        if ((inst.taskStackSize & 0x3) != 0) {
+            message = 'Task stack size must be a word multiple';
+            logError(validation, inst, "taskStackSize", message);
+        }
+        else if (inst.taskStackSize < defaultTaskStackSize) {
+            message = 'Task stack size is less than the recommended minimum ' +
+                defaultTaskStackSize + ' bytes';
+            logWarning(validation, inst, "taskStackSize", message);
+        }
+    }
+
+    /* Call generic module's validation */
+    if ($super.validate) {
+        $super.validate(inst, validation);
+    }
+}
+
+/*
  *  ======== extend ========
  *  Extends a base exports object to include any device specifics
  *
@@ -202,6 +298,11 @@ function extend(base)
     /* Display which driver implementation can be used */
     base = Common.addImplementationConfig(base, "CAN", null,
         [{name: "CANCC27XX"}], null);
+
+    /* Override base validate */
+    devSpecific.validate = function (inst, validation) {
+        return validate(inst, validation, base);
+    };
 
     /* Merge and overwrite base module attributes */
     let result = Object.assign({}, base, devSpecific);

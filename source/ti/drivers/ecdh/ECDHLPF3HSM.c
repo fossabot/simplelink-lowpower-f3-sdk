@@ -34,11 +34,13 @@
 #include <stdbool.h>
 
 /* Top-level and device-specific includes */
+#include <ti/drivers/dpl/SemaphoreP.h>
 #include <ti/drivers/ECDH.h>
 #include <ti/drivers/ecdh/ECDHLPF3HSM.h>
 #include <ti/drivers/cryptoutils/ecc/ECCParams.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKeyPlaintext.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 
 /* HSM-related includes */
 #include <ti/drivers/cryptoutils/hsm/HSMLPF3.h>
@@ -50,6 +52,17 @@
 /* RTOS-related includes */
 #include <ti/drivers/dpl/HwiP.h>
 #include <ti/drivers/dpl/DebugP.h>
+
+#include <ti/devices/DeviceFamily.h>
+#include DeviceFamily_constructPath(inc/hw_ints.h)
+
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX)
+    /* HSM Register names for CC35XX are different compared to CC27XX
+     * Below mapping helps to keep the source code same between
+     * both devices.
+     */
+    #define INT_HSM_SEC_IRQ INT_OSPR_HSM_HOST_0_SEC_IRQ
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX) */
 
 /* KeyStore-related includes */
 #if (ENABLE_KEY_STORAGE == 1)
@@ -148,7 +161,8 @@ ECDH_Handle ECDH_construct(ECDH_Config *config, const ECDH_Params *params)
 
         object->returnBehavior    = params->returnBehavior;
         object->callbackFxn       = params->callbackFxn;
-        object->accessTimeout     = params->timeout;
+        object->accessTimeout     = params->returnBehavior == ECDH_RETURN_BEHAVIOR_BLOCKING ? params->timeout
+                                                                                            : SemaphoreP_NO_WAIT;
         object->returnStatus      = ECDH_STATUS_SUCCESS;
         object->privateKeyAssetID = 0U;
         object->paramAssetID      = 0U;
@@ -666,6 +680,14 @@ static int_fast16_t ECDHLPF3HSM_initializeHSMOperations(ECDH_Handle handle)
         return ECDH_STATUS_RESOURCE_UNAVAILABLE;
     }
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return ECDH_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     /* Create and load assets necessary to conduct the operation:
      * - Private key, for both types of operations.
      * - Public key, for both types of operations.
@@ -674,9 +696,79 @@ static int_fast16_t ECDHLPF3HSM_initializeHSMOperations(ECDH_Handle handle)
      */
     status = ECDHLPF3HSM_createAndLoadAllAssets(handle);
 
+    if (HSMLPF3_isStandaloneDMASupportEnabled() || (status != ECDH_STATUS_SUCCESS))
+    {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+    }
+
     if ((status == ECDH_STATUS_SUCCESS) && (object->curveType != ECDH_TYPE_CURVE_25519))
     {
         status = ECDHLPF3HSM_checkECCKeys(handle);
+    }
+
+    return status;
+}
+
+/*
+ *  ======== ECDHLPF3HSM_readPublicKeyMaterial ========
+ */
+static int_fast16_t ECDHLPF3HSM_readPublicKeyMaterial(ECDH_Handle handle)
+{
+    ECDHLPF3HSM_Object *object = handle->object;
+    int_fast16_t status        = ECDH_STATUS_ERROR;
+    int_fast16_t hsmRetval     = HSMLPF3_STATUS_ERROR;
+    uint32_t assetSize         = HSM_ASYM_DATA_SIZE_VWB(object->curveLength);
+    uint8_t itemCount          = HSM_ASYM_ECC_PUB_KEY_VCOUNT;
+    int32_t tokenResult        = 0U;
+
+    /* Public key for curve25519 is comprised of only one component, pubkey.u.
+     * For shared secret operations, if the user provides in big endian
+     * more than one component, the ECDH driver only takes the first one.
+     */
+    if (object->curveType != ECDH_TYPE_CURVE_25519)
+    {
+        assetSize *= HSM_ASYM_ECC_PUB_KEY_VCOUNT;
+    }
+    else
+    {
+        /* Public key for curve25519 is composed of only one component, pubkey.u.
+         * For other curves, the public key has two components, pubkey.x and pubkey.y.
+         */
+        itemCount = HSM_ASYM_CURVE25519_PUB_KEY_VCOUNT;
+    }
+
+    /* Initialize a buffer that will hold the single- or multi-component vector for the operation's key */
+    (void)memset(&object->output[0], 0, assetSize);
+
+    HSMLPF3_getPublicDataRead(object->publicDataAssetID, &object->output[0], assetSize);
+
+    /* Submit token to the HSM IP engine */
+    hsmRetval = HSMLPF3_submitToken(HSMLPF3_RETURN_BEHAVIOR_POLLING, NULL, (uintptr_t)handle);
+
+    if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+    {
+        /* Handles post command token submission mechanism.
+         * Waits for a result token from the HSM IP in polling and blocking modes (and calls the drivers post-processing
+         * fxn) and returns immediately when in callback mode.
+         */
+        hsmRetval = HSMLPF3_waitForResult();
+
+        if (hsmRetval == HSMLPF3_STATUS_SUCCESS)
+        {
+            tokenResult = HSMLPF3_getResultCode();
+
+            if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+            {
+                status = ECDH_STATUS_SUCCESS;
+
+                HSMLPF3_asymDHPubKeyFromHW(&object->output[0],
+                                           object->curveLength,
+                                           itemCount,
+                                           (HSMLPF3_KeyMaterialEndianness)object->keyMaterialEndianness,
+                                           object->publicKey->u.plaintext.keyMaterial);
+            }
+        }
     }
 
     return status;
@@ -743,63 +835,16 @@ static int_fast16_t ECDHLPF3HSM_readSharedSecret(ECDH_Handle handle)
 }
 
 /*
- *  ======== ECDHLPF3HSM_ecdhPostProcessing ========
+ *  ======== ECDHLPF3HSM_ecdhCommonPostProcessing ========
  */
-static inline void ECDHLPF3HSM_ecdhPostProcessing(uintptr_t arg0)
+static void ECDHLPF3HSM_ecdhCommonPostProcessing(uintptr_t arg0, int_fast16_t status)
 {
     ECDH_Handle handle         = (ECDH_Handle)arg0;
     ECDHLPF3HSM_Object *object = handle->object;
-    int_fast16_t status        = ECDH_STATUS_ERROR;
     int_fast16_t assetStatus   = ECDH_STATUS_ERROR;
-    int32_t tokenResult        = HSMLPF3_getResultCode();
 
-    /* TokenResult carries information regarding the operation result status as well as other information such as
-     * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
-     * relevant information to an operation's result status.
-     */
-    if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
-    {
-        if (object->operationType == ECDH_OPERATION_TYPE_GENERATE_PUBLIC_KEY)
-        {
-            uint8_t itemCount = HSM_ASYM_ECC_PUB_KEY_VCOUNT;
-
-            /* Public key for curve25519 is composed of only one component, pubkey.u.
-             * For other curves, the public key has two components, pubkey.x and pubkey.y.
-             */
-            if (object->curveType == ECDH_TYPE_CURVE_25519)
-            {
-                itemCount = HSM_ASYM_CURVE25519_PUB_KEY_VCOUNT;
-            }
-
-            HSMLPF3_asymDHPubKeyFromHW(&object->output[0],
-                                       object->curveLength,
-                                       itemCount,
-                                       (HSMLPF3_KeyMaterialEndianness)object->keyMaterialEndianness,
-                                       object->publicKey->u.plaintext.keyMaterial);
-
-            if (object->publicKey->encoding == CryptoKey_BLANK_PLAINTEXT)
-            {
-                object->publicKey->encoding = CryptoKey_PLAINTEXT;
-            }
-            else
-            {
-                object->publicKey->encoding = CryptoKey_PLAINTEXT_HSM;
-            }
-
-            status = ECDH_STATUS_SUCCESS;
-        }
-        else
-        {
-            status = ECDHLPF3HSM_readSharedSecret(handle);
-
-            if (status == ECDH_STATUS_SUCCESS)
-            {
-                object->sharedSecret->encoding = (object->sharedSecret->encoding == CryptoKey_BLANK_PLAINTEXT)
-                                                     ? CryptoKey_PLAINTEXT
-                                                     : CryptoKey_PLAINTEXT_HSM;
-            }
-        }
-    }
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     /* Free assets (private key and ECC curve assets) */
     assetStatus = ECDHLPF3HSM_freeAllAssets(handle);
@@ -816,6 +861,145 @@ static inline void ECDHLPF3HSM_ecdhPostProcessing(uintptr_t arg0)
     if (object->returnBehavior == ECDH_RETURN_BEHAVIOR_CALLBACK)
     {
         object->callbackFxn((ECDH_Handle)arg0, status, *object->operation, object->operationType);
+    }
+}
+
+/*
+ *  ======== ECDHLPF3HSM_ecdhPostProcessing ========
+ */
+static inline void ECDHLPF3HSM_ecdhPostProcessing(uintptr_t arg0)
+{
+    ECDH_Handle handle         = (ECDH_Handle)arg0;
+    ECDHLPF3HSM_Object *object = handle->object;
+    int_fast16_t status        = ECDH_STATUS_ERROR;
+    int32_t tokenResult        = HSMLPF3_getResultCode();
+    bool commonResourceRetval  = false;
+
+    if (HSMLPF3_isStandaloneDMASupportEnabled())
+    {
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        if ((object->returnBehavior == ECDH_RETURN_BEHAVIOR_BLOCKING) ||
+            (object->returnBehavior == ECDH_RETURN_BEHAVIOR_POLLING))
+        {
+            /* The ECDH driver will opt to wait forever when called synchronously. */
+            commonResourceRetval = CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+        }
+        else
+        {
+            /* The ECDH driver will opt to attempt to acquire the lock with not wait when called asynchronously.
+             * If the ECDH driver was not able to obtain the semaphore from first try, CommonResource will return a an
+             * error and internally track when the entity that holds the semaphore releases it so that it can fire up
+             * the HSM ISR immediatley after.
+             */
+            commonResourceRetval = CommonResourceXXF3_acquireLockWithDelay();
+        }
+
+        /* Execute the DMA-dependent operations only when the CommonResource semaphore has been acquired. */
+        if (commonResourceRetval)
+        {
+            /* TokenResult carries information regarding the operation result status as well as other information such
+             * as whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to
+             * extract only relevant information to an operation's result status.
+             */
+            if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+            {
+                if (object->operationType == ECDH_OPERATION_TYPE_GENERATE_PUBLIC_KEY)
+                {
+                    status = ECDHLPF3HSM_readPublicKeyMaterial(handle);
+
+                    if (status == ECDH_STATUS_SUCCESS)
+                    {
+                        if (object->publicKey->encoding == CryptoKey_BLANK_PLAINTEXT)
+                        {
+                            object->publicKey->encoding = CryptoKey_PLAINTEXT;
+                        }
+                        else
+                        {
+                            object->publicKey->encoding = CryptoKey_PLAINTEXT_HSM;
+                        }
+                    }
+                }
+                else
+                {
+                    status = ECDHLPF3HSM_readSharedSecret(handle);
+
+                    if (status == ECDH_STATUS_SUCCESS)
+                    {
+                        object->sharedSecret->encoding = (object->sharedSecret->encoding == CryptoKey_BLANK_PLAINTEXT)
+                                                             ? CryptoKey_PLAINTEXT
+                                                             : CryptoKey_PLAINTEXT_HSM;
+                    }
+                }
+            }
+
+            /* Execute the common phase in the post processing part:
+             * - Free all created assets.
+             * - Release the HSM access semaphore.
+             * - When in Callback mode, call the user's callbck fxn.
+             */
+            ECDHLPF3HSM_ecdhCommonPostProcessing(arg0, status);
+        }
+        else
+        {
+            (void)HwiP_enableInterrupt(INT_HSM_SEC_IRQ);
+        }
+    }
+    else
+    {
+        /* TokenResult carries information regarding the operation result status as well as other information such as
+         * whether the operation is FIPS approved or not. The code below applies an HSMLPF3_RETVAL_MASK to extract only
+         * relevant information to an operation's result status.
+         */
+        if ((tokenResult & HSMLPF3_RETVAL_MASK) == EIP130TOKEN_RESULT_SUCCESS)
+        {
+            if (object->operationType == ECDH_OPERATION_TYPE_GENERATE_PUBLIC_KEY)
+            {
+                uint8_t itemCount = HSM_ASYM_ECC_PUB_KEY_VCOUNT;
+
+                /* Public key for curve25519 is composed of only one component, pubkey.u.
+                 * For other curves, the public key has two components, pubkey.x and pubkey.y.
+                 */
+                if (object->curveType == ECDH_TYPE_CURVE_25519)
+                {
+                    itemCount = HSM_ASYM_CURVE25519_PUB_KEY_VCOUNT;
+                }
+
+                HSMLPF3_asymDHPubKeyFromHW(&object->output[0],
+                                           object->curveLength,
+                                           itemCount,
+                                           (HSMLPF3_KeyMaterialEndianness)object->keyMaterialEndianness,
+                                           object->publicKey->u.plaintext.keyMaterial);
+
+                if (object->publicKey->encoding == CryptoKey_BLANK_PLAINTEXT)
+                {
+                    object->publicKey->encoding = CryptoKey_PLAINTEXT;
+                }
+                else
+                {
+                    object->publicKey->encoding = CryptoKey_PLAINTEXT_HSM;
+                }
+
+                status = ECDH_STATUS_SUCCESS;
+            }
+            else
+            {
+                status = ECDHLPF3HSM_readSharedSecret(handle);
+
+                if (status == ECDH_STATUS_SUCCESS)
+                {
+                    object->sharedSecret->encoding = (object->sharedSecret->encoding == CryptoKey_BLANK_PLAINTEXT)
+                                                         ? CryptoKey_PLAINTEXT
+                                                         : CryptoKey_PLAINTEXT_HSM;
+                }
+            }
+        }
+
+        /* Execute the common phase in the post processing part:
+         * - Free all created assets.
+         * - Release the HSM access semaphore.
+         * - When in Callback mode, call the user's callbck fxn.
+         */
+        ECDHLPF3HSM_ecdhCommonPostProcessing(arg0, status);
     }
 }
 
@@ -857,6 +1041,9 @@ int_fast16_t ECDH_generatePublicKey(ECDH_Handle handle, ECDH_OperationGeneratePu
 
     if (status != ECDH_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
          * error code anyways.
@@ -893,6 +1080,9 @@ int_fast16_t ECDH_generatePublicKey(ECDH_Handle handle, ECDH_OperationGeneratePu
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
         status = ECDH_STATUS_ERROR;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* Free All allocated assets.
          * Ignore the return value here since the driver status code is error.
@@ -944,6 +1134,9 @@ int_fast16_t ECDH_computeSharedSecret(ECDH_Handle handle, ECDH_OperationComputeS
 
     if (status != ECDH_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are retuning an
          * error code anyways.
@@ -979,6 +1172,9 @@ int_fast16_t ECDH_computeSharedSecret(ECDH_Handle handle, ECDH_OperationComputeS
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
         status = ECDH_STATUS_ERROR;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* Free All allocated assets.
          * Ignore the return value here since the driver status code is error.
@@ -1044,12 +1240,13 @@ static int_fast16_t ECDHLPF3HSM_createAndLoadAllAssets(ECDH_Handle handle)
         return status;
     }
 
-    /* If the operation type is generate public key then there is no need to create public data object.
-     * Otherwise, the HSM requires that the ECDH driver creates this asset. The HSM will then deposit
-     * the shared secret in this asset and the driver can then read it from there.
-     */
-    if (object->operationType == ECDH_OPERATION_TYPE_COMPUTE_SHARED_SECRET)
+    if ((HSMLPF3_isStandaloneDMASupportEnabled()) ||
+        (object->operationType == ECDH_OPERATION_TYPE_COMPUTE_SHARED_SECRET))
     {
+        /* If the operation type is generate public key then there is no need to create public data object.
+         * Otherwise, the HSM requires that the ECDH driver creates this asset. The HSM will then deposit
+         * the shared secret in this asset and the driver can then read it from there.
+         */
         status = ECDHLPF3HSM_createPublicDataAsset(handle);
 
         if (status != ECDH_STATUS_SUCCESS)
@@ -1092,12 +1289,25 @@ static int_fast16_t ECDHLPF3HSM_createAndLoadPrivateKeyAssetID(ECDH_Handle handl
     {
         keyMaterial = &KeyStore_keyingMaterial[0];
 
+        /* Release the CommonResource semaphore before entering the KeyStore space since KeyStore will attempt to
+         * acquire for key management operations.
+         */
+        CommonResourceXXF3_releaseLock();
+
         status = KeyStore_PSA_retrieveFromKeyStore(object->privateKey,
                                                    &KeyStore_keyingMaterial[0],
                                                    sizeof(KeyStore_keyingMaterial),
                                                    &object->privateKeyAssetID,
                                                    KEYSTORE_PSA_ALG_ECDH,
                                                    usage);
+
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+        if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+        {
+            HSMLPF3_releaseLock();
+
+            status = ECDH_STATUS_RESOURCE_UNAVAILABLE;
+        }
 
         if (status != KEYSTORE_PSA_STATUS_SUCCESS)
         {
@@ -1517,7 +1727,25 @@ static int_fast16_t ECDHLPF3HSM_createPublicDataAsset(ECDH_Handle handle)
     int_fast16_t hsmRetval     = HSMLPF3_STATUS_ERROR;
     ECDHLPF3HSM_Object *object = handle->object;
     uint64_t assetPolicy       = 0U;
-    uint32_t assetSize         = HSM_ASYM_DATA_SIZE_B2WB(object->curveLength);
+    uint32_t assetSize         = 0U;
+
+    if (object->operationType == ECDH_OPERATION_TYPE_GENERATE_PUBLIC_KEY)
+    {
+        assetSize = HSM_ASYM_DATA_SIZE_VWB(object->curveLength);
+
+        /* Public key for curve25519 is comprised of only one component, pubkey.u.
+         * For shared secret operations, if the user provides in big endian
+         * more than one component, the ECDH driver only takes the first one.
+         */
+        if (object->curveType != ECDH_TYPE_CURVE_25519)
+        {
+            assetSize *= HSM_ASYM_ECC_PUB_KEY_VCOUNT;
+        }
+    }
+    else
+    {
+        assetSize = HSM_ASYM_DATA_SIZE_B2WB(object->curveLength);
+    }
 
     /* Operation (Lower 16-bits + general Operation) + Direction. No Mode */
     assetPolicy = EIP130_ASSET_POLICY_NONMODIFIABLE | EIP130_ASSET_POLICY_NODOMAIN | EIP130_ASSET_POLICY_PUBLICDATA |

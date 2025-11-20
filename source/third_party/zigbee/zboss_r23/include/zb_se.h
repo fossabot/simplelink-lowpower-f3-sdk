@@ -180,6 +180,12 @@ typedef struct zse_service_disc_dev_s
   zse_service_disc_step_t step;
   zb_uint16_t cluster_id;
   zb_uint8_t op_in_progress;
+  /*
+   * An integer code that can be used to identify specific device type
+   * or purpose.
+   *
+   * See @ref zb_se_service_discovery_read_commodity() and
+   * @ref zb_se_service_discovery_read_commodity_attr_handle() */
   zb_uint8_t commodity_type;
   zb_uint8_t zcl_tsn;
 } zse_service_disc_dev_t;

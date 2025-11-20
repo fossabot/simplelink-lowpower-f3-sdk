@@ -125,6 +125,10 @@ extern "C"
 #include "ti/ble/stack_util/health_toolkit/assert.h"
 #include "ti/ble/stack_util/bcomdef.h"
 
+#if !defined(CONTROLLER_LIB) && !defined(CONFIG_ZEPHYR)
+#include <ti_drivers_config.h>
+#endif // !CONTROLLER_LIB && !CONFIG_ZEPHYR
+
 /*******************************************************************************
  * MACROS
  */
@@ -133,14 +137,14 @@ extern "C"
  * CONSTANTS
  */
 
-// Defines only required by Application.
-// Note: ICALL_STACK0_ADDR is assigned the entry point of the stack image and
-//       is only defined for the Application project
-#if defined(ICALL_STACK0_ADDR)
+#if defined(FREERTOS)
+#define LL_MAX_TASK_PRIORITY           (configMAX_PRIORITIES - 1)
+#elif defined(CONFIG_ZEPHYR)
+#define LL_MAX_TASK_PRIORITY           (CONFIG_NUM_COOP_PRIORITIES - 1)
+#else
+#define LL_MAX_TASK_PRIORITY           (5)
+#endif // FREERTOS
 
-#ifndef CONFIG_ZEPHYR
-#include <ti_drivers_config.h>
-#endif // CONFIG_ZEPHYR
 
 // RF Front End Settings
 // Note: The use of these values completely depends on how the PCB is laid out.
@@ -187,9 +191,6 @@ extern "C"
 #define EXTENDED_STACK_SETTINGS         0x00
 #endif
 
-// bitmask which enables the offset of the overrides for BAW
-#define CC2652RB_OVERRIDE_USED          0x02
-
 // Maximum number of BLE HCI PDUs. If the maximum number connections (above)
 // is set to 0 then this number should also be set to 0.
 #ifndef MAX_NUM_PDU
@@ -203,7 +204,11 @@ extern "C"
 #endif
 
 #ifdef CHANNEL_SOUNDING
+#ifdef CONTROLLER_ONLY
+#define CS_STEPS_RESULTS_FORMAT         0   // For Controller only, use HCI format
+#else
 #define CS_STEPS_RESULTS_FORMAT         1   // By default set it to 'Custom' format
+#endif
 #endif
 
 #endif //SYSCFG
@@ -307,8 +312,6 @@ extern "C"
 
 /************************************/
 
-#endif // !(CTRL_CONFIG | HOST_CONFIG)
-
 /*******************************************************************************
  * TYPEDEFS
  */
@@ -336,6 +339,7 @@ typedef struct
   int8_t                      pwrCtrlRssiLowThreshold;    // RSSI low threshold for power control
   int8_t                      pwrCtrlRssiHighThreshold;   // RSSI high threshold for power control
   int8_t                      pwrCtrlDeltaStepDb;         // Delta step in dB for power control threshold passed
+  uint_least32_t              llTaskPriority;             // Task priority for the LL task
 } stackSpecific_t;
 
 /*******************************************************************************

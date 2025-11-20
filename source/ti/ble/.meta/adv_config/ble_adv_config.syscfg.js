@@ -48,6 +48,13 @@ const config = {
     description: "Configure Extended Settings",
     config: [
         {
+            name: "enableLogging",
+            displayName: "Enable Logging",
+            longDescription: `This setting will enable logging for the BLE module.`,
+            default: false,
+            hidden: true,
+        },
+        {
             name: "disableDisplayModule",
             displayName: "Disable The Display Module",
             longDescription: Docs.disableDisplayModuleLongDescription,
@@ -238,13 +245,6 @@ const config = {
                 {
                     name: "icallEvents",
                     displayName: "ICALL Events",
-                    readOnly: true,
-                    hidden: true,
-                    default: true
-                },
-                {
-                    name: "icallStackAddress",
-                    displayName: "ICALL Stack Address",
                     readOnly: true,
                     hidden: true,
                     default: true

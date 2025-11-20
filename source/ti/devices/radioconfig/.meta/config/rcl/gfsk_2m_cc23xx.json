@@ -18,17 +18,10 @@
       "protocol": "Proprietary",
       "abbreviation": "gfsk_2_mbps",
       "default_clone_name": "Custom GFSK 2 Mbps, 320 kHz dev",
-      "state": [
-        {
-          "quality": "experimental",
-          "rf_design": "LP-EM-CC2340R53-YBG-WCSP",
-          "device_name_list": "CC2340R53"
-        },
-        {
-          "quality": "characterized",
-          "device_name_list": "CC2340R5,CC2340R22,CC2340R53"
-        }
-      ]
+      "state": {
+        "quality": "characterized",
+        "device_name_list": "CC2340R5,CC2340R22,CC2340R53"
+      }
     },
     "phy_properties": [
       {

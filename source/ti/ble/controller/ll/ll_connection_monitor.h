@@ -88,6 +88,10 @@
  * CONSTANTS
  */
 #define CM_INVALID_DATA_SIZE               0U
+#define CM_EMPTY_PACKET_OCTETS             0U
+#define CM_INVALID_ACCESS_ADDR             0xFFFFFFFFU
+#define CM_DEFAULT_ADJUSTMENTS_EVT_TRIES   4
+
 
 /*******************************************************************************
  * TYPEDEFS
@@ -103,45 +107,73 @@ typedef struct
   uint32_t timeToNextEvent;                        // The time left to the next event
   uint16_t currentEvent;                           // current event number
   uint16_t expirationValue;                        // number of events to a LSTO expiration
-  uint16_t peripheralLatencyValue;                 // current peripheral latency value (when enabled)
   /* Connection Parameters */
   uint16_t connInterval;                           // connection interval
   /* Channel Map */
   uint8_t  nextChan;                               // The unmapped channel for the next active connection event
   uint8_t  currentChan;                            // the current unmapped channel for the completed connection event
   uint8_t  currentMappedChan;                      // Currently used mapped channel
-  uint8_t  numUsedChans;                           // count of the number of usable data channels
   uint8_t  hopLength;                              // used for finding next data channel at next connection event
   uint8_t  chanMap[ LL_NUM_BYTES_FOR_CHAN_MAP ];   // bit map corresponding to the data channels 0..39 //5 Bytes
   /* Peer Address Information */
   uint8_t  peerAddr[ LL_DEVICE_ADDR_LEN ];         // Peer address
-  uint8_t  peerAddrType;                           // Peer address type
+  uint8_t  peerAddrType:1;                         // Peer address type
   /* PHY Information */
-  uint8_t  curPhy;                                 // current PHY
-  uint8_t  phyOpts;                                // Coded phy options
-  uint8_t  chanSelAlgo;                            // Channel selection algorithm
+  uint8_t  curPhy:3;                               // current PHY
+  uint8_t  phyOpts:2;                              // Coded phy options
+  uint8_t  chanSelAlgo:2;                          // Channel selection algorithm
   /* Central Contribution */
   uint16_t mstSCA;                                 // Central's portion of connection SCA
+  /* If there any pending update*/
+  cmConnUpdateEvt_t pendingUpdateEvt;              // Connection update event data
 } llCmDataFull_t;
+
+/** 
+* @brief Enum of the state of the connection monitor
+*/
+typedef enum
+{
+  LL_CM_STATE_SYNCING,       //!< The connection monitor trying to find the first packet.
+  LL_CM_STATE_ADJUSTMENT,    //!< The connection monitor is in adjustment state.
+  LL_CM_STATE_ACTIVE,        //!< The connection monitor is active and reports the rssi.
+} llCmState_e;
+
+/** 
+* @brief Connection Monitor Connection Role
+*/
+typedef enum
+{
+  LL_CM_PERIPHERAL_ROLE       = 0x02,
+  LL_CM_CENTRAL_ROLE          = 0x01,
+} llCmConnectionMaskRole_e;
+
 
 // The controller's Connection Monitor data structure
 typedef struct
 {
   uint32_t               relRxTimeoutTime;            //! Time before timing out the first packet of the event
   uint32_t               lastScanDuration;            //! Last scan RX duration
-  uint32_t               timeStampCentral;            //! Last timeStamp Central
-  uint32_t               timeStampPeripheral;         //! Last timeStamp Peripheral
+  uint32_t               timeStampCentral;            //! Last valid timeStamp Central
+  uint32_t               timeStampPeripheral;         //! Last valid timeStamp Peripheral
   uint32_t               maxDataTicks;                //! The maximum ticks it takes to snd a the maximum payload data
-  uint8_t                lastPktLength;
+  uint32_t               emptyPktLenInTicks;          //! The len of empty packet in ticks by current phy
+  uint16_t               lastValidCentralEvent;       //! The last valid central event
+  uint16_t               lastAdjustmentUpdateEvent;   //! The last valid central event
+  uint8_t                lastPktLength;               //! The length of the last packet received
   uint8_t                rssiCentral;                 //! Last Rssi value Central
   uint8_t                rssiPeripheral;              //! Last Rssi value Peripheral
   uint8_t                rxEntryNum;                  //! The number of the current packets recived in the RX window
-  uint8_t                isCentralPktValid;
   uint8_t                adjustEvtNum;                //! The number of events left to create adjusment to the connection
-  uint8_t                adjusted;                    //! Flag that indicates that that the connection adjusted
   uint8_t                syncAttemptsLeft;            //! The number of attempts left trying to find the first packet before stopping the session,
-                                                      //! once synced this varibale is not relevant.
-  cmConnectionMaskRole_e connRoleMask;                //! Mask of the connection role to report.
+  // Flags
+  uint8_t                isCentralPktValid:1;         //! Flag that indicates if the central packet is valid
+  uint8_t                isPeripheralPktValid:1;      //! Flag that indicates if the peripheral packet is valid
+  uint8_t                firstAdjustmentPkt:1;        //! Flag that indicates if the first packet after an adjustment
+  uint8_t                startEvtSent:1;              //! Flag that indicates if the start event was sent to the registered callback
+  uint8_t                addedOverheadFlag:1;         //! Flag that indicates if the overhead was added to the connection RX window.
+  uint8_t                pad:2;                       //! Padding, reserved for future use.
+  // End of flags
+  llCmState_e            state;                       //! The current state of the connection monitor @ref llCmState_e
   llConnState_t          *pllConn;
 } llCmConnState_t;
 
@@ -149,6 +181,7 @@ typedef struct
 typedef struct
 {
   uint8_t         numCmConns;            //! Number of connected connection monitors
+  cmReportEvt_t   currentCmReport;       //! The current connection monitor report
   llCmConnState_t *llCmConnection;       //! Array of connections
 } llCmConns_t;
 
@@ -188,7 +221,7 @@ cmErrorCodes_e LL_CMS_RegisterCBs( const cmsCBs_t *pCBs );
 
  * @return      The connection data size
  */
-uint16_t LL_CMS_GetConnDataSize( void );
+uint8_t LL_CMS_GetConnDataSize( void );
 
 /*******************************************************************************
  * @fn         LL_CMS_GetConnData
@@ -200,6 +233,9 @@ uint16_t LL_CMS_GetConnDataSize( void );
  *
  * @return     CM_SUCCESS, CM_INCORRECT_MODE, CM_INVALID_PARAMS,
  *             CM_NOT_CONNECTED, CM_FAILURE @ref cmErrorCodes_e
+ *
+ * @output     The params values and buffer in @ref cmsConnDataParams_t will be filled
+ *             if the command succeed.
  */
 cmErrorCodes_e LL_CMS_GetConnData( uint16_t connHandle, cmsConnDataParams_t *pParams );
 
@@ -220,14 +256,26 @@ cmErrorCodes_e LL_CMS_GetConnData( uint16_t connHandle, cmsConnDataParams_t *pPa
 cmErrorCodes_e LL_CM_RegisterCBs( const cmCBs_t *pCBs );
 
 /*******************************************************************************
- * @fn         LL_CM_StartMonitor
+ * @fn        LL_CM_StartMonitor
  *
- * @brief      Starts the connection monitoring process.
+ * @brief     Starts the connection monitoring process with the connection data given.
  *
- * @param      pParams - Pointer to the monitor parameters
+ * @param     pParams - Pointer to the monitor parameters
  *
- * @return     CM_SUCCESS, CM_INCORRECT_MODE, CM_INVALID_PARAMS,
- *             CM_CONNECTION_LIMIT_EXCEEDED @ref cmErrorCodes_e
+ * @return    CM_SUCCESS, CM_NOT_CONNECTED, CM_ALREADY_REQUESTED,
+ *            CM_INVALID_PARAMS, CM_NO_RESOURCE,
+ *            CM_CONNECTION_LIMIT_EXCEEDED, CM_UNSUPPORTED @ref cmErrorCodes_e
+ *
+ * @output    This function will send a @ref CM_TRACKING_START_EVT event to the registered
+ *            callback @ref pfnCmConnStatusEvtCB in case of a success monitoring start, otherwise it will send a
+ *            @ref CM_TRACKING_STOP_EVT event after the end of the trying to sync up to
+ *            maxSyncAttempts in the @ref cmStartMonitorParams_t.
+ *
+ * @note      If the return code is CM_SUCCESS if there any running advertise, it will be disabled,
+ *            and an event of @ref GAP_EVT_ADV_END_AFTER_DISABLE
+ *
+ * @note      After a success monitoring start, the application should expect
+ *            @ref cmReportEvt_t event with the RSSI by calling @ref pfnCmReportEvtCB.
  */
 cmErrorCodes_e LL_CM_StartMonitor( cmStartMonitorParams_t *pParams );
 
@@ -370,7 +418,7 @@ void llCmsConnUpdateInd( llConnState_t *connPtr, uint8_t updateType );
  *
  * @return      CM_SUCCESS, CM_INVALID_PARAMS @ref cmErrorCodes_e
  */
-cmErrorCodes_e llCmDisableCurAdv( void );
+uint8_t llCmDisableCurAdv( void );
 
 /*******************************************************************************
  * @fn          llCmRxEntryDoneEventHandler
@@ -395,5 +443,18 @@ void llCmRxEntryDoneEventHandler(RCL_Buffer_DataEntry *pDataEntry );
  * @return      None
  */
 void llCm_TaskEnd( void );
+
+/*******************************************************************************
+ * @fn          llCmSwitchToAdjustmentIfNeeded
+ *
+ * @brief       This function checks if the connection needs an adjustment, and it
+ *              updates the state if needed or forced.
+ *
+ * @param       connPtr - Pointer to the current connection.
+ * @param       force   - Force the adjustment even if not needed.
+ *
+ * @return      true if adjustment is needed, false otherwise.
+ */
+bool llCmCheckIfAdjustmentNeeded( llConnState_t *connPtr, bool force );
 
 #endif /* LL_CONNECTION_MONITOR_H */

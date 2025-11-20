@@ -4497,74 +4497,6 @@
         ]
     },
     {
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/key_node/README.html",
-        "resourceType": "categoryInfo",
-        "name": "key_node",
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "devices": [
-            "CC2340R5"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble"
-        ],
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "advanced": {
-            "overrideProjectSpecDeviceId": true
-        },
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R5"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R5"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2340R5_freertos_ticlang.projectspec",
-        "name": "key_node",
-        "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
-        ]
-    },
-    {
         "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/README.html",
         "resourceType": "categoryInfo",
         "name": "key_node",
@@ -4766,45 +4698,6 @@
             "key_node",
             "FreeRTOS",
             "TI Clang Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R5"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R5"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/key_node/freertos/iar/key_node_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "key_node",
-        "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "IAR Compiler"
         ]
     },
     {

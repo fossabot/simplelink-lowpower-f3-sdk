@@ -263,6 +263,8 @@ extern llStatus_t       LL_PRIV_RemoveInvalidPeerId( rlEntry_t *pResolvingListEn
 
 uint8_t                 LL_PRIV_ValidatePeerAddress(uint8_t *peerAddr,  uint8_t peerAddrType, uint8_t peerRLIndex);
 
+uint8_t                 LL_PRIV_ResolveRPAtoIdAddr( uint8_t devAddrType, uint8_t *devAddr,  uint8_t **pIdAddr );
+
 bool                    LL_PRIV_IsIDAddrAllowed( uint8 rlIndex );
 
 #ifdef QUAL_TEST

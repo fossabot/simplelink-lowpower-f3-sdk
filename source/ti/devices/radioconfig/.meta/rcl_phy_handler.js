@@ -346,11 +346,11 @@ function create(phyGroup, phyID, first) {
         }
 
         // Remove any double quotes around script dependencies that may return string values
-        scriptCode = scriptCode.replace("\"getPhyProperty()\"", "getPhyProperty()");
-        scriptCode = scriptCode.replace("\"getTestProperty()\"", "getTestProperty()");
+        scriptCode = scriptCode.replace(/\"(getPhyProperty\([^\)]+\))\"/, "$1");
+        scriptCode = scriptCode.replace(/\"(getTestProperty\([^\)]+\))\"/, "$1");
         scriptCode = scriptCode.replace("\"getTxPowerValue()\"", "getTxPowerValue()");
         scriptCode = scriptCode.replace("\"getFrontEndName()\"", "getFrontEndName()");
-        scriptCode = scriptCode.replace("\"getBoardProperty()\"", "getBoardProperty()");
+        scriptCode = scriptCode.replace(/\"(getBoardProperty\([^\)]+\))\"/, "$1");
         scriptCode = scriptCode.replace("\"getBoardRfDesignNames()\"", "getBoardRfDesignNames()");
         scriptCode = scriptCode.replace("\"getFeatureSelector()\"", "getFeatureSelector()");
         scriptCode = scriptCode.replace("\"getMultiPhyEnabledPropertyNameList()\"", "getMultiPhyEnabledPropertyNameList()");

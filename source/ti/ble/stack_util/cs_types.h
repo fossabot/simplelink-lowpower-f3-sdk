@@ -169,6 +169,13 @@
 #define    CS_ENABLE    1
 /** @} */
 
+/** @defgroup TX power and RSSI values. Relevant for CS Set Default Settings command and CS Procedure Enable Complete event
+ * @{
+ */
+#define CS_INVALID_TX_POWER           0x7F    // 127 - Invalid value
+#define CS_MIN_TX_POWER_VALUE         -127    // Minimum Tx Power in dBm
+#define CS_MAX_TX_POWER_VALUE         20      // Maximum Tx Power in dBm
+/** @} */
 
 /**
  * Extracts I and Q branches based on pct value (24 bits)
@@ -182,8 +189,10 @@
 #define CS_MAX_PERMUTATION_INDEX_4_ANT        0x17U     // Max antenna permutation index for 4 antennas
 #define CS_RANGING_MAX_PERMUTATION_INDEX      CS_MAX_PERMUTATION_INDEX_4_ANT
 
-#define CS_MAX_NUM_CONFIG_IDS                  4
+#define CS_MIN_NUM_CONFIG_IDS                  1U       // Min number of configuration IDs
+#define CS_MAX_NUM_CONFIG_IDS                  4U       // Max number of configuration IDs
 
+#define CS_MIN_ANT_PATHS                  1             // Min antenna paths
 #define CS_MAX_ANT_PATHS                  4             // Max antenna paths
 #define CS_MAX_MODE_ZERO_PER_PROCEDURE    96            // Max mode-0 steps for a single procedure that runs maximum number of subevents
 
@@ -194,20 +203,26 @@
 // Error Codes
 typedef enum csStatus_e {
     CS_STATUS_SUCCESS,
-    CS_STATUS_INACTIVE_CONNECTION   = 0x02, /* SPEC defined error code, Inactive connection */
-    CS_STATUS_INSUFFICIENT_MEMORY   = 0x07, /* SPEC defined error code, Insufficient memory */
-    CS_STATUS_COMMAND_DISALLOWED    = 0x0C, /* SPEC defined error code, command disallowed */
-    CS_STATUS_LIMITED_RESOURCES     = 0x0D, /* SPEC defined error code, limited resources */
-    CS_STATUS_UNEXPECTED_PARAMETER  = 0x12, /* SPEC defined error code, unexpected parameter */
-    CS_STATUS_FEATURE_NOT_SUPPORTED = 0x11, /* SPEC defined error code, feature not supproted */
-    CS_STATUS_INVALID_LL_PARAM      = 0x1E, /* SPEC defined error code, invalid LL parameter */
-    CS_STATUS_UNSPECIFIED_ERROR     = 0x1F, /* SPEC defined error code, unspecified */
-    CS_STATUS_INSUFFICIENT_SECURITY = 0x2F, /* SPEC defined error code, insufficient security */
-    CS_STATUS_INVALID_CONN_PTR      = 0xA0, /* Custom CS error codes */
+    CS_STATUS_INACTIVE_CONNECTION         = 0x02,       /* SPEC defined error code, Inactive connection */
+    CS_STATUS_INSUFFICIENT_MEMORY         = 0x07,       /* SPEC defined error code, Insufficient memory */
+    CS_STATUS_COMMAND_DISALLOWED          = 0x0C,       /* SPEC defined error code, command disallowed */
+    CS_STATUS_LIMITED_RESOURCES           = 0x0D,       /* SPEC defined error code, limited resources */
+    CS_STATUS_FEATURE_NOT_SUPPORTED       = 0x11,       /* SPEC defined error code, feature not supproted */
+    CS_STATUS_UNEXPECTED_PARAMETER        = 0x12,       /* SPEC defined error code, unexpected parameter */
+    CS_STATUS_PEER_TERM                   = 0x13,       /* SPEC defined error code, feature not supproted */
+    CS_STATUS_HOST_TERM                   = 0x16,       /* SPEC defined error code, host terminated the procedure */
+    CS_STATUS_UNSUPPORTED_REMOTE_FEATURE  = 0x1A,       /* SPEC defined error code, feature not supproted */
+    CS_STATUS_INVALID_LL_PARAM            = 0x1E,       /* SPEC defined error code, invalid LL parameter */
+    CS_STATUS_UNSPECIFIED_ERROR           = 0x1F,       /* SPEC defined error code, unspecified */
+    CS_STATUS_UNSUPPORTED_PARAM_VAL       = 0x20,       /* SPEC defined error code, unsupported parameter value */
+    CS_STATUS_ERROR_TRANSACTION_COLLISION = 0x23,       /* SPEC defined error code, collision */
+    CS_STATUS_INSTANT_PASSED              = 0x28,       /* SPEC defined error code, instant passed */
+    CS_STATUS_INSUFFICIENT_SECURITY       = 0x2F,       /* SPEC defined error code, insufficient security */
+    CS_STATUS_INVALID_CHM                 = 0x48,       /* SPEC defined error code, insufficient channels*/
+    CS_STATUS_INVALID_CONN_PTR            = 0xA0,       /* Custom CS error codes */
     CS_STATUS_INVALID_BUFFER,
     CS_STATUS_CONNECTION_TERMINATED,
     CS_STATUS_INVALID_PKT_LEN,
-    CS_STATUS_INVALID_CHM,
     CS_STATUS_INVALID_CONFIG_ID,
     CS_STATUS_PROCEDURE_IN_PROGRESS,
     CS_STATUS_UNKNOWN_CTRL_PKT,
@@ -225,7 +240,8 @@ typedef enum csStatus_e {
     CS_STATUS_CONFIG_ENABLED,
     CS_STATUS_INVALID_CHAN_IDX,
     CS_STATUS_INVALID_STEP_MODE,
-    CS_STATUS_INVOKE_FUNC_FAIL
+    CS_STATUS_INVOKE_FUNC_FAIL,
+    CS_STATUS_NO_SYNC
 } csStatus_e;
 
 typedef enum
@@ -296,8 +312,6 @@ typedef struct
   uint8_t  preferredPeerAntenna;       //!< Preferred peer Antenna
   uint8_t  snrCtrlI;                   //!< SNR Control Initiator
   uint8_t  snrCtrlR;                   //!< SNR Control Reflector
-  uint8_t  enable;                     //!< is Procedure Enabled
-  bool     status;                     //!< is Procedure Status  true if set, false otherwise
 } csProcedureParams_t;
 
 typedef struct

@@ -42,6 +42,7 @@
 #include <ti/drivers/cryptoutils/aes/AESCommonLPF3.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKey.h>
 #include <ti/drivers/cryptoutils/sharedresources/CryptoResourceLPF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
 #include <ti/devices/DeviceFamily.h>
 
@@ -1430,6 +1431,9 @@ static void AESCMACLPF3HSM_postProcessingCommon(AESCMAC_Handle handle, int_fast1
         }
     }
 
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
+
     /* In the case the HSM returns a failure code, we need to free all assets allocated. */
     if (AESCMACLPF3HSM_freeAllAssets(handle) != AESCMAC_STATUS_SUCCESS)
     {
@@ -1613,6 +1617,14 @@ static int_fast16_t AESCMACLPF3HSM_performHSMOperation(AESCMAC_Handle handle)
 
     HSMLPF3_constructCMACToken(object, isNew, isFinal);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->common.semaphoreTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return AESCMAC_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->common.returnBehavior,
                                     AESCMACLPF3HSM_performHSMOperationPostProcessing,
                                     (uintptr_t)handle);
@@ -1629,6 +1641,9 @@ static int_fast16_t AESCMACLPF3HSM_performHSMOperation(AESCMAC_Handle handle)
 
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated
          * Capturing the return status of this operation is pointless since we are returning an
          * error code anyways.
@@ -1707,6 +1722,17 @@ static int_fast16_t AESCMACLPF3HSM_createAndLoadKeyAssetID(AESCMAC_Handle handle
         status = AESCMACLPF3HSM_createKeyAsset(handle);
         if (status == AESCMAC_STATUS_SUCCESS)
         {
+            /* Due to errata SYS_211, get HSM lock to avoid AHB bus master
+             * transactions. For now, there is no protection against I2S, so
+             * I2S must not be used at the same time as the HSM.
+             */
+            if (!CommonResourceXXF3_acquireLock(object->common.semaphoreTimeout))
+            {
+                HSMLPF3_releaseLock();
+
+                return AESCMAC_STATUS_RESOURCE_UNAVAILABLE;
+            }
+
             /* Now that the driver has successfully created an asset, object->keyAssetID is now non-zero.
              * If any failure condition happens after this moment, the cleanup will expect
              * object->driverCreatedKeyAsset to be accurate, since the keyAssetID will reflect that there
@@ -1715,6 +1741,9 @@ static int_fast16_t AESCMACLPF3HSM_createAndLoadKeyAssetID(AESCMAC_Handle handle
             object->driverCreatedKeyAsset = true;
 
             status = AESCMACLPF3HSM_loadKeyAsset(handle, keyMaterial);
+
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
         }
         else
         {

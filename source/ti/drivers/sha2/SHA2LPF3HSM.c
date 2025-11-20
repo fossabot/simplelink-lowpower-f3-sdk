@@ -34,6 +34,7 @@
 #include <ti/drivers/dpl/DebugP.h>
 #include <ti/drivers/dpl/HwiP.h>
 #include <ti/drivers/cryptoutils/sharedresources/CryptoResourceLPF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 
 #if (ENABLE_KEY_STORAGE == 1)
     #include <ti/drivers/cryptoutils/cryptokey/CryptoKeyKeyStore_PSA.h>
@@ -233,6 +234,9 @@ static int_fast16_t SHA2LPF3HSM_computeIntermediateHash(SHA2_Handle handle)
         }
         else
         {
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
+
             /* If there's an error waiting for the result, abort any post-processing and be sure to
              * release locks here. This can only happen in polling mode, so do not call the user's
              * callback.
@@ -248,6 +252,9 @@ static int_fast16_t SHA2LPF3HSM_computeIntermediateHash(SHA2_Handle handle)
         object->bytesProcessed  = 0;
         SHA2_data               = NULL;
         SHA2_dataBytesRemaining = 0;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* The post-process function will not execute, so this execution path must
          * release the lock and power constraint itself
@@ -518,6 +525,17 @@ static int_fast16_t SHA2LPF3HSM_addData(SHA2_Handle handle, const void *data, si
          */
         addDataTransactionLength = transactionLength;
 
+        /* Due to errata SYS_211, get HSM lock to avoid AHB bus master
+         * transactions. For now, there is no protection against I2S, so
+         * I2S must not be used at the same time as the HSM.
+         */
+        if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+        {
+            HSMLPF3_releaseLock();
+
+            return SHA2_STATUS_RESOURCE_UNAVAILABLE;
+        }
+
         /* Starting the operation and setting object->operationInProgress must be atomic */
         key = HwiP_disable();
 
@@ -557,6 +575,9 @@ static int_fast16_t SHA2LPF3HSM_addData(SHA2_Handle handle, const void *data, si
 
                 object->operationInProgress = false;
 
+                /* Release the CommonResource semaphore. */
+                CommonResourceXXF3_releaseLock();
+
                 HSMLPF3_releaseLock();
             }
         }
@@ -590,6 +611,9 @@ static int_fast16_t SHA2LPF3HSM_addData(SHA2_Handle handle, const void *data, si
         object->returnStatus = SHA2_STATUS_SUCCESS;
 
         status = SHA2_STATUS_SUCCESS;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         HSMLPF3_releaseLock();
 
@@ -683,6 +707,14 @@ static int_fast16_t SHA2LPF3HSM_finalize(SHA2_Handle handle, void *digest)
         object->digestLength = SHA2_DIGEST_LENGTH_BYTES_384;
     }
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return SHA2_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     key = HwiP_disable();
 
     /* Exchange token to hash the remainder data */
@@ -708,6 +740,9 @@ static int_fast16_t SHA2LPF3HSM_finalize(SHA2_Handle handle, void *digest)
         }
         else
         {
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
+
             /* If there's an error waiting for the result, abort any post-processing and be sure to
              * release locks here. This can only happen in polling mode, so do not call the user's
              * callback.
@@ -720,6 +755,9 @@ static int_fast16_t SHA2LPF3HSM_finalize(SHA2_Handle handle, void *digest)
         HwiP_restore(key);
 
         status = SHA2_STATUS_ERROR;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* The application's callback is not called in this error case */
 
@@ -779,6 +817,14 @@ static int_fast16_t SHA2LPF3HSM_hashData(SHA2_Handle handle, const void *data, s
     /* Populates the HSMLPF3 commandToken as a hash token for a SHA2 operation. */
     HSMLPF3_constructSHA2PhysicalToken(object);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return SHA2_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     key = HwiP_disable();
 
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->returnBehavior,
@@ -803,12 +849,18 @@ static int_fast16_t SHA2LPF3HSM_hashData(SHA2_Handle handle, const void *data, s
         }
         else
         {
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
+
             HSMLPF3_releaseLock();
         }
     }
     else
     {
         HwiP_restore(key);
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         HSMLPF3_releaseLock();
     }
@@ -1034,6 +1086,9 @@ static inline void SHA2LPF3HSM_oneStepAndFinalizePostProcessing(uintptr_t arg0)
         status = SHA2_STATUS_ERROR;
     }
 
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
+
     if (SHA2LPF3HSM_freeAllAssets(handle) != SHA2_STATUS_SUCCESS)
     {
         object->returnStatus = SHA2_STATUS_ERROR;
@@ -1059,6 +1114,14 @@ static int_fast16_t SHA2LPF3HSM_processOneStepAndFinalizeOperation(SHA2_Handle h
 
     (void)HSMLPF3_constructSHA2PhysicalToken(object);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return SHA2_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     int_fast16_t hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->returnBehavior,
                                                  SHA2LPF3HSM_oneStepAndFinalizePostProcessing,
                                                  (uintptr_t)handle);
@@ -1075,6 +1138,9 @@ static int_fast16_t SHA2LPF3HSM_processOneStepAndFinalizeOperation(SHA2_Handle h
 
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         HSMLPF3_releaseLock();
     }
 
@@ -1101,6 +1167,9 @@ static void SHA2LPF3HSM_hashPostProcess(uintptr_t driverHandle)
 
         HSMLPF3_getResultDigest(object->output, object->digestLength);
     }
+
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     object->returnStatus = status;
 
@@ -1136,6 +1205,9 @@ static void SHA2LPF3HSM_finalizePostProcess(uintptr_t driverHandle)
         object->returnStatus = SHA2_STATUS_SUCCESS;
         HSMLPF3_getResultDigest(object->output, object->digestLength);
     }
+
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     /* The multi-step operation is now complete, so reset any
      * values tracking data from the operation.
@@ -1182,6 +1254,9 @@ static void SHA2LPF3HSM_addDataPostProcess(uintptr_t driverHandle)
     {
         object->returnStatus = SHA2_STATUS_ERROR;
 
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         SHA2_reset(handle);
 
         HSMLPF3_releaseLock();
@@ -1215,6 +1290,9 @@ static void SHA2LPF3HSM_addDataPostProcess(uintptr_t driverHandle)
         }
         else
         {
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
+
             if (SHA2_dataBytesRemaining > 0)
             {
                 memcpy(object->buffer, SHA2_data, SHA2_dataBytesRemaining);
@@ -1278,6 +1356,9 @@ static void SHA2LPF3HSM_intermediateHashPostProcess(uintptr_t driverHandle)
 
         status = SHA2_STATUS_SUCCESS;
     }
+
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     object->returnStatus = status;
 
@@ -1520,6 +1601,17 @@ static int_fast16_t SHA2LPF3HSM_createAndLoadKeyAssetID(SHA2_Handle handle)
 
         if (status == SHA2_STATUS_SUCCESS)
         {
+            /* Due to errata SYS_211, get HSM lock to avoid AHB bus master
+             * transactions. For now, there is no protection against I2S, so
+             * I2S must not be used at the same time as the HSM.
+             */
+            if (!CommonResourceXXF3_acquireLock(object->accessTimeout))
+            {
+                HSMLPF3_releaseLock();
+
+                return SHA2_STATUS_RESOURCE_UNAVAILABLE;
+            }
+
             /* Now that the driver has successfully created an asset, object->keyAssetID is now non-zero.
              * If any failure condition happens after this moment, the cleanup will expect
              * object->driverCreatedKeyAsset to be accurate, since the keyAssetID will reflect that there
@@ -1528,6 +1620,9 @@ static int_fast16_t SHA2LPF3HSM_createAndLoadKeyAssetID(SHA2_Handle handle)
             object->driverCreatedKeyAsset = true;
 
             status = SHA2LPF3HSM_LoadKeyAsset(handle, keyMaterial);
+
+            /* Release the CommonResource semaphore. */
+            CommonResourceXXF3_releaseLock();
         }
         else
         {

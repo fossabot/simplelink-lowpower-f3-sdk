@@ -170,6 +170,7 @@ MAIN()
   g_dev_ctx.ota_attr.manufacturer = 0xBEBE;
   g_dev_ctx.ota_attr.image_type = 0x2340;
   g_dev_ctx.ota_attr.file_version = 0x00000001;
+  g_dev_ctx.ota_attr.min_block_reque = DL_INIT_OTA_MIN_BLOCK_REQUE;
 
   /* Global ZBOSS initialization */
   ZB_INIT("on_off_switch");
@@ -249,7 +250,7 @@ MAIN()
 
     zb_osif_led_button_init();
     ZB_SCHEDULE_APP_ALARM(off_network_attention, 0, 1 * ZB_TIME_ONE_SECOND);
-    
+
     /* Call the application-specific main loop */
     my_main_loop();
   }
@@ -363,6 +364,30 @@ void start_finding_binding(zb_uint8_t param)
   zb_bdb_finding_binding_initiator(ZB_SWITCH_ENDPOINT, finding_binding_cb);
 }
 
+void set_tx_power(zb_int8_t power)
+{
+  zb_uint32_t chanlist = DEFAULT_CHANLIST;
+  for (zb_uint8_t i = 0; i < 32; i++) {
+    if (chanlist & (1U << i)) {
+      zb_bufid_t buf = zb_buf_get_out();
+      if (!buf)
+      {
+        Log_printf(LogModule_Zigbee_App, Log_WARNING, "no buffer available");
+        return;
+      }
+
+      zb_tx_power_params_t *power_params = (zb_tx_power_params_t *)zb_buf_begin(buf);
+      power_params->status = RET_OK;
+      power_params->page = 0;
+      power_params->channel = i;
+      power_params->tx_power = power;
+      power_params->cb = NULL;
+
+      zb_set_tx_power_async(buf);
+    }
+  }
+}
+
 void zboss_signal_handler(zb_uint8_t param)
 {
   zb_zdo_app_signal_hdr_t *sg_p = NULL;
@@ -378,7 +403,7 @@ void zboss_signal_handler(zb_uint8_t param)
       case ZB_ZDO_SIGNAL_SKIP_STARTUP:
 #ifndef ZB_MACSPLIT_HOST
         Log_printf(LogModule_Zigbee_App, Log_INFO, "ZB_ZDO_SIGNAL_SKIP_STARTUP: boot, not started yet");
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         zboss_start_continue();
 #endif /* ZB_MACSPLIT_HOST */
         break;
@@ -386,7 +411,7 @@ void zboss_signal_handler(zb_uint8_t param)
 #ifdef ZB_MACSPLIT_HOST
       case ZB_MACSPLIT_DEVICE_BOOT:
         Log_printf(LogModule_Zigbee_App, Log_INFO, "ZB_MACSPLIT_DEVICE_BOOT: boot, not started yet");
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         zboss_start_continue();
         break;
 #endif /* ZB_MACSPLIT_HOST */
@@ -398,7 +423,7 @@ void zboss_signal_handler(zb_uint8_t param)
           zb_bdb_reset_via_local_action(0);
           perform_factory_reset = ZB_FALSE;
         }
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
 
         buf = zb_buf_get_out();

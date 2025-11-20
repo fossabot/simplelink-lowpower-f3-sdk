@@ -51,8 +51,8 @@ your device.
     meaning if your application was already programmed, it will still be there
     after provisioning
     - Please see the "Programming the Hardware Security Module (HSM)" section
-    of the SDK docs more details on how to use CCS or Uniflash to provision the
-    HSM FW with the `*.bin` file in this directory
+    of the SDK docs for more details on how to use CCS or Uniflash to provision
+    the HSM FW with the `*.bin` file in this directory
 2. IAR
     - IAR provides similar HSM FW provisioning functionality as CCS & Uniflash
     - Please see the "Programming the Hardware Security Module (HSM)" for more
@@ -68,7 +68,7 @@ your device.
     - ROM will securely perform the HSM FW update and return functionality back
     to the app which can evaluate the result accordingly
     - Please find the example demonstrating this method in the SDK at
-    `<sdk>/examples/<nortos|rtos>/LP_EM_CC2745R10_Q1/hsm/hsmfwupdate`
+    `<sdk>/examples/<nortos|rtos>/<board>/hsm/hsmfwupdate`
     - The `hsmfwupdate` example has been pre-built for you resulting in a
     `*.out` file in this directory which you can program directly to your
     device

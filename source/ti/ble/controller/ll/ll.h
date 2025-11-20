@@ -144,6 +144,7 @@ extern "C"
 **       Per the Bluetooth Core Specification, V4.0.0, Vol. 2, Part D.
 */
 #define LL_STATUS_SUCCESS                              0x00U // Success
+#define LL_STATUS_ERROR_UNKNOWN_HCI_CMD                0x01 // Unknown HCI Command
 #define LL_STATUS_ERROR_UNKNOWN_CONN_HANDLE            0x02 // Unknown Connection Identifier
 #define LL_STATUS_ERROR_INACTIVE_CONNECTION            0x02 // Unknown Connection Identifier for now; may be needed for multiple connections
 #define LL_STATUS_ERROR_HW_FAILURE                     0x03 // Hardware Failure
@@ -189,8 +190,6 @@ extern "C"
 #define LL_STATUS_ERROR_LL_TIMEOUT_PEER                0x22 // Link Layer Response Timeout
 #define LL_STATUS_ERROR_TRANSACTION_COLLISION          0x23 // Transaction Collision
 #define LL_STATUS_ERROR_INSTANT_PASSED                 0x28 // Instant Passed
-#define LL_STATUS_ERROR_INSTANT_PASSED_HOST            0x28 // Instant Passed
-#define LL_STATUS_ERROR_INSTANT_PASSED_PEER            0x28 // Instant Passed
 #define LL_STATUS_ERROR_KEY_PAIRING_NOT_SUPPORTED      0x29 // Pairing With Unit Key Not Supported
 #define LL_STATUS_ERROR_INSUFFICIENT_SECURITY          0x2F // Insufficient Security
 #define LL_STATUS_ERROR_DIFFERENT_TRANS_COLLISION      0x2A // Different Transaction Collision
@@ -211,6 +210,7 @@ extern "C"
 #define LL_STATUS_ERROR_OP_CANCELLED_BY_HOST           0x44 // Operation Cancelled by Host
 #define LL_STATUS_ERROR_INSUFFICIENT_CHANNELS          0x48U // Number of channels is insufficient
 #define LL_STATUS_ERROR_PACKET_TOO_LONG                0x45 // Packet Too Long
+#define LL_STATUS_ERROR_PACKET_TOO_LATE                0x46 // Packet was submitted too late
 
 // Internal
 // Handover
@@ -238,9 +238,6 @@ extern "C"
 #define LL_CTRL_PKT_TIMEOUT_TERM                       LL_STATUS_ERROR_LL_TIMEOUT
 #define LL_CTRL_PKT_TIMEOUT_HOST_TERM                  LL_STATUS_ERROR_LL_TIMEOUT_HOST
 #define LL_CTRL_PKT_TIMEOUT_PEER_TERM                  LL_STATUS_ERROR_LL_TIMEOUT_PEER
-#define LL_CTRL_PKT_INSTANT_PASSED_TERM                LL_STATUS_ERROR_INSTANT_PASSED
-#define LL_CTRL_PKT_INSTANT_PASSED_HOST_TERM           LL_STATUS_ERROR_INSTANT_PASSED_HOST
-#define LL_CTRL_PKT_INSTANT_PASSED_PEER_TERM           LL_STATUS_ERROR_INSTANT_PASSED_PEER
 #define LL_UNACCEPTABLE_CONN_INTERVAL_TERM             LL_STATUS_ERROR_UNACCEPTABLE_CONN_INTERVAL
 #define LL_MIC_FAILURE_TERM                            LL_STATUS_ERROR_CONN_TERM_DUE_TO_MIC_FAILURE
 #define LL_CONN_ESTABLISHMENT_FAILED_TERM              LL_STATUS_ERROR_CONN_FAILED_TO_BE_ESTABLISHED
@@ -555,14 +552,14 @@ extern "C"
 #define LL_MAX_EXT_DATA_LEN                            254
 
 //
-#define LL_MIN_LINK_DATA_LEN                           27    // in bytes
-#define LL_MIN_LINK_DATA_TIME                          328   // in us
+#define LL_MIN_LINK_DATA_LEN                           27U   // in bytes
+#define LL_MIN_LINK_DATA_TIME                          328U   // in us
 #define LL_MIN_LINK_DATA_TIME_CODED                    2704  // in us
 
-#define LL_MAX_LINK_DATA_LEN                           251   // in bytes
+#define LL_MAX_LINK_DATA_LEN                           251U   // in bytes
 #define LL_MAX_LINK_DATA_TIME_UNCODED                  2120  // in us
 
-#define LL_MAX_LINK_DATA_TIME_CODED                    17040 // in us
+#define LL_MAX_LINK_DATA_TIME_CODED                    17040U // in us
 
 #define LL_MAX_LINK_DATA_TIME                          LL_MAX_LINK_DATA_TIME_CODED // Coded is the maximum
 
@@ -2668,161 +2665,6 @@ llStatus_t LE_SetPeriodicAdvData( uint8_t advHandle,
 llStatus_t LE_SetPeriodicAdvEnable( uint8_t enable,
                                     uint8_t advHandle );
 
-/*********************************************************************
- * @fn      LE_PeriodicAdvCreateSync
- *
- * @brief   Used a scanner to synchronize with a periodic advertising train from
- *          an advertiser and begin receiving periodic advertising packets.
- *
- * @design /ref did_286039104
- *
- * @param   options     - Clear Bit 0 - Use the advSID, advAddrType, and advAddress
- *                                      parameters to determine which advertiser to listen to.
- *                        Set Bit 0   - Use the Periodic Advertiser List to determine which
- *                                      advertiser to listen to.
- *                        Clear Bit 1 - Reporting initially enabled.
- *                        Set Bit 1   - Reporting initially disabled.
- * @param   advSID      - Advertising SID subfield in the ADI field used to identify
- *                        the Periodic Advertising (Range: 0x00 to 0x0F)
- * @param   advAddrType - Advertiser address type - 0x00 - public ; 0x01 - random
- * @param   advAddress  - Advertiser address
- * @param   skip        - The maximum number of periodic advertising events that can be
- *                        skipped after a successful receive (Range: 0x0000 to 0x01F3)
- * @param   syncTimeout - Synchronization timeout for the periodic advertising train
- *                           Range: 0x000A to 0x4000 Time = N*10 ms Time Range: 100 ms to 163.84 s
- * @param   syncCteType - Set Bit 0 - Do not sync to packets with an AoA CTE
- *                        Set Bit 1 - Do not sync to packets with an AoD CTE with 1 us slots
- *                        Set Bit 2 - Do not sync to packets with an AoD CTE with 2 us slots
- *                        Set Bit 4 - Do not sync to packets without a CTE
- *
- * @return  HCI_Success
- */
-extern llStatus_t LE_PeriodicAdvCreateSync( uint8  options,
-                                            uint8  advSID,
-                                            uint8  advAddrType,
-                                            uint8  *advAddress,
-                                            uint16 skip,
-                                            uint16 syncTimeout,
-                                            uint8  syncCteType );
-
-/*********************************************************************
- * @fn      LE_PeriodicAdvCreateSyncCancel
- *
- * @brief   Used a scanner to cancel the HCI_LE_Periodic_Advertising_Create_Sync
- *          command while it is pending.
- *
- * @design /ref did_286039104
- *
- * @param   None
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_PeriodicAdvCreateSyncCancel( void );
-
-/*********************************************************************
- * @fn      LE_PeriodicAdvTerminateSync
- *
- * @brief   Used a scanner to stop reception of the periodic advertising
- *          train identified by the syncHandle parameter.
- *
- * @design /ref did_286039104
- *
- * @param   syncHandle - Handle identifying the periodic advertising train
- *                       (Range: 0x0000 to 0x0EFF)
- *                       The handle was assigned by the Controller while generating
- *                       the LE Periodic Advertising Sync Established event
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_PeriodicAdvTerminateSync( uint16 syncHandle );
-
-/*********************************************************************
- * @fn      LE_AddDeviceToPeriodicAdvertiserList
- *
- * @brief   Used a scanner to add an entry, consisting of a single device address
- *          and SID, to the Periodic Advertiser list stored in the Controller.
- *
- * @design /ref did_286039104
- *
- * @param   advAddrType - Advertiser address type - 0x00 - Public or Public Identity Address
- *                                                  0x01 - Random or Random (static) Identity Address
- * @param   advAddress  - Advertiser address
- * @param   advSID      - Advertising SID subfield in the ADI field used to identify
- *                        the Periodic Advertising (Range: 0x00 to 0x0F)
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_AddDeviceToPeriodicAdvList( uint8 advAddrType,
-                                                 uint8 *advAddress,
-                                                 uint8 advSID );
-
-/*********************************************************************
- * @fn      LE_RemoveDeviceFromPeriodicAdvList
- *
- * @brief   Used a scanner to remove one entry from the list of Periodic Advertisers
- *          stored in the Controller.
- *
- * @design /ref did_286039104
- *
- * @param   advAddrType - Advertiser address type -
- *                        0x00 - Public or Public Identity Address
- *                        0x01 - Random or Random (static) Identity Address
- * @param   advAddress  - Advertiser address
- * @param   advSID      - Advertising SID subfield in the ADI field used to identify
- *                        the Periodic Advertising (Range: 0x00 to 0x0F)
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_RemoveDeviceFromPeriodicAdvList( uint8 advAddrType,
-                                                      uint8 *advAddress,
-                                                      uint8 advSID );
-
-/*********************************************************************
- * @fn      LE_ClearPeriodicAdvList
- *
- * @brief   Used a scanner to remove all entries from the list of Periodic
- *          Advertisers in the Controller.
- *
- * @design /ref did_286039104
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_ClearPeriodicAdvList( void );
-
-/*********************************************************************
- * @fn      LE_ReadPeriodicAdvListSize
- *
- * @brief   Used a scanner to read the total number of Periodic Advertiser
- *          list entries that can be stored in the Controller.
- *
- * @design /ref did_286039104
- *
- * @return  llStatus_t
- *          Periodic Advertiser List Size (Range: 0x01 to 0xFF)
- */
-extern llStatus_t LE_ReadPeriodicAdvListSize( uint8 *listSize );
-
-/*********************************************************************
- * @fn      LE_SetPeriodicAdvReceiveEnable
- *
- * @brief   Used a scanner to enable or disable reports for the periodic
- *          advertising train identified by the syncHandle parameter.
- *
- * @design /ref did_286039104
- *
- * @param   syncHandle - Handle identifying the periodic advertising train
- *                       (Range: 0x0000 to 0x0EFF)
- *                       The handle was assigned by the Controller while generating
- *                       the LE Periodic Advertising Sync Established event
- * @param   enable     - 0x00 - Reporting disable
- *                       0x01 - Reporting enable
- *
- * @return  llStatus_t
- */
-extern llStatus_t LE_SetPeriodicAdvReceiveEnable( uint16 syncHandle,
-                                                  uint8  enable );
-
-
 /*
 ** Vendor Specific Command API
 */
@@ -3986,6 +3828,8 @@ void LL_ConnectionCompleteCback( uint8 reasonCode, uint16 connHandle,
  * @param       connTimeout   - The connection's Supervision Timeout.
  * @param       clockAccuracy - The sleep clock accurracy of the Central. Only
  *                              valid on the Central. Set to 0x00 for the Central.
+ * @param       advHandle     - value of the advHandle the connection was estalblished on
+ * @param       syncHandle    - value of the sync handle the connection was estalblished on
  *
  * output parameters
  *
@@ -3999,7 +3843,9 @@ void LL_EnhancedConnectionCompleteCback( uint8 reasonCode, uint16 connHandle,
                                          uint8 *peerRPA, uint16 connInterval,
                                          uint16 peripheralLatency,
                                          uint16 connTimeout,
-                                         uint8 clockAccuracy );
+                                         uint8  clockAccuracy,
+                                         uint8  advHandle,
+                                         uint16 syncHandle);
 
 /*******************************************************************************
  * @fn          LL_DisconnectCback Callback
@@ -4711,79 +4557,99 @@ extern llStatus_t LL_SetSecAdvChanMap( uint8 *chanMap );
 uint8_t LL_validateChannelMap( uint8_t* chanMap );
 
 /*********************************************************************
- * @fn      HCI_PeriodicAdvSyncEstablishedEvent
+ * @fn      HCI_PeriodicAdvSyncEstablishedEventV1
  *
  * @brief   This event indicates the scanner that the Controller has received
  *          the first periodic advertising packet from an advertiser after the
  *          HCI_LE_Periodic_Advertising_Create_Sync command has been sent to the Controller.
+ *          V1 indicated that the platform doesn't support PAwR.
  *
  * @design  /ref did_286039104
  *
  * input parameters
  *
- * @param   status           - Periodic advertising sync HCI status
- * @param   syncHandle       - Handle identifying the periodic advertising train assigned by the Controller
- *                             (Range: 0x0000 to 0x0EFF)
- * @param   advSid           - Value of the Advertising SID subfield in the ADI field of the PDU
- * @param   advAddrType      - Advertiser address type
- *                             0x00 - Public
- *                             0x01 - Random
- *                             0x02 - Public Identity Address
- *                             0x03 - Random Identity Address
- * @param   advAddress       - Advertiser address
- * @param   advPhy           - Advertiser PHY
- *                             0x01 - LE 1M
- *                             0x02 - LE 2M
- *                             0x03 - LE Coded
- * @param   periodicAdvInt   - Periodic advertising interval Range: 0x0006 to 0xFFFF
- *                             Time = N * 1.25 ms (Time Range: 7.5 ms to 81.91875 s)
- * @param   advClockAccuracy - Accuracy of the periodic advertiser's clock
- *                             0x00 - 500 ppm
- *                             0x01 - 250 ppm
- *                             0x02 - 150 ppm
- *                             0x03 - 100 ppm
- *                             0x04 - 75 ppm
- *                             0x05 - 50 ppm
- *                             0x06 - 30 ppm
- *                             0x07 - 20 ppm
+ * @param   status                - Periodic advertising sync HCI status
+ * @param   llPadvSEstEventParams - Pointer to the periodic advertising sync established event parameters
+ *
+ * output parameters
+ *
+ * @param   None
  *
  * @return  void
  */
-void HCI_PeriodicAdvSyncEstablishedEvent( uint8 status, uint16 syncHandle,
-                                          uint8 advSid, uint8 advAddrType,
-                                          uint8 *advAddress, uint8 advPhy,
-                                          uint16 periodicAdvInt,
-                                          uint8 advClockAccuracy );
+void HCI_PadvSyncEstabEventV1( uint8 status, uint8_t* llPadvSEstEventParams);
 
 /*********************************************************************
- * @fn      HCI_PeriodicAdvReportEvent
+ * @fn      HCI_PeriodicAdvSyncEstablishedEventV2
+ *
+ * @brief   This event indicates the scanner that the Controller has received
+ *          the first periodic advertising packet from an advertiser after the
+ *          HCI_LE_Periodic_Advertising_Create_Sync command has been sent to the Controller.
+ *          V2 indicates that that platform supports PAwR.
+ *
+ * output parameters
+ *
+ * @param   status                - Periodic advertising sync HCI status
+ * @param   llPadvSEstEventParams - Pointer to the periodic advertising sync established event parameters
+ *
+ * input parameters
+ *
+ * @param   None
+ *
+ * @return  void
+ */
+void HCI_PadvSyncEstabEventV2( uint8 status, uint8_t* llPadvSEstEventParams);
+
+/*********************************************************************
+ * @fn      HCI_PeriodicAdvReportEventV2
  *
  * @brief   This event indicates the scanner that the Controller has
  *          received a Periodic Advertising packet.
  *
  * @design  /ref did_286039104
  *
- * @param   syncHandle - Handle identifying the periodic advertising train
- * @param   txPower    - Tx Power information (Range: -127 to +20)
- * @param   rssi       - RSSI value for the received packet (Range: -127 to +20)
- *                       If the packet contains CTE, this value is not available
- * @param   cteType    - Constant Tone Extension type
- *                       0x00 - AoA Constant Tone Extension
- *                       0x01 - AoD Constant Tone Extension with 1us slots
- *                       0x02 - AoD Constant Tone Extension with 2us slots
- *                       0xFF - No Constant Tone Extension
+ * @output  parameters
+ *
+ * @param   periodicEvtParams - Pointer to the periodic advertising event parameters
  * @param   dataStatus - Data status
  *                       0x00 - Data complete
  *                       0x01 - Data incomplete, more data to come
  *                       0x02 - Data incomplete, data truncated, no more to come
- * @param   dataLen    - Length of the Data field (Range: 0 to 247)
- * @param   data       - Data received from a Periodic Advertising packet
+ *                       0xFF - Subevent Has not received.
+ * @param   dataLen           - Length of the Data field (Range: 0 to 247)
+ * @param   data              - Data received from a Periodic Advertising packet
+ *
+ * @input   parameters
+ *
+ * @param   None
  *
  * @return  void
  */
-void HCI_PeriodicAdvReportEvent( uint16 syncHandle, int8 txPower, int8 rssi,
-                                 uint8 cteType, uint8 dataStatus, uint8 dataLen,
-                                 uint8 *data );
+void HCI_PeriodicAdvReportEventV2( uint8_t* periodicEvtParams, uint8_t dataStatus, uint8 dataLen, uint8 *data );
+
+/*********************************************************************
+ * @fn      HCI_PeriodicAdvReportEventV1
+ *
+ * @brief   This event indicates the scanner that the Controller has
+ *          received a Periodic Advertising packet. (Platform doesn't support PAwR)
+ *
+ * @design  /ref did_286039104
+ *
+ * @param   periodicEvtParams - Pointer to the periodic advertising event parameters
+ * @param   dataStatus - Data status
+ *                       0x00 - Data complete
+ *                       0x01 - Data incomplete, more data to come
+ *                       0x02 - Data incomplete, data truncated, no more to come
+ *
+ * @param   dataLen           - Length of the Data field (Range: 0 to 247)
+ * @param   data              - Data received from a Periodic Advertising packet
+ *
+ * @return  void
+ */
+void HCI_PeriodicAdvReportEventV1( uint8_t* periodicEvtParams,
+                                   uint8_t  dataStatus,
+                                   uint8_t  dataLen,
+                                   uint8_t* data );
 
 /*********************************************************************
  * @fn      HCI_PeriodicAdvSyncLostEvent
@@ -4892,6 +4758,60 @@ extern void HCI_ExtConnectionlessIqReportEvent(uint16 syncHandle,
 llStatus_t LL_CheckFeatureSup( uint8_t *pFeatureSet,
                                uint8_t  featureByteLocation,
                                uint8_t  featureBitMask );
+
+/*******************************************************************************
+ * @fn          HCI_PASTReceivedEventV1
+ *
+ * @brief       Periodic advertising sync transfer received event is used by the
+ *              controller to report that it has received periodic advertising
+ *              synchronization information from the device referred to by the
+ *              connHandle parameter and either successfully synchronized to the
+ *              periodic advertising train or timed out while attempting to sync
+ *              V1 indicates that the platform does not support PAwR.
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       pPASTReceivedInfo - Pointer to hold the periodic adv
+ *                                  sync transfer received event
+ * @param       status            - Status of the periodic adv sync
+ *                                  transfer received event
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void HCI_PASTReceivedEventV1( uint8_t status, uint8_t* pPASTReceivedInfo );
+
+ /*******************************************************************************
+ * @fn          HCI_PASTReceivedEventV2
+ *
+ * @brief       Periodic advertising sync transfer received event is used by the
+ *              controller to report that it has received periodic advertising
+ *              synchronization information from the device referred to by the
+ *              connHandle parameter and either successfully synchronized to the
+ *              periodic advertising train or timed out while attempting to sync
+ *              V2 indicates that the platform supports PAwR.
+ *
+ * @Design      BLE_LOKI-2753
+ *
+ * input parameters
+ *
+ * @param       pPASTReceivedInfo - Pointer to hold the periodic adv
+ *                                  sync transfer received event
+ * @param       status            - Status of the periodic adv sync
+ *                                  transfer received event
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void HCI_PASTReceivedEventV2( uint8_t status, uint8_t* pPASTReceivedInfo );
 
 #ifdef __cplusplus
 }

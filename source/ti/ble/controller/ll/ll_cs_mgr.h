@@ -75,6 +75,8 @@
  
  
  *****************************************************************************/
+#ifndef LL_CS_MGR_H
+#define LL_CS_MGR_H
 
 /*******************************************************************************
  * INCLUDES
@@ -190,6 +192,32 @@ csStatus_e LL_CS_ReadLocalSupportedCapabilites(llCsCapabilities_t* pLocalCapabil
 csStatus_e LL_CS_ReadRemoteSupportedCapabilities(uint16 connId);
 
 /*******************************************************************************
+ * @fn          LL_CS_WriteCachedRemoteSupportedCapabilities
+ *
+ * @brief       Write a cached CS capabilities supported by the remote Controller.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Handle
+ * @param       pRemoteCapabilities - Pointer to remote capabilities to be set
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      CS_STATUS_UNEXPECTED_PARAMETER - pRemoteCapabilities is NULL
+ *              CS_STATUS_PROCEDURE_IN_PROGRESS - Currently in a middle of a procedure
+ *              CS_STATUS_ERROR_COMMAND_DISALLOWED - If LL_CS_CAPABILITIES_REQ or
+ *                            LL_CS_CAPABILITIES_RSP PDU has been received from the
+ *                            remote Controller, or if a CS configuration has already
+ *                            been created.
+ *
+ *              CS_STATUS_ERROR_INACTIVE_CONNECTION - if the connection handle is inactive
+ *              CS_STATUS_SUCCESS - if successfully written
+ */
+csStatus_e LL_CS_WriteCachedRemoteSupportedCapabilities(uint16 connId, llCsCapabilities_t* pRemoteCapabilities);
+
+/*******************************************************************************
  * @fn          LL_CS_SetDefaultSettings
  *
  * @brief       Set default CS settings in the local Controller.
@@ -275,18 +303,18 @@ csStatus_e LL_CS_ReadLocalFAETable(csFaeTbl_t* pFaeTable);
 csStatus_e LL_CS_ReadRemoteFAETable(uint16 connId);
 
 /*******************************************************************************
- * @fn          LL_CS_WriteRemoteFAETable
+ * @fn          LL_CS_WriteCachedRemoteFAETable
  *
  * @brief       Write the per-channel Mode 0 FAE table of the remote controller
- * The remote controller in a reflector role (if previously known
- * by the host) The API sets the provided FAE table in the CS Database
+ *              The remote controller (if previously known by the host).
+ *              The API sets the provided FAE table in the CS Database
  *
  * @design      BLE_LOKI-506
  *
  * input parameters
  *
  * @param       connId - connection Handle
- * @param       pFaeTbl - Pointer to reflector table
+ * @param       pFaeTbl - Pointer to remote FAE table
  *
  * output parameters
  *
@@ -301,7 +329,7 @@ csStatus_e LL_CS_ReadRemoteFAETable(uint16 connId);
  *                                                    supported by the host
  *              LL_STATUS_SUCCESS when command is successful
  */
-csStatus_e LL_CS_WriteRemoteFAETable(uint16 connId, int8* pFaeTbl);
+csStatus_e LL_CS_WriteCachedRemoteFAETable(uint16 connId, int8* pFaeTbl);
 
 /*******************************************************************************
  * @fn          LL_CS_CreateConfig
@@ -399,7 +427,7 @@ csStatus_e LL_CS_RemoveConfig(uint16 connId, uint8 configId);
  *              LL_STATUS_ERROR_FEATURE_NOT_SUPPORTED if CS is not supported
  *              LL_STATUS_SUCCESS when command is successful
  */
-csStatus_e LL_CS_SetChannelClassification(uint8* pChannelClassification);
+csStatus_e LL_CS_SetChannelClassification(uint8_t* pChannelClassification);
 
 /*******************************************************************************
  * @fn          LL_CS_GetRole
@@ -489,6 +517,24 @@ csStatus_e LL_CS_SetProcedureParameters(uint16 connId, uint8 configId,
 csStatus_e LL_CS_ProcedureEnable(uint16 connId, uint8 configId, uint8 enable);
 
 /*******************************************************************************
+ * @fn          LL_CS_isCsInProgress
+ *
+ * @brief       Determine if the CS control procedure or CS procedure is in progress.
+ *
+ * input parameters
+ *
+ * @param       connId - connection handle
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      TRUE in case SC CTRL or CS procedure in progress.
+ *              FALSE otherwise.
+ */
+bool LL_CS_isCsInProgress(uint16 connId);
+
+/*******************************************************************************
  * @fn          LL_CS_Test
  *
  * @brief       Start a CS Test
@@ -533,3 +579,4 @@ csStatus_e LL_CS_TestEnd(void);
 
 /*******************************************************************************
  */
+#endif // LL_CS_MGR_H

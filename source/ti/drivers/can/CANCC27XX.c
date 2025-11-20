@@ -73,17 +73,29 @@ static HwiP_Struct canHwi;
  * to fine tune the size of the Rx ring buffer when the CAN bus is under maximum
  * load.
  */
-static uint32_t rxRingBufFullCnt = 0U;
+static volatile uint32_t rxRingBufFullCnt = 0U;
+
+/* Tracks the maximum usage of the Rx ring buffer to allow tuning of the Rx ring
+ * buffer size when the CAN bus is under maximum load and CPU utilization is
+ * high.
+ */
+static volatile int32_t rxRingBufMaxCnt = 0U;
+
+/* Tracks the maximum fill level of the Rx FIFOs to allow tuning of the Rx FIFO
+ * size when the CAN bus is under maximum load and CPU utilization is high.
+ * This array is indexed by the Rx FIFO number.
+ */
+static volatile uint8_t rxFifoMaxFillLevel[2U] = {0U, 0U};
 
 static MCAN_TxBufElement txElem;
 static MCAN_RxBufElement rxElem;
 
 /* Default device-specific message RAM configuration:
- *  - Each standard filter element occupies 4-bytes.
- *  - Each extended filter element occupies 8-bytes.
- *  - Each Rx/Tx buffer occupies 72-bytes when CAN FD is enabled or 16-bytes
+ *  - Each standard filter element occupies 4 bytes.
+ *  - Each extended filter element occupies 8 bytes.
+ *  - Each Rx/Tx buffer occupies 72 bytes when CAN FD is enabled or 16 bytes
  *    for classic CAN.
- *  - Each Tx Event occupies 8-bytes.
+ *  - Each Tx Event occupies 8 bytes.
  */
 const CAN_MsgRamConfig CANCC27XX_defaultMsgRamConfig = {
     .stdFilterNum       = 0U,
@@ -100,8 +112,13 @@ const CAN_MsgRamConfig CANCC27XX_defaultMsgRamConfig = {
     .txEventFifoNum = 8U,
 };
 
+/* Externs */
+extern int_fast16_t CANCC27XXXX_init(const CAN_Config *config);
+extern void CANCC27XXXX_close(CAN_Handle handle);
+
 /* Forward declarations */
-static void CANCC27XX_hwiFxn(uintptr_t arg);
+void CANCC27XX_hwiFxn(uintptr_t arg);
+void CANCC27XX_irqHandler(void *arg);
 static bool CANCC27XX_isRxStructRingBufFull(CAN_Handle handle);
 static void CANCC27XX_handleRxFifo(CAN_Handle handle, uint32_t fifoNum);
 static void CANCC27XX_handleRxBuf(CAN_Handle handle);
@@ -120,21 +137,6 @@ static void CANCC27XX_enableLoopback(bool externalModeEnable);
 uint32_t MCAN_getMRAMOffset(void)
 {
     return CANFD_SRAM_BASE;
-}
-
-/*
- *  ======== MCAN_writeReg ========
- */
-void MCAN_writeReg(uint32_t offset, uint32_t value)
-{
-    uint32_t addr = offset;
-
-    if (addr < CANFD_SRAM_BASE)
-    {
-        addr += CANFD_BASE;
-    }
-
-    HWREG(addr) = value;
 }
 
 /*
@@ -169,9 +171,9 @@ void MCAN_readMsgRam(uint8_t *dst, uint32_t offset, size_t numBytes)
 }
 
 /*
- *  ======== CANCC27XX_hwiFxn ========
+ *  ======== CANCC27XX_irqHandler ========
  */
-static void CANCC27XX_hwiFxn(uintptr_t arg)
+void CANCC27XX_irqHandler(void *arg)
 {
     CAN_Handle handle  = (CAN_Handle)arg;
     CAN_Object *object = (CAN_Object *)handle->object;
@@ -190,12 +192,17 @@ static void CANCC27XX_hwiFxn(uintptr_t arg)
     /* Check MCAN interrupt line 0 event status */
     if ((canIntStatus & CAN_INT_INTL0) != 0U)
     {
-        CANClearInt(CAN_INT_LINE0, CAN_INT_INTL0);
-
         /* Get the masked MCAN interrupt status */
         intStatus = MCAN_getIntStatus() & object->intMask;
 
         MCAN_clearIntStatus(intStatus);
+
+        CANClearInt(CAN_INT_LINE0, CAN_INT_INTL0);
+
+        /* Clear the NVIC pending interrupt to avoid a spurious interrupt when
+         * the IRQ handling is deferred to a task.
+         */
+        HwiP_clearInterrupt(INT_CAN_IRQ);
 
         if ((intStatus & MCAN_INT_SRC_BUS_OFF_STATUS) != 0U)
         {
@@ -318,6 +325,12 @@ static void CANCC27XX_hwiFxn(uintptr_t arg)
 
             rxCnt = StructRingBuf_getCount(&object->rxStructRingBuf);
 
+            /* Update the maximum usage of the Rx ring buffer */
+            if (rxCnt > rxRingBufMaxCnt)
+            {
+                rxRingBufMaxCnt = rxCnt;
+            }
+
             if (rxCnt > 0)
             {
                 /* Call the event callback function provided by the application */
@@ -327,12 +340,18 @@ static void CANCC27XX_hwiFxn(uintptr_t arg)
 
         if ((intStatus & MCAN_INT_SRC_RX_FIFO0_MSG_LOST) != 0U)
         {
+            /* Try to read messages from Rx FIFO 0 to free buffers to avoid losing additional messages */
+            CANCC27XX_handleRxFifo(handle, MCAN_RX_FIFO_NUM_0);
+
             /* Call the event callback function provided by the application */
             object->eventCbk(handle, CAN_EVENT_RX_FIFO_MSG_LOST, 0U, object->userArg);
         }
 
         if ((intStatus & MCAN_INT_SRC_RX_FIFO1_MSG_LOST) != 0U)
         {
+            /* Try to read messages from Rx FIFO 1 to free buffers to avoid losing additional messages */
+            CANCC27XX_handleRxFifo(handle, MCAN_RX_FIFO_NUM_1);
+
             /* Call the event callback function provided by the application */
             object->eventCbk(handle, CAN_EVENT_RX_FIFO_MSG_LOST, 1U, object->userArg);
         }
@@ -373,9 +392,27 @@ static void CANCC27XX_handleRxFifo(CAN_Handle handle, uint32_t fifoNum)
 
     MCAN_getRxFifoStatus(fifoNum, &fifoStatus);
 
-    if ((fifoStatus.fillLvl > 0U) && !CANCC27XX_isRxStructRingBufFull(handle))
+    if (fifoStatus.fillLvl == 0U)
     {
-        MCAN_readRxMsg(MCAN_MEM_TYPE_FIFO, fifoNum, &rxElem);
+        /* If a new message is received between the time MCAN_IR is cleared and
+         * the Rx FIFO status is read, the New Message flag will be set but
+         * there may be no message available.
+         */
+        return;
+    }
+
+    /* Track the maximum fill level of the Rx FIFOs to allow tuning of the Rx FIFO
+     * size when the CAN bus is under maximum load.
+     */
+    if (fifoStatus.fillLvl > rxFifoMaxFillLevel[fifoNum])
+    {
+        rxFifoMaxFillLevel[fifoNum] = (uint8_t)fifoStatus.fillLvl;
+    }
+
+    if (!CANCC27XX_isRxStructRingBufFull(handle))
+    {
+        MCAN_readRxFifo(fifoNum, fifoStatus.getIdx, &rxElem);
+
         /* Return value can be ignored since ring buffer is not full */
         (void)StructRingBuf_put(&object->rxStructRingBuf, &rxElem);
 
@@ -383,11 +420,6 @@ static void CANCC27XX_handleRxFifo(CAN_Handle handle, uint32_t fifoNum)
 
         while ((fifoStatus.fillLvl > 0U) && !CANCC27XX_isRxStructRingBufFull(handle))
         {
-            MCAN_readRxMsg(MCAN_MEM_TYPE_FIFO, fifoNum, &rxElem);
-            /* Return value can be ignored since ring buffer is not full */
-            (void)StructRingBuf_put(&object->rxStructRingBuf, &rxElem);
-
-            fifoStatus.fillLvl--;
             fifoStatus.getIdx++;
 
             /* Check for rollover */
@@ -395,11 +427,20 @@ static void CANCC27XX_handleRxFifo(CAN_Handle handle, uint32_t fifoNum)
             {
                 fifoStatus.getIdx = 0U;
             }
-        }
-    }
 
-    /* Return value can be ignored since the inputs are known to be valid */
-    (void)MCAN_setRxFifoAck(fifoNum, fifoStatus.getIdx);
+            MCAN_readRxFifo(fifoNum, fifoStatus.getIdx, &rxElem);
+
+            /* Return value can be ignored since ring buffer is not full */
+            (void)StructRingBuf_put(&object->rxStructRingBuf, &rxElem);
+
+            fifoStatus.fillLvl--;
+        }
+
+        /* ACK the sequence of messages read above. Return value can be ignored
+         * since the inputs are known to be valid.
+         */
+        (void)MCAN_setRxFifoAck(fifoNum, fifoStatus.getIdx);
+    }
 }
 
 /*
@@ -762,6 +803,14 @@ int_fast16_t CAN_initDevice(uint_least8_t index, CAN_Params *params)
     HwiP_Params hwiParams;
     int_fast16_t status;
 
+    /* Device variant initialization */
+    status = CANCC27XXXX_init(config);
+
+    if (status != CAN_STATUS_SUCCESS)
+    {
+        return status;
+    }
+
     /* Try to start and take ownership of AFOSC. Only a single driver is
      * permitted to have ownership of AFOSC at a time.
      */
@@ -774,7 +823,7 @@ int_fast16_t CAN_initDevice(uint_least8_t index, CAN_Params *params)
     /* Set CAN functional clock to use AFOSC (80 MHz) */
     CKMDSelectCanClock(CKMD_CAN_CLOCK_SOURCE_CLKAF);
 
-    /* Power up and enable host clock for MCAN peripheral */
+    /* Enable clock for MCAN peripheral */
     Power_setDependency(PowerLPF3_PERIPH_MCAN);
 
     /* Wait for memory initialization to complete */
@@ -806,10 +855,14 @@ int_fast16_t CAN_initDevice(uint_least8_t index, CAN_Params *params)
     }
     else
     {
+        /* Disable clock for MCAN peripheral */
+        Power_releaseDependency(PowerLPF3_PERIPH_MCAN);
+
+        /* Stop AFOSC clock and release ownership */
         PowerLPF3_stopAFOSC();
 
-        /* Power down and disable clock for MCAN peripheral */
-        Power_releaseDependency(PowerLPF3_PERIPH_MCAN);
+        /* Device variant cleanup */
+        CANCC27XXXX_close((CAN_Handle)config);
 
         status = CAN_STATUS_ERROR;
     }
@@ -825,17 +878,24 @@ void CAN_close(CAN_Handle handle)
     CAN_Object *object         = handle->object;
     const CAN_HWAttrs *hwAttrs = handle->hwAttrs;
 
+    /* Set MCAN SW init mode to disable Rx & Tx from CAN bus */
+    MCAN_setOpMode(MCAN_OPERATION_MODE_SW_INIT);
+
     HwiP_destruct(&canHwi);
 
     GPIO_resetConfig(hwAttrs->rxPin);
     GPIO_resetConfig(hwAttrs->txPin);
 
-    PowerLPF3_stopAFOSC();
-
-    /* Power down and disable clock for MCAN peripheral */
+    /* Disable clock for MCAN peripheral */
     Power_releaseDependency(PowerLPF3_PERIPH_MCAN);
 
+    /* Stop AFOSC and release ownership */
+    PowerLPF3_stopAFOSC();
+
     Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
+
+    /* Device variant cleanup */
+    CANCC27XXXX_close(handle);
 
     object->isOpen = false;
 }

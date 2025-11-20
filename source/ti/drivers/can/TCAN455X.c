@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,11 +87,11 @@ static MCAN_RxBufElement rxElem;
 extern const TCAN455X_Config TCAN455X_config;
 
 /* Default device-specific message RAM configuration:
- *  - Each standard filter element occupies 4-bytes.
- *  - Each extended filter element occupies 8-bytes.
- *  - Each Rx/Tx buffer occupies 72-bytes when CAN FD is enabled or 16-bytes
+ *  - Each standard filter element occupies 4 bytes.
+ *  - Each extended filter element occupies 8 bytes.
+ *  - Each Rx/Tx buffer occupies 72 bytes when CAN FD is enabled or 16 bytes
  *    for classic CAN.
- *  - Each Tx Event occupies 8-bytes.
+ *  - Each Tx Event occupies 8 bytes.
  */
 const CAN_MsgRamConfig TCAN455X_defaultMsgRamConfig = {
     .stdFilterNum       = 0U,
@@ -461,33 +461,27 @@ static void TCAN455X_handleRxFifo(CAN_Handle handle, uint32_t fifoNum)
 
     MCAN_getRxFifoStatus(fifoNum, &fifoStatus);
 
-    if ((fifoStatus.fillLvl > 0U) && !TCAN455X_isRxStructRingBufFull(handle))
+    while ((fifoStatus.fillLvl > 0U) && !TCAN455X_isRxStructRingBufFull(handle))
     {
         MCAN_readRxMsg(MCAN_MEM_TYPE_FIFO, fifoNum, &rxElem);
+
+        /* ACK Rx FIFO to free the Rx element for reuse immediately.
+         * Return value can be ignored since the inputs are known to be valid.
+         */
+        (void)MCAN_setRxFifoAck(fifoNum, fifoStatus.getIdx);
+
         /* Return value can be ignored since ring buffer is not full */
         (void)StructRingBuf_put(&object->rxStructRingBuf, &rxElem);
 
         fifoStatus.fillLvl--;
+        fifoStatus.getIdx++;
 
-        while ((fifoStatus.fillLvl > 0U) && !TCAN455X_isRxStructRingBufFull(handle))
+        /* Check for rollover */
+        if (fifoStatus.getIdx >= object->rxFifoNum[fifoNum])
         {
-            MCAN_readRxMsg(MCAN_MEM_TYPE_FIFO, fifoNum, &rxElem);
-            /* Return value can be ignored since ring buffer is not full */
-            (void)StructRingBuf_put(&object->rxStructRingBuf, &rxElem);
-
-            fifoStatus.fillLvl--;
-            fifoStatus.getIdx++;
-
-            /* Check for rollover */
-            if (fifoStatus.getIdx >= object->rxFifoNum[fifoNum])
-            {
-                fifoStatus.getIdx = 0U;
-            }
+            fifoStatus.getIdx = 0U;
         }
     }
-
-    /* Return value can be ignored since the inputs are known to be valid */
-    (void)MCAN_setRxFifoAck(fifoNum, fifoStatus.getIdx);
 }
 
 /*

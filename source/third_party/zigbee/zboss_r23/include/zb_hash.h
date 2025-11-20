@@ -53,6 +53,8 @@ zb_uint32_t zb_64bit_hash(zb_uint8_t const *data);
  */
 zb_uint32_t zb_fnv_32a_uint16(zb_uint16_t v);
 
+zb_uint32_t zb_fnv_32a_ieee64(const zb_64bit_addr_t a);
+
 /*! @} */
 /*! @endcond */
 

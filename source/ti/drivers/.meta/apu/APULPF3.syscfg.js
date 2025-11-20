@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (c) 2024-2025, Texas Instruments Incorporated - http://www.ti.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ intPriority.description = "APU Interrupt Priority";
 let devSpecific = {
     moduleStatic: {
         config: [],
-        modules: Common.autoForceModules(["Board"])
+        modules: Common.autoForceModules(["Board", "DMA"])
     },
     templates: {
         boardc: "/ti/drivers/apu/APULPF3.Board.c.xdt",

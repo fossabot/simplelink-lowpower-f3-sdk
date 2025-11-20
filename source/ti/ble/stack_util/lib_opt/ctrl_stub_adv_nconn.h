@@ -83,7 +83,6 @@
 #include "ti/ble/controller/ll/ll_ble.h"
 #include "ti/ble/controller/ll/ll_ae.h"
 #include "ti/ble/controller/hci/hci.h"
-#include "ti/ble/stack_util/connection_monitor_types.h"
 
 // Function prototypes for the actual implementations
 extern void llProcessAdvAddrResolutionTimeout(void);
@@ -95,7 +94,7 @@ extern advSet_t* LL_GetAdvSet(uint8_t handle, uint8_t allocFlag);
 extern llStatus_t LL_SetSecAdvChanMap(uint8_t* chanMap);
 extern void llExtAdv_PostProcess(void);
 extern hciStatus_t hciCmdParserAdvertiser(uint8_t* pData, uint16_t cmdOpCode);
-extern hciStatus_t hciCmdParserVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode);
+extern hciStatus_t hciCmdParserExtVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode);
 extern void LL_rclAdvRxEntryDone(void);
 extern uint8_t LL_IsAdvertizeWithRandomAddress(void);
 extern void LL_UpdateAdvSCAValue(uint16_t scaInPPM);
@@ -104,13 +103,14 @@ extern uint8_t llHandoverDisableAdv(uint8_t advHandle);
 extern uint8_t llCheckAdvHealth(uint32_t* currentTime, volatile uint32_t* advTime);
 extern void* llFindNextAdvSet(void);
 extern void LL_DisableAdvSets(void);
-extern cmErrorCodes_e llCmDisableCurAdv(void);
+extern uint8_t llCmDisableCurAdv(void);
 extern uint8_t llCompareSecondaryPrimaryTasksQoSParam_adv(llConnState_t* primConnPtr);
 extern void llSelectTasksetTimeGapForAdv(uint32_t* timeGap);
 extern void llFreeTaskAdv(void);
 extern void llCalculateAdvTimeGap(uint32_t* timeGap);
 extern void hci_tl_ClearAdvSet(void);
 extern uint8_t processAdvExtraHCICmd(hciPacket_t* pMsg);
+
 
 // Wrapper functions for the feature implementations
 void OPT_llProcessAdvAddrResolutionTimeout(void);
@@ -122,7 +122,7 @@ advSet_t* OPT_LL_GetAdvSet(uint8_t handle, uint8_t allocFlag);
 llStatus_t OPT_LL_SetSecAdvChanMap(uint8_t* chanMap);
 void OPT_llExtAdv_PostProcess(void);
 hciStatus_t OPT_hciCmdParserAdvertiser(uint8_t* pData, uint16_t cmdOpCode);
-hciStatus_t OPT_hciCmdParserVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode);
+hciStatus_t OPT_hciCmdParserExtVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode);
 void OPT_LL_rclAdvRxEntryDone(void);
 uint8_t OPT_LL_IsAdvertizeWithRandomAddress(void);
 void OPT_LL_UpdateAdvSCAValue(uint16_t scaInPPM);
@@ -131,7 +131,7 @@ uint8_t OPT_llHandoverDisableAdv(uint8_t advHandle);
 uint8_t OPT_llCheckAdvHealth(uint32_t* currentTime, volatile uint32_t* advTime);
 void* OPT_llFindNextAdvSet(void);
 void OPT_LL_DisableAdvSets(void);
-cmErrorCodes_e OPT_llCmDisableCurAdv(void);
+uint8_t OPT_llCmDisableCurAdv(void);
 uint8_t OPT_llCompareSecondaryPrimaryTasksQoSParam_adv(llConnState_t* primConnPtr);
 void OPT_llSelectTasksetTimeGapForAdv(uint32_t* timeGap);
 void OPT_llFreeTaskAdv(void);

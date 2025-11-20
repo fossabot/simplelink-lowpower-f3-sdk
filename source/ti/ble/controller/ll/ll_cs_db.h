@@ -70,7 +70,8 @@
  
  
  *****************************************************************************/
-
+#ifndef LL_CS_DB_H
+#define LL_CS_DB_H
 /*******************************************************************************
  * INCLUDES
  */
@@ -136,35 +137,14 @@ uint8 llCsInitDb(void);
 void llCsDbClearCsConnData(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbInitDefaultParams
- *
- * @brief       Set Default Parameters at CS initialization
- *
- *
- * input parameters
- *
- * @param       connId - connection identifier.
- * @param       configId - Config Id
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbInitDefaultParams(uint16_t connId, uint8_t configId);
-
-/*******************************************************************************
  * @fn          llCsDbClearProcedureData
  *
  * @brief       Clear CS procedure data
- * Used when CS is initialized and when a procedure ends and is not to be
- * repeated.
+ * Used when CS procedure ends and is not to be repeated.
  *
  * input parameters
  *
  * @param       connId - Connection Id
- * @param       configId - Config Id
  *
  * output parameters
  *
@@ -172,7 +152,25 @@ void llCsDbInitDefaultParams(uint16_t connId, uint8_t configId);
  *
  * @return      None
  */
-void llCsDbClearProcedureData(uint16 connId, uint8 configId);
+void llCsDbClearProcedureData(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbClearProcedureData
+ *
+ * @brief       Clear CS channel indexes data
+ * Used when CS procedure ends and is not to be repeated.
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbClearFilteredChanIdxData(uint16 connId, uint8 configId);
 
 /*******************************************************************************
  * @fn          llCsDbFree
@@ -211,7 +209,7 @@ void llCsDbFree(void);
 void llCsDbConnFree(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbMarkProcedureCompleted
+ * @fn          llCsDbMarkCtrlProcedureCompleted
  *
  * @brief       Marks the bit of the provided cs procedure ID as completed (on)
  *
@@ -229,7 +227,7 @@ void llCsDbConnFree(uint16 connId);
  *
  * @return      None
  */
-void llCsDbMarkProcedureCompleted(uint16 connId, uint8 csProcedureId);
+void llCsDbMarkCtrlProcedureCompleted(uint16 connId, uint8 csProcedureId);
 
 /*******************************************************************************
  * @fn          llCsDbClearProcedureCompleted
@@ -268,9 +266,9 @@ void llCsDbClearProcedureCompleted(uint16 connId, uint8 csProcedureId);
  *
  * @param       None.
  *
- * @return      TRUE if the proecure is completed, FALSE otherwise.
+ * @return      true if the proecure is completed, false otherwise.
  */
-uint8 llCsDbIsProcedureCompleted(uint16 connId, uint8 procedureId);
+bool llCsDbIsProcedureCompleted(uint16 connId, uint8 procedureId);
 
 /*******************************************************************************
  * @fn          llCsDbIsProcedureCompleted
@@ -293,11 +291,9 @@ uint8 llCsDbIsProcedureCompleted(uint16 connId, uint8 procedureId);
 uint8 llCsDbGetProcedureCompleted(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbResetProcedureCompletedFlag
+ * @fn          llCsDbSetActiveCtrlProcedure
  *
- * @brief       Reset Procedure COmpleted Flag
- * This function clears the Complete Procedure flag of CS procedures that can
- * be run more than once.
+ * @brief       Set Active CS Procedure.
  *
  * @design      BLE_LOKI-506
  *
@@ -313,34 +309,10 @@ uint8 llCsDbGetProcedureCompleted(uint16 connId);
  *
  * @return      None
  */
-void llCsDbResetProcedureCompletedFlag(uint16 connId, uint8 procedureId);
+void llCsDbSetActiveCtrlProcedure(uint16 connId, uint8 procedureId);
 
 /*******************************************************************************
- * @fn          llCsDbSetActiveProcedure
- *
- * @brief       Set Active CS Procedure.
- * Ensure no other CS procedure is already active
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId - connection Handle
- * @param       procedureId - Procedure bit, use the macros defined
- *                          in CS Ctrl Procedures
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      CS_STATUS_SUCCESS is procedure is activated successfully
- *              CS_STATUS_PROCEDURE_IN_PROGRESS cannot activate this procedure
- *              since another procedure is progress
- */
-uint8 llCsDbSetActiveProcedure(uint16 connId, uint8 procedureId);
-
-/*******************************************************************************
- * @fn          llCsDbSetInActiveProcedure
+ * @fn          llCsDbSetInactiveCtrlProcedure
  *
  * @brief       Set InActive status in the Active CS Procedure.
  *
@@ -354,10 +326,10 @@ uint8 llCsDbSetActiveProcedure(uint16 connId, uint8 procedureId);
  *
  * @return      None
  */
-void llCsDbSetInActiveProcedure(uint16 connId);
+void llCsDbSetInactiveCtrlProcedure(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbGetActiveProcedure
+ * @fn          llCsDbGetActiveCtrlProcedure
  *
  * @brief       Set Active CS Procedure.
  *
@@ -371,7 +343,7 @@ void llCsDbSetInActiveProcedure(uint16 connId);
  *
  * @return      None
  */
-uint8 llCsDbGetActiveProcedure(uint16 connId);
+uint8 llCsDbGetActiveCtrlProcedure(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsDbIsCsCtrlProcedureInProgress
@@ -392,58 +364,7 @@ uint8 llCsDbGetActiveProcedure(uint16 connId);
  * @return      true if the procedure is active,
  *              false otherwise.
  */
-uint8 llCsDbIsCsCtrlProcedureInProgress(uint16 connId);
-
-/*******************************************************************************
- * @fn          llCsDbSetSecurityVectors
- *
- * @brief       Sets Security Vectors in CS Database.
- * This API is used by the CS Security Module after it generates the CS
- * Security Vectors. The security vectors come in two parts, a central and a
- * peripheral. When both parts of the vectors are available locally after the
- * security procedure is complete, the vectors are combined such
- * that:
- *     The central's part starts from: 0
- *     central part starts from: VECTOR_SIZE/2
- *
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId - connection Id
- * @param       pSecurityVectors - Pointer to Security Vectors.
- * @param       offset - the offset to save the security vectors
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbSetSecurityVectors(uint16 connId, const csSecVectors_t* pSecurityVectors,
-                              uint8 offset);
-
-/*******************************************************************************
- * @fn          llCsDbGetSecurityVectors
- *
- * @brief       Gets Security Vectors in CS Database.
- * The CS DRBG uses this API to get the security vectors and use them.
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId - connection Id
- * @param       pSecurityVectors - Pointer to Security Vectors
- *
- * output parameters
- *
- * @param       pSecurityVectors
- *
- * @return      None
- */
-void llCsDbGetSecurityVectors(uint16 connId, csSecVectors_t* pSecurityVectors);
+bool llCsDbIsCsCtrlProcedureInProgress(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsDbGetLocalCapabilities
@@ -463,7 +384,7 @@ void llCsDbGetSecurityVectors(uint16 connId, csSecVectors_t* pSecurityVectors);
  *
  * @return      None
  */
-void llCsDbGetLocalCapabilities(llCsCapabilities_t* pLocalCapabilities);
+const llCsCapabilities_t* llCsDbGetLocalCapabilities( void );
 
 /*******************************************************************************
  * @fn          llCsDbSetPeerCapabilities
@@ -497,15 +418,14 @@ void llCsDbSetPeerCapabilities(uint16 connId,
  * input parameters
  *
  * @param       connId - connection Id
- * @param       pRemoteCapabilities - pointer to remote Capabilities.
+ *
  * output parameters
  *
- * @param       pLocalCapabilities
+ * @param       None
  *
- * @return      None
+ * @return      pRemoteCapabilities - pointer to remote Capabilities.
  */
-void llCsDbGetPeerCapabilities(uint16 connId,
-                               llCsCapabilities_t* pRemoteCapabilities);
+const llCsCapabilities_t* llCsDbGetPeerCapabilities(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsDbGetLocalFaeTbl
@@ -567,7 +487,7 @@ csStatus_e llCsDbSetRemoteFaeTbl(uint16 connId, const csFaeTbl_t* pFae);
 const csFaeTbl_t* llCsDbGetRemoteFaeTbl(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbSetConfiguration
+ * @fn          llCsDbApplyConfigReqCtrlPkt
  *
  * @brief       Set CS configuration by configuration Id.
  * CS configuration memory is allocated, then the data is set.
@@ -585,7 +505,7 @@ const csFaeTbl_t* llCsDbGetRemoteFaeTbl(uint16 connId);
  * @return      Status
  *              CS_STATUS_INSUFFICIENT_MEMORY if mem alloc failed
  */
-csStatus_e llCsDbSetConfiguration(uint16 connId, const csConfigurationSet_t* pConfig);
+csStatus_e llCsDbApplyConfigReqCtrlPkt(uint16 connId, const csConfigurationSet_t* pConfig);
 
 /*******************************************************************************
  * @fn          llCsDbRemoveConfiguration
@@ -608,6 +528,43 @@ csStatus_e llCsDbSetConfiguration(uint16 connId, const csConfigurationSet_t* pCo
  * @return      None
  */
 void llCsDbRemoveConfiguration(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetpCurrentConfigRspId
+ *
+ * @brief       Get current configuration response Id
+ * This is the configuration Id that was last sent in a CS Config Request
+ *
+ * input parameters
+ *
+ * @param       connId - connection ID
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      current configuration response Id
+ */
+uint8_t llCsDbGetpCurrentConfigRspId(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetpCurrentConfigRspId
+ *
+ * @brief       Set current configuration response Id
+ * This is the configuration Id that was last sent in a CS Config Request
+ *
+ * input parameters
+ *
+ * @param       connId - connection ID
+ * @param       configId - configuration Id to set as current response Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSetpCurrentConfigRspId(uint16_t connId, uint8_t configId);
 
 /*******************************************************************************
  * @fn          llCsDbGetConfigState
@@ -684,6 +641,80 @@ uint8_t llCsDbGetConfigPeerRole(uint16 connId, uint8 configId);
 const csConfigurationSet_t* llCsDbGetConfiguration(uint16 connId, uint8 configId);
 
 /*******************************************************************************
+ * @fn          llCsDbSetChanMapIndData
+ *
+ * @brief       Sets the Channel Map Indication data received from peer device
+ *              in the CS DB.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       pNewChanMap - pointer to new channel map received from peer device
+ * @param       instanteEvt - event instant when the new channel map shall be applied
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSetChanMapIndData( uint8_t connId , csChm_t* pNewChanMap, uint16_t instanteEvt);
+
+/*******************************************************************************
+ * @fn          llCsDbApplyChanMapUpdate
+ *
+ * @brief       Applies the Channel Map update received from peer device
+ *              in the CS DB.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbApplyChanMapUpdate(uint8_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbStartUsingClassifiedPeerChanMap
+ *
+ * @brief       Start using the classified peer channel map as current channel map
+ *              This is used when a CS procedure starts, to ensure that the
+ *              classified channel map is used for the procedure.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbStartUsingClassifiedPeerChanMap(uint8_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetClassifiedPeerChannelMap
+ *
+ * @brief       Gets CS Channel Map structure by connection Id
+ *
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ *
+ * @return      const pointer to CS Channel Map structure
+ */
+const llCsChannelMapClassification_t *llCsDbGetClassifiedPeerChannelMap(uint8 connId);
+
+/*******************************************************************************
  * @fn          llCsDbGetCs
  *
  * @brief       Gets the whole CS configuration by configuration Id
@@ -702,7 +733,7 @@ const llCs_t* llCsDbGetCs(uint16 connId);
 /*******************************************************************************
  * @fn          llCsDbSetCurrentConfigId
  *
- * @brief       Set current configuration.
+ * @brief       Set current configuration id used for active procedure.
  * This is needed because there is an array of configurations
  * And when setting up we may lose the current index
  * This is used to store it
@@ -741,7 +772,7 @@ void llCsDbRemoveCurrentConfigId(uint16 connId);
 /*******************************************************************************
  * @fn          llCsDbGetCurrentConfigId
  *
- * @brief       Get current configuration.
+ * @brief       Get current configuration id used for active procedure.
  * This is needed because there is an array of configurations
  * And when setting up we may lose the current index
  * This is used to get it
@@ -760,30 +791,89 @@ void llCsDbRemoveCurrentConfigId(uint16 connId);
 uint8 llCsDbGetCurrentConfigId(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbSetProcedureParams
+ * @fn          llCsDbGetCtrlPktConfigReqId
  *
- * @brief       Sets CS Procedure Parameters by configuration Id
+ * @brief       Get the configId for configuration request.
+ * This is required because the control procedures might run for one configId while
+ * there is an active CS procedure for another configId. They should not override each other
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      configuration config Id
+ */
+uint8 llCsDbGetCtrlPktConfigReqId(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetCtrlPktConfigReqId
+ *
+ * @brief        Set the configId for configuration request.
+ * This is required because the control procedures might run for one configId while
+ * there is an active CS procedure for another configId. They should not override each other
+ *
  *
  * @design      BLE_LOKI-506
  *
  * input parameters
  *
  * @param       connId - connection Id
- * @param       configId - CS configuration Id
- * @param       pProcParams - pointer to procedure parameters
+ * @param       configurationConfigId - CS configuration Id
  * output parameters
  *
  * @param       None
  *
  * @return      None
  */
-void llCsDbSetProcedureParams(uint16 connId, uint8 configId,
-                              const csProcedureParams_t* pProcParams);
+void llCsDbSetCtrlPktConfigReqId(uint16 connId, uint8 configurationConfigId);
 
 /*******************************************************************************
- * @fn          llCsDbGetProcedureParamStatus
+ * @fn          llCsDbCreateCandidateConfigReq
  *
- * @brief       Get Procedure Params Status
+ * @brief       Create Candidate CS configuration request control packet set.
+ *              The Set will be store in a pending state till the confirmation arrives.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       pCsConfigReq - pointer to configuration set
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Status
+ *              CS_STATUS_INSUFFICIENT_MEMORY if mem alloc failed
+ *              CS_STATUS_ERROR_TRANSACTION_COLLISION if there is already a pending config req
+ *              CS_STATUS_SUCCESS if success
+ */
+csStatus_e llCsDbCreateCandidateConfigReq( uint16_t connId, const csConfigurationSet_t *pCsConfigReq );
+
+/*******************************************************************************
+ * @fn          llCsDbRemovePendingConfigReqCtrlSet
+ *
+ * @brief       Remove CS configuration request control packet set.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Status
+ *              CS_STATUS_UNEXPECTED_PARAMETER if there is no config req to remove
+ *              CS_STATUS_SUCCESS if success
+ */
+uint8_t llCsDbRemovePendingConfigReqCtrlSet(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetConfigReqCtrlPkt
+ *
+ * @brief       Get CS configuration request control packet set.
  *
  * input parameters
  *
@@ -793,87 +883,9 @@ void llCsDbSetProcedureParams(uint16 connId, uint8 configId,
  *
  * @param       None
  *
- * @return      Success - if procedure params were previously set
- *              Failure - if procedure params were not set
+ * @return      const pointer to configuration set
  */
-bool llCsDbGetProcedureParamStatus(uint16 connId, uint8 configId);
-
-/*******************************************************************************
- * @fn          llCsDbSetProcedureParamStatus
- *
- * @brief       Set Procedure Parameters status
- *
- * input parameters
- *
- * @param       connId - connection Id
- * @param       configId - CS configuration Id
- * @param       status - procedure parameters status
- * output parameters
- *
- * @param       None
- *
- * @return      None
- */
-void llCsDbSetProcedureParamStatus(uint16 connId, uint8 configId, bool status);
-
-/*******************************************************************************
- * @fn          llCsDbGetProcedureParams
- *
- * @brief       Gets CS Procedure Parameters by configuration Id
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId - connection Id
- * @param       configId - CS configuration Id
- * @param       pProcParams - pointer to procedure parameters
- * output parameters
- *
- * @param       pProcParams
- *
- * @return      None
- */
-void llCsDbGetProcedureParams(uint16 connId, uint8 configId,
-                              csProcedureParams_t* pProcParams);
-
-/*******************************************************************************
- * @fn          llCsDbEnableProcedureParams
- *
- * @brief       Enables or disables the procedure parameter set
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId   - connection Id
- * @param       configId - CS configuration Id
- * @param       enable   - enable or disable procedure params
- * output parameters
- *
- * @param       pProcParams
- *
- * @return      None
- */
-void llCsDbEnableProcedureParams(uint16 connId, uint8 configId, uint8 enable);
-
-/*******************************************************************************
- * @fn          llCsDbIsProcedureEnabled
- *
- * @brief       Is CS procedure enabled
- *
- * input parameters
- *
- * @param       connId - connection ID
- * @param       configID - cs config ID
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-uint8 llCsDbIsProcedureEnabled(uint16 connId, uint8 configId);
+const csConfigurationSet_t* llCsDbGetConfigReqCtrlPkt(uint16_t connId);
 
 /*******************************************************************************
  * @fn          llCsDbIsCsProcedureInProgress
@@ -893,72 +905,66 @@ uint8 llCsDbIsProcedureEnabled(uint16 connId, uint8 configId);
 uint8 llCsDbIsCsProcedureInProgress(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbGetProcedureTerminateState
+ * @fn          llCsDbGetSubEventDoneStatus
  *
- * @brief       Get current terminateState.
- *
- * @design      BLE_LOKI-506
+ * @brief       Get the SubEvent Done status
  *
  * input parameters
  *
- * @param       connId   - connection Id
+ * @param       connId - connection ID
  *
  * output parameters
  *
- * @param       None
+ * @param       None.
  *
- * @return      terminateState
+ * @return      SubEvent Done status
  */
-csTerminateState_e llCsDbGetProcedureTerminateState(uint16 connId);
+uint8_t llCsDbGetSubEventDoneStatus(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbSetProcedureTerminateState
+ * @fn          llCsDbSetSubEventDoneStatus
  *
- * @brief       Set terminateState parameter
- *
- * @design      BLE_LOKI-506
+ * @brief       Set the SubEvent Done status
  *
  * input parameters
  *
- * @param       connId         - connection Id
- * @param       terminateState - indicate if the procedure state should be
- *                    updated to CS_DISABLE. The following values are optional:
- *                    CS_TERMINATE_RECEIVED and CS_TERMINATE_DISABLE
+ * @param       connId - connection ID
+ * @param       subeventDoneStatus - SubEvent Done status
  *
  * output parameters
  *
- * @param       None
+ * @param       None.
  *
  * @return      None
  */
-void llCsDbSetProcedureTerminateState(uint16 connId, csTerminateState_e terminateState);
+void llCsDbSetSubEventDoneStatus(uint16 connId, uint8_t subeventDoneStatus);
 
 /*******************************************************************************
- * @fn          llCsDbGetTerminateReason
+ * @fn          llCsDbGetProcedureDoneErrorCode
  *
- * @brief       Get the CS Terminate Reason
- *
- * input parameters
- *
- * @param       connId - Connection ID
- *
- * output parameters
- *
- * @param       None
- *
- * @return      Error Code (Termination Reason)
- */
-uint8 llCsDbGetTerminateReason(uint16 connId);
-
-/*******************************************************************************
- * @fn          llCsDbSetTerminateReason
- *
- * @brief       Set the CS Termination Reason
+ * @brief       Get the CS Procedure Done Error Reason
  *
  * input parameters
  *
  * @param       connId - Connection Id
- * @param       errorCode - The error code for the temrination reason
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The error code for the temrination reason
+ */
+uint8 llCsDbGetProcedureDoneErrorCode(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetProcedureDoneErrorCode
+ *
+ * @brief       Set the CS Procedure Done Error Reason
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       procErrorCode - The error code for the temrination reason
  *
  * output parameters
  *
@@ -966,7 +972,92 @@ uint8 llCsDbGetTerminateReason(uint16 connId);
  *
  * @return      None
  */
-void llCsDbSetTerminateReason(uint16 connId, uint8 errorCode);
+void llCsDbSetProcedureDoneErrorCode(uint16 connId, uint8 procErrorCode);
+
+/*******************************************************************************
+ * @fn          llCsDbClearProcedureDoneErrorCode
+ *
+ * @brief       Clear the CS Procedure Done Error Reason
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbClearProcedureDoneErrorCode(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetSubEventDoneErrorCode
+ *
+ * @brief       Get the CS SubEvent Terminate Reason
+ *
+ * input parameters
+ *
+ * @param       connId - Connection ID
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      SubEvent Error Code (Termination Reason)
+ */
+uint8 llCsDbGetSubEventDoneErrorCode(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetSubEventErrCode
+ *
+ * @brief       Set the CS SubEvent Terminate Reason
+ *
+ * input parameters
+ *
+ * @param       connId - Connection ID
+ * @param       errCode - SubEvent Error Code (Termination Reason)
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      SubEvent Error Code (Termination Reason)
+ */
+void llCsDbSetSubEventErrCode(uint16_t connId, uint8_t errCode);
+
+/*******************************************************************************
+ * @fn          llCsDbSetSubEventDoneErrorCode
+ *
+ * @brief       Set the CS Sub Event Termination Reason
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ * @param       seErrorCode - The error code for the temrination reason
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetSubEventDoneErrorCode(uint16 connId, uint8 seErrorCode);
+
+/*******************************************************************************
+ * @fn          llCsDbGetEnableProcedureDuration
+ *
+ * @brief       Get the procedure enable duration parameter
+ *
+ * input parameters
+ *
+ * @param       connId   - connection Id
+ * @param       configId - CS configuration Id
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Procedure duration
+ */
+uint16 llCsDbGetEnableProcedureDuration(uint16 connId, uint8 configId);
 
 /*******************************************************************************
  * @fn          llCsDbSetEnableProcedureDuration
@@ -988,6 +1079,25 @@ void llCsDbSetTerminateReason(uint16 connId, uint8 errorCode);
  */
 void llCsDbSetEnableProcedureDuration(uint16 connId, uint8 configId,
                                       uint16 duration);
+
+/*******************************************************************************
+ * @fn          llCsDbGetEnableProcedureCount
+ *
+ * @brief       Get the procedure enable procedure count parameter
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id
+ * @param       configId  - CS configuration Id
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The number of the procedure repetitions
+ */
+uint16 llCsDbGetEnableProcedureCount(uint16 connId, uint8 configId);
+
+uint16 llCsDbGetHostEnableProcedureCount(uint16 connId, uint8 configId);
 
 /*******************************************************************************
  * @fn          llCsDbSetEnableProcedureCount
@@ -1030,6 +1140,24 @@ void llCsDbSetEnableProcedureCount(uint16 connId, uint8 configId, uint16 count);
  */
 void llCsDbSetEnableProcedureInterval(uint16 connId, uint8 configId,
                                       uint16 procedureInterval);
+
+/*******************************************************************************
+ * @fn          llCsDbGetEnableProcedureInterval
+ *
+ * @brief       Get the procedure enable procedure event interval parameter
+ *
+ * input parameters
+ *
+ * @param       connId   - connection Id
+ * @param       configId - CS configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Procedure interval
+ */
+uint16_t llCsDbGetEnableProcedureInterval(uint16_t connId, uint8_t configId);
 
 /*******************************************************************************
  * @fn          llCsDbSetProcedureDoneStatus
@@ -1082,6 +1210,62 @@ uint8_t llCsDbGetProcedureDoneStatus(uint16 connId);
 bool llCsDbIsAnyProcedureActive(void);
 
 /*******************************************************************************
+ * @fn          llCsDbIsCsProcedureParamsSet
+ *
+ * @brief       Indicates whether a Set Procedure Parameters command has been
+ *              issued by the local device, for a specific config ID.
+ *
+ * input parameters
+ *
+ * @param       connId   - connection Id
+ * @param       configId - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      true - if the Set Procedure Parameters command has been issued
+ * @return      false - if the Set Procedure Parameters command has not been issued
+ */
+bool llCsDbIsCsProcedureParamsSet(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsDbUpdateLocalChm
+ *
+ * @brief       Update the local channel map in the CS DB.
+ *              This is used when @ref LL_CS_SetChannelClassification is called.
+ *
+ * input parameters
+ *
+ * @param       pNewChm - pointer to new channel map
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbUpdateLocalChm(uint8_t *pNewChm);
+
+/*******************************************************************************
+ * @fn          llCsDbSetChannelClassificationReqTime
+ *
+ * @brief       Set the time when the Channel Classification update API has called
+ *              @ref LL_CS_SetChannelClassification.
+ *
+ * input parameters
+ *
+ * @param       requestTime - time when the request was sent
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetChannelClassificationReqTime( uint32_t requestTime );
+
+/*******************************************************************************
  * @fn          llCsDbSetDefaultSettings
  *
  * @brief       Sets the default settings in the CS DB
@@ -1122,6 +1306,101 @@ void llCsDbSetDefaultSettings(uint16 connId,
  */
 void llCsDbGetDefaultSettings(uint16 connId,
                               csDefaultSettings_t* defaultSettings);
+
+/*******************************************************************************
+ * @fn          llCsDbGetDefaultMaxTxPower
+ *
+ * @brief       Gets the Max Tx Power from the CS Default settings for
+ *              a given connection
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Max Tx Power
+ */
+int8_t llCsDbGetDefaultMaxTxPower(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetDefaultCsSyncAntennaSelection
+ *
+ * @brief       Gets the CS Sync Antenna Selection from the CS Default settings for
+ *              a given connection
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      CS Sync Antenna Selection
+ */
+uint8_t llCsDbGetDefaultCsSyncAntennaSelection(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetProcedureCsSyncAntennaSelection
+ *
+ * @brief       This function Sets the current CS Sync Antenna Selection in
+ *              procedureInfo for the given connection.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id to be used
+ * @param       csSyncAntennaSelection - CS Sync Antenna Selection value to set
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetProcedureCsSyncAntennaSelection(uint16_t connId, csSyncAntennaSelection_t csSyncAntennaSelection);
+
+/*******************************************************************************
+ * @fn          llCsDbGetProcedureCsSyncAntennaSelection
+ *
+ * @brief       This function gets the current CS Sync Antenna Selection in
+ *              procedureInfo for the given connection.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id to be used
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      CS Sync Antenna Selection
+ */
+csSyncAntennaSelection_t llCsDbGetProcedureCsSyncAntennaSelection(uint16_t connId);
+
+
+/*******************************************************************************
+ * @fn          llCsDbIsProcedureRepetitions
+ *
+ * @brief       Checks if Procedure Repetitions is enabled
+ *
+ * @design      BLE_LOKI-506
+ *
+ * input parameters
+ *
+ * @param       connId   - connection Id
+ * @param       configId - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      true - procedure repetitions enabled, false - only one procedure
+ */
+bool llCsDbIsProcedureRepetitions(uint16 connId, uint8 configId);
+
 
 /*******************************************************************************
  * @fn          llCsDbSetProcedureEnableData
@@ -1183,6 +1462,42 @@ void llCsDbGetProcedureEnableData(uint16 connId, uint8 configId,
 uint8 llCsDbGetSubeventsPerEvent(uint16 connId, uint8 configId);
 
 /*******************************************************************************
+ * @fn          llCsDbGetProcedureEnableOffset
+ *
+ * @brief       Get the offset for CS procedure
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * @return      Number of subevents per event
+ */
+uint32_t llCsDbGetProcedureEnableOffset(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetProcedureEnableSubEventInterval
+ *
+ * @brief       Get the sub-event interval for CS procedure
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * @return      Number of subevents per event
+ */
+uint16 llCsDbGetProcedureEnableSubEventInterval(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetSubeventsLen
+ *
+ * @brief       Get the subevent lenght in a CS procedure
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * @return      Number of subevents per event
+ */
+uint32 llCsDbGetSubeventsLen(uint16 connId, uint8 configId);
+
+/*******************************************************************************
  * @fn          llCsDbCompareProcedureData
  *
  * @brief       Compare procedure data saved in the csdb, to what is provided
@@ -1197,13 +1512,13 @@ uint8 llCsDbGetSubeventsPerEvent(uint16 connId, uint8 configId);
  *
  * @param       None.
  *
- * @return      None
+ * @return      TRUE - if the saved data is equal to input pProcData, FALSE - otherwise
  */
 uint8 llCsDbCompareProcedureData(uint16 connId, uint8 configId,
                                  csProcedureEnable_t* procData);
 
 /*******************************************************************************
- * @fn          llCsDbGetAclCounter
+ * @fn          llCsDbGetNextProcedureConnEvent
  *
  * @brief       Get the ACL counter that the CS is pending
  *
@@ -1220,7 +1535,7 @@ uint8 llCsDbCompareProcedureData(uint16 connId, uint8 configId,
  *
  * @return      ACL Counter
  */
-uint16 llCsDbGetAclCounter(uint16 connId, uint8 configId);
+uint16 llCsDbGetNextProcedureConnEvent(uint16 connId, uint8 configId);
 
 /*******************************************************************************
  * @fn          llCsDbSetNextProcedureConnEvent
@@ -1266,42 +1581,6 @@ void llCsDbSetProcedureEnableIndData(uint16 connId, uint8 configId,
                                      const csProcedureEnable_t* enData);
 
 /*******************************************************************************
- * @fn          llCsDbGetNextProcedureFlag
- *
- * @brief       Get the next procedure flag
- *
- * input parameters
- *
- * @param       connId   - connection Id
- * @param       configId - configuration Id
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-uint8 llCsDbGetNextProcedureFlag(uint16 connId, uint8 configId);
-
-/*******************************************************************************
- * @fn          llCsDbSetNextProcedureFlag
- *
- * @brief       Set the next procedure flag
- *
- * input parameters
- *
- * @param       connId   - connection Id
- * @param       next     - flag to set
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbSetNextProcedureFlag(uint16 connId, uint8 next);
-
-/*******************************************************************************
  * @fn          llCsDbGetProcedureEnableACI
  *
  * @brief       Get the last ACI as in the procedureEnableData DB,
@@ -1321,103 +1600,55 @@ void llCsDbSetNextProcedureFlag(uint16 connId, uint8 next);
 csACI_e llCsDbGetProcedureEnableACI(uint16 connId, uint8 configId);
 
 /*******************************************************************************
- * @fn          llCsDbGetNextSubeventFlag
+ * @fn          llCsDbUpdateLocalChm
  *
- * @brief       Get the next subevent flag for a given connection.
+ * @brief       Update the local channel map
  *
- * @param       connId - connection Id
+ * @param       pNewChm - pointer to the new channel map
  *
- * @return      Next subevent flag
+ * @return      None.
  */
-csNextSubevent_e llCsDbGetNextSubeventFlag(uint16 connId);
+void lCsDbUpdateLocalChm(uint8_t *pNewChm);
 
 /*******************************************************************************
- * @fn          llCsDbSetNextSubeventFlag
+ * @fn          llCsDbGetLocalChannelMap
  *
- * @brief       Set the next subevent flag for a given connection.
+ * @brief       Get the local Channel Map classification
  *
- * @param       connId - connection Id
- * @param       next - next subevent flag
+ * @param       None.
  *
- * @return      None
+ * @return      const pointer to local Channel Map
  */
-void llCsDbSetNextSubeventFlag(uint16 connId, csNextSubevent_e next);
+const csChm_t* llCsDbGetLocalChannelMap( void );
 
 /*******************************************************************************
- * @fn          llCsDbUpdateChannelMap
+ * @fn          llCsDbGetLocalClassifiedChMStruct
  *
- * @brief       Update channel map
+ * @brief       Get the local Channel Map classification structure
  *
- * @design      BLE_LOKI-506
+ * @param       None.
+ *
+ * @return      const pointer to local Channel Map structure
+ */
+const csLocalChm_t* llCsDbGetLocalClassifiedChMStruct( void );
+
+/*******************************************************************************
+ * @fn          llCsDbEnableChannelMapChannelUpdate
+ *
+ * @brief       Enable the Channel Map classification update
+ *              This is used when @ref LL_CS_SetChannelClassification is called.
  *
  * input parameters
  *
- * @param       pChM - pointer to channel map update
- * @param       currentTime - current RAT time
+ * @param       None.
  *
  * output parameters
  *
  * @param       None.
  *
- * @return      Status
- *              CS_STATUS_INVALID_CHM If the channel map combination results in
- * zero
+ * @return      None.
  */
-csStatus_e llCsDbUpdateChannelMap(uint8* pChM, uint32 currentTime);
-
-/*******************************************************************************
- * @fn          llCsDbGetLastChmUpdateTime
- *
- * @brief       Get Last Channel Map Update time
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       None
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      Last Channel Map Update Time
- */
-uint32 llCsDbGetLastChmUpdateTime(void);
-
-/*******************************************************************************
- * @fn          llCsDbGetChannelMap
- *
- * @brief       Get the Channel Map classification
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       pChM - pointer to channel map
- *
- * output parameters
- *
- * @param       pChm.
- *
- * @return      None
- */
-void llCsDbGetChannelMap(uint8* pChm);
-
-/*******************************************************************************
- * @fn          llCsDbSetFilterChannelMap
- *
- * @brief       Update the Channel Map classification in the DB
- *
- * input parameters
- *
- * @param       pChm - pointer to input channel map
- *
- * output parameters
- *
- * @return      None
- */
-void llCsDbSetFilterChannelMap(uint8 connId, uint8 configId, const csChm_t* pChM);
-
+void llCsDbEnableChannelMapChannelUpdate( void );
 
 /*******************************************************************************
  * @fn          llCsDbFilterChannelMap
@@ -1436,81 +1667,6 @@ void llCsDbSetFilterChannelMap(uint8 connId, uint8 configId, const csChm_t* pChM
  *
  */
 void llCsDbFilterChannelMap(const csChm_t* pChM, csChm_t* pFilteredChM);
-/*******************************************************************************
- * @fn          llCsDbSetActiveConnId
- *
- * @brief      Set Active Conn Id
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       connId - connection identifier
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbSetActiveConnId(uint16 connId);
-
-/*******************************************************************************
- * @fn          llCsDbGetActiveConnId
- *
- * @brief      Get active connection ID
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       none
- *
- * output parameters
- *
- * @param       ConnId.
- *
- * @return      None
- */
-uint16 llCsDbGetActiveConnId(void);
-
-/*******************************************************************************
- * @fn          llCsDbSetBleRole
- *
- * @brief       Set BLE role in the CS DB
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       role - BLE role, central or peripheral
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbSetBleRole(csBleRole role);
-
-/*******************************************************************************
- * @fn          llCsDbGetBleRole
- *
- * @brief       Get BLE role: Central or Peripheral.
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       none
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      BLE Role
- */
-csBleRole llCsDbGetBleRole(void);
 
 /*******************************************************************************
  * @fn          llCsDbGetAciNumAnt
@@ -1562,7 +1718,7 @@ uint8 llCsDbGetFactorialValue(uint8 num);
  *
  * @return      T_IP
  */
-uint8 llCsDbGetTip(uint8 idx);
+uint16 llCsDbGetTip(uint8 idx);
 
 /*******************************************************************************
  * @fn          llCsDbGetTfcs
@@ -1579,7 +1735,7 @@ uint8 llCsDbGetTip(uint8 idx);
  *
  * @return      T_FCS
  */
-uint8 llCsDbGetTfcs(uint8 idx);
+uint16 llCsDbGetTfcs(uint8 idx);
 
 /*******************************************************************************
  * @fn          llCsDbGetTpm
@@ -1702,7 +1858,6 @@ void llCsDbUpdateChanIndexArray(uint8 mode, uint16 connId, uint8 configId,
  * input parameters
  *
  * @param       connId - connection handle
- * @param       configId - cs config identifier
  * @param       mmSteps - number of main mode steps
  *
  * output parameters
@@ -1711,12 +1866,46 @@ void llCsDbUpdateChanIndexArray(uint8 mode, uint16 connId, uint8 configId,
  *
  * @return      None
  */
-void llCsDbSetRemainingMmSteps(uint16 connId, uint8 configId, uint16 mmSteps);
+void llCsDbSetRemainingMmSteps(uint16 connId, uint16 mmSteps);
 
 /*******************************************************************************
  * @fn          llCsDbGetRemainingMmSteps
  *
  * @brief       Get the number of steps remaining for the procedure.
+ *
+ * input parameters
+ *
+ * @param       connId - connection handle
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+uint16 llCsDbGetRemainingMmSteps(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbIncrementRemainingMmSteps
+ *
+ * @brief       Increment the number of steps remaining for the procedure.
+ *
+ * input parameters
+ *
+ * @param       connId - connection handle
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbIncrementRemainingMmSteps(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetChMRepetition
+ *
+ * @brief       Get the number of Channel repetitions for the procedure.
  *
  * input parameters
  *
@@ -1729,10 +1918,111 @@ void llCsDbSetRemainingMmSteps(uint16 connId, uint8 configId, uint16 mmSteps);
  *
  * @return      None
  */
-uint16 llCsDbGetRemainingMmSteps(uint16 connId, uint8 configId);
+uint16 llCsDbGetChMRepetition(uint16 connId, uint8 configId);
 
 /*******************************************************************************
- * @fn          llCsDbGetSubeventInfo
+ * @fn          llCsDbSubModeInsertionIsCompletedSet
+ *
+ * @brief       Set SubMode insertion completed indication
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       complete - true/false
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None.
+ */
+void llCsDbSubModeInsertionIsCompletedSet(uint16 connId, bool complete);
+
+/*******************************************************************************
+ * @fn          llCsDbSubModeInsertionIsCompletedGet
+ *
+ * @brief       Get SubMode insertion completed indication
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      complete - true/false
+ */
+bool llCsDbSubModeInsertionIsCompletedGet(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSubModeInsertionChannelIdxSet
+ *
+ * @brief       Get Channel Index for the subMode insertion
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       channelIdx - channel index
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSubModeInsertionChannelIdxSet(uint16 connId, uint8_t channelIdx);
+
+/*******************************************************************************
+ * @fn          llCsDbSubModeInsertionChannelIdxGet
+ *
+ * @brief       Set Channel Index for the subMode insertion
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      channel index
+ */
+uint8_t llCsDbSubModeInsertionChannelIdxGet(uint16 connId);
+
+/*******************************************************************************
+* @fn          llCsDbResetSubModeInsertionStepCount
+*
+* @brief       Reset the SubMode insertion step counter
+*
+* @details     Clears the counter that tracks SubMode insertions, typically
+*              called at the beginning of a new subevent or when restarting
+*              the SubMode insertion process
+*
+* @param       connId - Connection identifier
+*
+* @return      None
+*/
+void llCsDbResetSubModeInsertionStepCount(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbResetSubModeInsertionInfo
+*
+* @brief       Reset all SubMode insertion tracking information
+*
+* @details     Completely clears all SubMode insertion state information,
+*              including step counts, insertion indices, and completion status.
+*              Typically called when starting a new procedure or when aborting
+*              and restarting the SubMode insertion process.
+*
+* @param       connId - Connection identifier
+*
+* @return      None
+*/
+void llCsDbResetSubModeInsertionInfo(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetSubeventCount
  *
  * @brief       Get Subevent info from the DB
  *
@@ -1741,9 +2031,10 @@ uint16 llCsDbGetRemainingMmSteps(uint16 connId, uint8 configId);
  * input parameters
  *
  * @param       connId - connection Id
+ * @param       configId - cs config identifier
  * @param       type   - info type:
- *                       CS_SE_INFO_NUM_STEPS to get the num of steps
- *                       CS_SE_INFO_STEP_COUNT to get the step count
+ *                       CS_SE_INFO_STEPS_NUM to get the num of steps
+ *                       CS_SE_INFO_STEPS_C to get the step count
  *
  * output parameters
  *
@@ -1751,7 +2042,7 @@ uint16 llCsDbGetRemainingMmSteps(uint16 connId, uint8 configId);
  *
  * @return      numSteps or stepCount per type
  */
-uint16 llCsDbGetSubeventInfo(uint16 connId, csSubeventInfo_e type);
+uint16 llCsDbGetSubeventCount(uint16 connId, csSubeventInfo_e type);
 
 /*******************************************************************************
  * @fn          llCsDbSetSubeventCount
@@ -1775,9 +2066,144 @@ uint16 llCsDbGetSubeventInfo(uint16 connId, csSubeventInfo_e type);
 void llCsDbSetSubeventCount(uint16 connId, csSubeventInfo_e type, uint16 count);
 
 /*******************************************************************************
- * @fn          llCsDbIncrementSubeventInfoCounter
+* @fn          llCsDbGetMModeRepetitionsChannelIndex
+*
+* @brief       Retrieve the channel index used in previous subevent's final Main Mode step
+*
+* @details     Returns the channel index that was used in the last Main Mode step of the
+*              previous subevent. This channel will be reused for Main Mode Repetition
+*              steps in the current subevent to maintain measurement continuity.
+*
+* @param       connId - Connection identifier
+*
+* @return      Channel index for Main Mode Repetition step
+*/
+uint8_t llCsDbGetMModeRepetitionsChannelIndex(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbGetMModeRepetitionsCount
+*
+* @brief       Get the number of stored Main Mode channels from previous subevent
+*
+* @details     Returns the count of Main Mode channels that were stored during the
+*              previous subevent's execution. These channels are available for
+*              repetition in the current subevent.
+*
+* @param       connId - Connection identifier
+*
+* @return      Number of stored channel indices available for repetition
+*/
+uint8_t llCsDbGetMModeRepetitionsCount(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbGetMModeRepetitionsIsFull
+*
+* @brief       Check if the Main Mode channel circular buffer is fully populated
+*
+* @details     Indicates whether the circular buffer storing Main Mode channel indices
+*              has been completely filled. This status helps ensure channels are
+*              retrieved in the same sequence they were originally transmitted.
+*
+* @param       connId - Connection identifier
+*
+* @return      true if all configured channel slots are filled, false otherwise
+*/
+bool llCsDbGetMModeRepetitionsIsFull(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbIncrementMModeRepetitionsArrayChannelIndex
+*
+* @brief       Advance to the next position in the Main Mode channel storage buffer
+*
+* @details     Increments the index pointer in the circular buffer used to store
+*              Main Mode channel indices for future repetitions. The index wraps
+*              around when it reaches the maximum repetition count specified in
+*              the configuration.
+*
+* @param       connId - Connection identifier
+* @param       configId - Configuration identifier
+*
+* @return      None
+*/
+void llCsDbIncrementMModeRepetitionsArrayChannelIndex(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+* @fn          llCsDbIncrementMModeRepetitionsCount
+*
+* @brief       Increment the count of stored Main Mode channels
+*
+* @details     Increases the counter tracking how many Main Mode channel indices
+*              have been stored for future repetition. The counter is capped at
+*              the maximum repetition count specified in the user configuration.
+*
+* @param       connId - Connection identifier
+* @param       configId - Configuration identifier
+*
+* @return      None
+*/
+void llCsDbIncrementMModeRepetitionsCount(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+* @fn          llCsDbSetSubModeInsertionNextIndex
+*
+* @brief       Set the index for the next SubMode insertion
+*
+* @details     Updates the position counter that determines how many MainMode steps
+*              should be executed before the next SubMode step is inserted
+*
+* @param       connId - Connection identifier
+* @param       nextIndex - Number of MainMode steps to perform before next SubMode insertion
+*
+* @return      None
+*/
+void llCsDbSetSubModeInsertionNextIndex(uint16_t connId, uint8_t nextIndex);
+
+/*******************************************************************************
+* @fn          llCsDbGetSubModeInsertionNextIndex
+*
+* @brief       Get the index for the next SubMode insertion
+*
+* @details     Returns the current position counter that determines how many MainMode
+*              steps remain before the next SubMode insertion should occur
+*
+* @param       connId - Connection identifier
+*
+* @return      Number of MainMode steps before next SubMode insertion
+*/
+uint8_t llCsDbGetSubModeInsertionNextIndex(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbIncrementSubModeInsertionStepCount
+*
+* @brief       Increment the SubMode insertion step counter
+*
+* @details     Increases the counter tracking how many SubMode insertions have been
+*              performed in the current subevent
+*
+* @param       connId - Connection identifier
+*
+* @return      None
+*/
+void llCsDbIncrementSubModeInsertionStepCount(uint16_t connId);
+
+/*******************************************************************************
+* @fn          llCsDbGetSubModeInsertionStepCount
+*
+* @brief       Get the current SubMode insertion step count
+*
+* @details     Returns the number of SubMode steps that have been inserted
+*              in the current subevent
+*
+* @param       connId - Connection identifier
+*
+* @return      Number of SubMode insertions performed in current subevent
+*/
+uint8_t llCsDbGetSubModeInsertionStepCount(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbIncrementSubeventCount
  *
- * @brief       Increment a subeventInfo counter by incVal
+ * @brief       Increment a subeventInfo counter by 1
  *
  * @design      BLE_LOKI-506
  *
@@ -1785,7 +2211,6 @@ void llCsDbSetSubeventCount(uint16 connId, csSubeventInfo_e type, uint16 count);
  *
  * @param       connId - connection Id
  * @param       type   - info type
- * @param       incVal - incremention value
  *
  * output parameters
  *
@@ -1793,11 +2218,30 @@ void llCsDbSetSubeventCount(uint16 connId, csSubeventInfo_e type, uint16 count);
  *
  * @return      None.
  */
-void llCsDbIncrementSubeventInfoCounter(uint16 connId, csSubeventInfo_e type,
-                                        uint16 incVal);
+void llCsDbIncrementSubeventCount(uint16 connId, csSubeventInfo_e type);
 
 /*******************************************************************************
- * @fn          llCsDbIncrementProcCounter
+ * @fn          llCsDbResetSubeventCount
+ *
+ * @brief       Reset a subeventInfo counter
+ *
+ * @design      BLE_LOKI-506
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       type   - info type
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None.
+ */
+void llCsDbResetSubeventCount(uint16 connId, csSubeventInfo_e type);
+
+/*******************************************************************************
+ * @fn          llCsDbIncrementProcedureCount
  *
  * @brief       Increment procedure counter
  *
@@ -1812,10 +2256,10 @@ void llCsDbIncrementSubeventInfoCounter(uint16 connId, csSubeventInfo_e type,
  *
  * @return      None
  */
-uint16 llCsDbIncrementProcCounter(uint16 connId, csProcedureCounter_e counter);
+uint16 llCsDbIncrementProcedureCount(uint16 connId, csProcedureCounter_e counter);
 
 /*******************************************************************************
- * @fn          llCsDbResetProcCounter
+ * @fn          llCsDbResetProcedureCount
  *
  * @brief       Reset Procedure Counter
  *
@@ -1830,10 +2274,10 @@ uint16 llCsDbIncrementProcCounter(uint16 connId, csProcedureCounter_e counter);
  *
  * @return      None
  */
-void llCsDbResetProcCounter(uint16 connId, csProcedureCounter_e counter);
+void llCsDbResetProcedureCount(uint16 connId,  csProcedureCounter_e counter);
 
 /*******************************************************************************
- * @fn          llCsDbGetProcCounter
+ * @fn          llCsDbGetProcedureCount
  *
  * @brief       Get procedure countern
  *
@@ -1848,42 +2292,7 @@ void llCsDbResetProcCounter(uint16 connId, csProcedureCounter_e counter);
  *
  * @return      None
  */
-uint16 llCsDbGetProcCounter(uint16 connId, csProcedureCounter_e counter);
-
-/*******************************************************************************
- * @fn          llCsDbSetEventsPerProcedure
- *
- * @brief       Set events per procedure
- *
- * input parameters
- *
- * @param       connId - connection Id
- * @param       eventsPerProcedure - events per procedure
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-void llCsDbSetEventsPerProcedure(uint16 connId, uint16 eventsPerProcedure);
-
-/*******************************************************************************
- * @fn          llCsDbGetEventsPerProcedure
- *
- * @brief       Get Events Per Procedure
- *
- * input parameters
- *
- * @param       connId - connection Id
- *
- * output parameters
- *
- * @param       None.
- *
- * @return      None
- */
-uint16 llCsDbGetEventsPerProcedure(uint16 connId);
+uint16 llCsDbGetProcedureCount(uint16 connId, csProcedureCounter_e counter);
 
 /*******************************************************************************
  * @fn          llCsDbSetEventAnchorPoint
@@ -1919,6 +2328,51 @@ void llCsDbSetEventAnchorPoint(uint16 connId, uint32_t anchorPoint);
  * @return      None
  */
 uint32_t llCsDbGetEventAnchorPoint(uint16 connId);
+
+/*******************************************************************************
+* @fn          llCsDbSetProcedureRepetitionsPreviousProcedureStatus
+*
+* @brief       Store the status of the preceding CS procedure
+*
+* @details     Records whether the previous procedure was successfully synchronized.
+*              This information is used to enforce the specification requirement
+*              that repetitions must be terminated if two consecutive procedures
+*              fail to synchronize.
+*
+* input parameters
+*
+* @param       connId - connection Id
+* @param       status - 0 if previous procedure was synchronized, 1 otherwise
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      None
+*/
+void llCsDbSetProcedureRepetitionsPreviousProcedureStatus(uint16 connId, bool status);
+
+/*******************************************************************************
+* @fn          llCsDbGetProcedureRepetitionsPreviousProcedureStatus
+*
+* @brief       Get the synchronization status of the preceding CS procedure
+*
+* @details     Returns whether the previous procedure was successfully synchronized.
+*              This information is used to enforce the specification requirement
+*              that repetitions must be terminated if two consecutive procedures
+*              fail to synchronize.
+*
+* input parameters
+*
+* @param       connId - connection Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      0 if previous procedure was synchronized, 1 otherwise
+*/
+bool llCsDbGetProcedureRepetitionsPreviousProcedureStatus(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsDbInitDRBGCache
@@ -2321,7 +2775,6 @@ csStatus_e llCsDbSetTestOverrideData(csTestParams_t* pTestParams);
  *
  * input parameters
  *
- * @param       pCsTestOverrideData - pointer to CS test overrides
  *
  * output parameters
  *
@@ -2329,30 +2782,7 @@ csStatus_e llCsDbSetTestOverrideData(csTestParams_t* pTestParams);
  *
  * @return      None
  */
-void llCsDbGetTestOverrideData(csTestOverrideData_t* pCsTestOverrideData);
-
-/*******************************************************************************
- * @fn          llCsDbGetReportedConnId
- *
- * @brief       Get Reported Connection ID
- * This function is needed because in test mode we assume a connId = 0
- * However, the spec specifies connID = 0xFFFF
- * We can't use this value in the rest of the code because the llCs DB
- * is based on the maxNumConns (1-8). 0xFFFF would create an attempt to
- * access beyond the boundaries of the llCs
- * So only when it comes to reporting the connId, it will be reported as 0xFFFF
- *
- * input parameters
- *
- * @param       None
- *
- * output parameters
- *
- * @param       None
- *
- * @return      ConnId
- */
-uint16 llCsDbGetReportedConnId(void);
+const csTestOverrideData_t* llCsDbGetTestOverrideData( void );
 
 /*******************************************************************************
  * @fn          llCsDbGetChanOverrideCfg
@@ -2389,7 +2819,7 @@ uint8 llCsDbGetChanOverrideCfg(void);
  * @return      TRUE - if CS Test Mode is enabled
  *              FALSE - if CS Test Mode is disabled
  */
-uint8 llCsDbGetOverrideCfg(csOverrideCfg_t* pOverrideCfg);
+bool llCsDbGetOverrideCfg(csOverrideCfg_t* pOverrideCfg);
 
 /*******************************************************************************
  * @fn          llCsDbOverrideChanIndexArr
@@ -2530,6 +2960,7 @@ uint8 llCsDbGetNextOverrideAntennaPermutation(csACI_e ACI);
  *
  * input parameters
  *
+ * @param       connId - Connection Id
  * @param       ACI - ACI index to be used to determine the next
  *                    permutation index.
  *
@@ -2539,39 +2970,18 @@ uint8 llCsDbGetNextOverrideAntennaPermutation(csACI_e ACI);
  *
  * @return      The next Antenna Permutation index value.
  */
-uint8_t llCsGetNextAntennaPermutationWrapper(csACI_e ACI);
+uint8_t llCsGetNextAntennaPermutationWrapper(uint16 connId, csACI_e ACI);
 
 /*******************************************************************************
- * @fn          llCsGetNextCsSyncAntennaSelection
+ * @fn          llCsDbSetGpioVals
  *
- * @brief       Get the CS Sync Antenna Selection value for a CS step.
- *              If loop is configured (only relevant for CS_TEST):
- *                  1. The next value will be returned.
- *                  2. Updates the value in the DB (defaultSettings).
- *
+ * @brief       Set antennas GPIO values for the current procedure in the DB
  *
  * input parameters
  *
- * @param       connId - Connection Id to get the value for
- *
- * output parameters
- *
- * @param       None
- *
- * @return      CS Sync Antenna Selection value
- */
-uint8 llCsGetNextCsSyncAntennaSelection(uint8 connId);
-
-/*******************************************************************************
- * @fn          llCsDbResetCsSyncAntennaSelectionLoop
- *
- * @brief       This function resets CS Sync Antenna Selection to its initial value.
- *              If loop is configured - Reset to @ref CS_SYNC_ANT_SELECT_REPETITIVE.
- *              Otherwise - doesn't reset.
- *
- * input parameters
- *
- * @param       connId - connection Id to be used for the reset.
+ * @param       connId - Connection Id
+ * @param       gpioValsToSet - pointer to GPIO values to set.
+ *                              Assumed size @ref CS_ANTENNAS_GPIOS_ARRAY_SIZE
  *
  * output parameters
  *
@@ -2579,17 +2989,34 @@ uint8 llCsGetNextCsSyncAntennaSelection(uint8 connId);
  *
  * @return      None
  */
-void llCsDbResetCsSyncAntennaSelectionLoop(uint16 connId);
+void llCsDbSetGpioVals(uint16_t connId, uint8_t gpioValsToSet[CS_ANTENNAS_GPIOS_ARRAY_SIZE]);
 
 /*******************************************************************************
- * @fn          llCsDbSetAntIndicesRCLMapping
+ * @fn          llCsDbGetGpioVals
+ *
+ * @brief       Get antennas GPIO values array for the current procedure
+ *
+ * input parameters
+ *
+ * @param       connId - Connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Pointer to GPIO values array
+ */
+const uint8_t* llCsDbGetGpioVals(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetPhysicalAntToRCLMapping
  *
  * @brief       Sets antennas indices mapping into CS DB.
  *              This maps an antenna index to its actual index in RCL command.
  *
  * input parameters
  *
- * @param       connId - connection Id to be used for the reset.
+ * @param       connId - connection Id to be used.
  * @param       mappingToSet - antennas indices mapping to set.
  *
  * output parameters
@@ -2598,24 +3025,36 @@ void llCsDbResetCsSyncAntennaSelectionLoop(uint16 connId);
  *
  * @return      None
  */
-void llCsDbSetAntIndicesRCLMapping( uint16 connId, uint8 mappingToSet);
+void llCsDbSetPhysicalAntToRCLMapping( uint16_t connId, uint8_t mappingToSet);
 
 /*******************************************************************************
- * @fn          llCsDbSetTiming
+ * @fn          llCsDbGetPhysicalAntToRCLMapping
  *
- * @brief Set the timing parameters for a specific connection and configuration.
- *
- * This function sets the timing parameters for a given connection and configuration ID
- * in the Connection State Database.
+ * @brief       Gets antennas indices mapping from procedureInfo DB.
+ *              This maps an antenna index to its actual index in RCL command.
  *
  * input parameters
  *
- * @param connId The connection identifier.
- * @param configId The configuration identifier.
- * @param tIP1 Timing parameter IP1.
- * @param tIP2 Timing parameter IP2.
- * @param tFCs Timing parameter FCs.
- * @param tPM Timing parameter PM.
+ * @param       connId - connection Id to be used.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The antenna index mapping.
+ */
+uint8_t llCsDbGetPhysicalAntToRCLMapping(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetRCLAntToPhysicalMapping
+ *
+ * @brief       Sets RCL antennas indices mapping into CS DB.
+ *              This maps an antenna index set in RCL command to its physical index.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id to be used.
+ * @param       mappingToSet - antennas indices mapping to set.
  *
  * output parameters
  *
@@ -2623,11 +3062,25 @@ void llCsDbSetAntIndicesRCLMapping( uint16 connId, uint8 mappingToSet);
  *
  * @return      None
  */
-void llCsDbSetTiming(uint16 connId, uint8 configId,
-                                    uint8 tIP1,
-                                    uint8 tIP2,
-                                    uint8 tFCs,
-                                    uint8 tPM);
+void llCsDbSetRCLAntToPhysicalMapping( uint16_t connId, uint8_t mappingToSet);
+
+/*******************************************************************************
+ * @fn          llCsDbGetRCLAntToPhysicalMapping
+ *
+ * @brief       Gets RCL antennas indices mapping from procedureInfo DB.
+ *              This maps an antenna index set in RCL command to its physical index.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id to be used.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The antenna index mapping.
+ */
+uint8_t llCsDbGetRCLAntToPhysicalMapping(uint16_t connId);
 
 /*******************************************************************************
  * @fn          llCsDbHandoverSetShuffledChanArr
@@ -2670,15 +3123,285 @@ void llCsDbHandoverSetShuffledChanArr(uint16 connId, uint8 configId, const uint8
 void llCsDbSetProcedureInfo(uint16 connId, const csProcedureInfo_t *pProcedureInfo);
 
 /*******************************************************************************
- * @fn          llCsDbSetMainModeSteps
- * @brief       Set the 'main mode number of steps' minimum and maximum values
+ * @fn          llCsDbGetSubModeInsertionRange
+ * @brief       Get the 'main mode number of steps' minimum and maximum values
  *
  * input parameters
  *
  * @param       connId    - connection Id to be used for the reset.
  * @param       configId  - configuration Id to update
- * @param       numStepsMin  - minimum number of steps
- * @param       numStepsMax  - maximum number of steps
+ *
+ * output parameters
+ *
+ * @param       pNumStepsMin  - minimum number of steps
+ * @param       pNumStepsMax  - maximum number of steps
+ *
+ * @return      None
+ */
+void llCsDbGetSubModeInsertionRange(uint16 connId, uint8 configId, uint8 *pNumStepsMin, uint8 *pNumStepsMax);
+
+/*******************************************************************************
+ * @fn          llCsDbGetMainModeRepetition
+ * @brief       Get the main mode repetition number, as configured in the config procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Number of main mode repetitions
+ */
+uint8_t llCsDbGetMainModeRepetition(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetMainModeRepetition
+ * @brief       Get the main mode repetition number, as configured in the config procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Number of main mode repetitions
+ */
+uint8_t llCsDbGetMainModeRepetition(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgGetTransactionId
+ *
+ * @brief       Get the Transactrion Id
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ *
+ * output parameters
+ *
+ * @param       transactionId   - transaction Id
+ *
+ * @return      None
+ */
+uint16 llCsDbDrbgGetTransactionId( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgGetStepCount
+ *
+ * @brief       Get DRBG param step count
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      DRBG num steps
+ */
+uint16 llCsDbDrbgGetStepCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgGetLastGenConnEventCount
+ *
+ * @brief       Get the last conn event count that a steps were successfully generated
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      connection event counter
+ */
+uint16 llCsDbDrbgGetLastGenConnEventCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgSetLastGenConnEventCount
+ *
+ * @brief       Set the last conn event count that a steps were successfully generated
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ * @param       connEvent - connection event counter to set
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgSetLastGenConnEventCount(uint16 connId, uint16 connEvent);
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgGetProcedureCount
+ *
+ * @brief       Get DRBG param procedure count
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      DRBG num procedures
+ */
+uint16 llCsDbDrbgGetProcedureCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgIncrementProcedureCount
+ *
+ * @brief       Increment DRBG param procedure count
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgIncrementProcedureCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgSetProcedureCount
+ *
+ * @brief       Set DRBG param procedure count
+ * This API shall be used only in case of CS Procedure Termination when CS
+ * Procedure Count in the CS_TERMINATE_RSP is larger than that of the
+ * CS_TERMINATE_REQ. In these case we must use the larger value to keep the
+ * Link Layers sychronized.
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ * @param       procCnt - Procedure Count
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgSetProcedureCount(uint16 connId, uint16 procCnt);
+
+/*******************************************************************************
+ * @fn          llCsSecIncProcCounter
+ *
+ * @brief       Increment CS procedure counter
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsSecIncProcCounter( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgIncreaseStepCount
+ *
+ * @brief       Increase the step counter
+ *
+ * @design      BLE_LOKI-506
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgIncreaseStepCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgSetTransactionCount
+ *
+ * @brief       Set the Transactrion Count
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ * @param       transactionCounter   - transaction Counter
+ *
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgSetTransactionCount( uint16 connId, uint8 transactionCounter );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgSetTransactionCount
+ *
+ * @brief       Increment the Transactrion Count
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ *
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgIncrementTransactionCount( uint16 connId );
+
+/*******************************************************************************
+ * @fn          llCsDbDrbgSetTransactionId
+ *
+ * @brief       Set the Transactrion Id
+ *
+ * input parameters
+ *
+ * @param       connId   - connId
+ * @param       transactionId   - transaction Id
+ *
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbDrbgSetTransactionId( uint16 connId, uint8 transactionId );
+
+/*******************************************************************************
+ * @fn          llCsDbSetRepeatProcedureConnEvent
+ * @brief       Set the connection event counter the next procedure should
+ *              start when using procedure repetitions
+ *
+ * input parameters
+ *
+ * @param       connId       - connection Id.
+ * @param       configId     - configuration Id
+ * @param       connEvtCount - connection event count for the repeat procedure
  *
  * output parameters
  *
@@ -2686,4 +3409,331 @@ void llCsDbSetProcedureInfo(uint16 connId, const csProcedureInfo_t *pProcedureIn
  *
  * @return      None
  */
-void llCsDbSetMainModeSteps(uint16 connId, uint8 configId, uint8 numStepsMin, uint8 numStepsMax);
+void llCsDbSetRepeatProcedureConnEvent(uint16 connId, uint8 configId,
+                                       uint16 connEvtCount);
+
+/*******************************************************************************
+ * @fn          llCsDbGetRepeatProcedureConnEvent
+ * @brief       Return the connection event counter of the current connection
+ *              event the procedure should start when using procedure repetitions
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id.
+ * @param       configId  - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Connection event count for the repeat procedure
+ */
+uint16_t llCsDbGetRepeatProcedureConnEvent(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetFirstProcedureAfterSecurity
+ *
+ * @brief       Set the first CS procedure after security procedure flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       enable    - true to enable the first procedure after security flag,
+ *                          false to disable it
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetFirstProcedureAfterSecurity(uint16 connId, bool enable);
+
+/*******************************************************************************
+ * @fn          llCsDbGetFirstProcedureAfterSecurity
+ *
+ * @brief       Get the first CS procedure after security procedure flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      true if this flag is enabled, false otherwise
+ */
+bool llCsDbGetFirstProcedureAfterSecurity(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetMissedProcedureFlag
+ *
+ * @brief       Set the missed procedure flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       enable    - true to enable the missed procedure flag,
+ *                          false to disable it
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetValidProcedureFlag(uint16 connId, bool valid);
+
+/*******************************************************************************
+ * @fn          llCsDbGetMissedProcedureFlag
+ *
+ * @brief       Get the missed procedure flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      true if this flag is enabled, false otherwise
+ */
+bool llCsDbGetValidProcedureFlag(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetTerminateErrCode
+ *
+ * @brief       Set the termination error code
+ *
+ * input parameters
+ *
+ * @param       connId     - connection Id
+ * @param       errCode    - The error code
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetTerminateErrCode(uint16_t connId, uint8_t errCode);
+
+/*******************************************************************************
+ * @fn          llCsDbGetTerminateErrCode
+ *
+ * @brief       Get the termination error code
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      the termination error code
+ */
+uint8_t llCsDbGetTerminateErrCode(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetCsReqIntiatedByPeerFlag
+ *
+ * @brief       Set peer intiated CS Req flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       enable    - true to enable the peer intiated the CS req,
+ *                          false to disable it
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetCsReqIntiatedByPeerFlag(uint16_t connId, bool enable);
+
+/*******************************************************************************
+ * @fn          llCsDbGetCsReqIntiatedByPeerFlag
+ *
+ * @brief       Get the peer intiated a CS Req flag
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      true if this flag is enabled, false otherwise
+ */
+bool llCsDbGetCsReqIntiatedByPeerFlag(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetTerminatePeerProcCount
+ *
+ * @brief       Set the terminate peer procedure count
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       peerCount - Peer procedure count
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetTerminatePeerProcCount(uint16_t connId, uint16_t peerCount);
+
+/*******************************************************************************
+ * @fn          llCsDbGetTerminatePeerProcCount
+ *
+ * @brief       Get the terminate peer procedure count
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Peer procedure counter
+ */
+uint16_t llCsDbGetTerminatePeerProcCount(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetModeZeroSteps
+ * @brief       Get the number of Mode0 steps for this procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The number of Mode0 steps for this procedure
+ */
+uint8_t llCsDbGetModeZeroSteps(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetMainMode
+ * @brief       Get the Main Mode type for this procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The Main Mode type for this procedure
+ */
+uint8_t llCsDbGetMainMode(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetSubMode
+ * @brief       Get the Sub Mode type for this procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The Sub Mode type for this procedure
+ */
+uint8_t llCsDbGetSubMode(uint16 connId, uint8 configId);
+
+
+/*******************************************************************************
+ * @fn          llCsDbGetRttType
+ * @brief       Get the RTT type for this procedure
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id to be used for the reset.
+ * @param       configId  - configuration Id to update
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The RTT type for this procedure
+ */
+uint8_t llCsDbGetRttType(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetMModeRepetitionsChannelArray
+ * @brief       This function saves the channels for M-Mode repetitions
+ *              measurements for a given connection. M-Mode repetitions
+ *              allow for multiple consecutive measurements to improve accuracy.
+ *
+ * input parameters
+ *
+ * @param       connId        - connection Id
+ * @param       index         - Index in the DB for the channelInd to be saved in
+ * @param       channelIdx    - The channelIdx to be saved
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsDbSetMModeRepetitionsChannelArray(uint16 connId, uint8_t index, uint8_t channelIdx);
+
+/*******************************************************************************
+ * @fn          llCsDbGetMModeRepetitionsChannelArray
+ * @brief       This function gets the channels for M-Mode repetitions
+ *              measurements for a given connection. M-Mode repetitions
+ *              allow for multiple consecutive measurements to improve accuracy.
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id
+ * @param       index     - Index in the DB for the channelInd to be retreive from
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      The retreived channelIdx
+ *
+ */
+uint8_t llCsDbGetMModeRepetitionsChannelArray(uint16 connId, uint8_t index);
+
+/*******************************************************************************
+ * @fn          llCsDbClearMModeRepetitions
+ * @brief       This function clears the channels for M-Mode repetitions
+ *              measurements for a given connection. M-Mode repetitions
+ *              allow for multiple consecutive measurements to improve accuracy.
+ *
+ * input parameters
+ *
+ * @param       connId    - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ *
+ */
+void llCsDbClearMModeRepetitions(uint16 connId);
+
+#endif //LL_CS_DB_H

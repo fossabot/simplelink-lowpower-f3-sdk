@@ -163,7 +163,12 @@ typedef enum
   ZB_MACSPLIT_TRANSPORT_TYPE_SPI = 0,
   ZB_MACSPLIT_TRANSPORT_TYPE_SERIAL,
   ZB_MACSPLIT_TRANSPORT_TYPE_USERIAL,
+  /* Transport through zb_mux_device (legacy mode).
+   * ZB_MACSPLIT_TRANSPORT_TYPE_EXTERNAL should be used instead */
   ZB_MACSPLIT_TRANSPORT_TYPE_MUX,
+  /* External layer (i.e. application) should
+   * handle receiving and sending of raw data. */
+  ZB_MACSPLIT_TRANSPORT_TYPE_EXTERNAL,
   ZB_MACSPLIT_TRANSPORT_TYPES_N
 }
 zb_macsplit_transport_type_e;
@@ -258,6 +263,12 @@ ZB_RING_BUFFER_DECLARE(zb_macsplit_transport_buffer, zb_uint8_t, ZB_MACSPLIT_TRA
 
 #if defined ZB_MACSPLIT_HOST
 #define ZB_MACSPLIT_CONFIRM_TIMEOUT      10000U  /* in msec */
+#ifdef ZB_MACSPLIT_ENABLE_BOOT_IND_WATCHDOG
+#ifndef ZB_MACSPLIT_BOOT_INDICATION_WAIT_TIMEOUT_MS
+#define ZB_MACSPLIT_BOOT_INDICATION_WAIT_TIMEOUT_MS 10000U  /* in msec */
+#endif  /* ZB_MACSPLIT_BOOT_INDICATION_WAIT_TIMEOUT_MS */
+void zb_macsplit_boot_indication_wait_stop(void);
+#endif  /* ZB_MACSPLIT_ENABLE_BOOT_IND_WATCHDOG */
 #endif /* ZB_MACSPLIT_HOST */
 
 #if defined ZB_MACSPLIT_DEVICE
@@ -431,7 +442,7 @@ typedef struct zb_macsplit_transport_context_s
   ZB_VOLATILE zb_macsplit_transport_buffer_t   rx_buffer;   /*!< buffer for incoming data used by osif layer */
   ZB_VOLATILE zb_macsplit_transport_buffer_t   tx_buffer;   /*!< buffer for outcoming data used by osif layer */
 #endif
-#if defined ZB_MACSPLIT_DEVICE && (defined ZB_SERIAL_FOR_TRACE || defined ZB_TRACE_OVER_USART || defined ZB_DUMP_OVER_MACSPLIT)
+#if defined ZB_MACSPLIT_DEVICE && defined ZB_TRACE_OVER_USART
   zb_uint8_t                       trace_buffer[ZB_MACSPLIT_TRACE_BUF_SIZE]; /*!< inner buffer for sending trace to HW */
   zb_short_t                       trace_buffer_data;
 #endif
@@ -566,5 +577,50 @@ void macsplit_ack_by_conf_param(zb_bufid_t param);
 zb_uint8_t macsplit_pkt_number_add(zb_uint8_t num, zb_int8_t inc);
 
 zb_uint8_t macsplit_pkt_number_add(zb_uint8_t num, zb_int8_t inc);
+
+
+#ifdef ZB_MACSPLIT_TRANSPORT_EXTERNAL
+
+/* If MAC-split external transport is enabled, some other layer (i.e. application)
+ * should handle sending and receiving of raw data stream.
+ * Internal MAC-split IO buffers (RX and TX) are not used.
+ *
+ * External layer should meet the following requirements:
+ *  - All functions with the zb_macsplit_transport_external_ prefix
+ *    should be implemented according to their description.
+ *  - zb_macsplit_transport_recv_byte() should be called when raw MAC-split byte is received.
+ *    The function is allowed to be called in an interrupt context.
+ * */
+
+/**
+ * @brief MAC-split calls the function to initialize external transport
+ */
+void zb_macsplit_transport_external_init_io(void);
+
+
+/**
+ * @brief MAC-split calls the function to deinitialize external transport
+ */
+void zb_macsplit_transport_external_deinit_io(void);
+
+/**
+ * @brief MAC-split calls the function on packet sending to check the ability to send
+ * the packet immediately.
+ *
+ * @return zb_bool_t ZB_TRUE if the MAC-split transport port is open (data portion can be sent) and ZB_FALSE otherwise
+ */
+zb_bool_t zb_macsplit_transport_external_is_open(void);
+
+/**
+ * @brief MAC-split calls the function to send raw data portion
+ *
+ * @param data data pointer
+ * @param len data portion length
+ * @param retransmit ZB_TRUE if the function is called to retransmit some data
+ * @return zb_ret_t RET_OK for successful data sending or RET_BUSY if the transport is busy
+ */
+zb_ret_t zb_macsplit_transport_external_put_bytes(const zb_uint8_t *data, zb_uint16_t len, zb_bool_t retransmit);
+
+#endif /* ZB_MACSPLIT_TRANSPORT_EXTERNAL */
 
 #endif /* ZB_MACSPLIT_TRANSPORT_H */

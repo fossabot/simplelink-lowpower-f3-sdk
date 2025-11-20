@@ -104,8 +104,15 @@ extern "C"
 #define UFALSE 0U
 #endif
 
-#ifndef NULL
-#define NULL 0L
+// Fix to stdint.h definitions
+#ifdef UINT8_MAX
+#undef UINT8_MAX
+#define UINT8_MAX 255U
+#endif
+
+#ifdef UINT16_MAX
+#undef UINT16_MAX
+#define UINT16_MAX 65535U
 #endif
 
 /// @endcond // NODOC
@@ -315,6 +322,10 @@ typedef uint32_t        halDataAlign_t;
 #define NO_INIT    __no_init
 #define WEAK_FUNC __weak
 
+/* ----------- KEIL Compiler ----------- */
+#elif defined __KEIL__
+#define ASM_NOP   __nop()
+
 /* ----------- CCS Compiler ----------- */
 #elif defined __TI_COMPILER_VERSION || defined __TI_COMPILER_VERSION__
 #define ASM_NOP    asm(" NOP")
@@ -324,6 +335,10 @@ typedef uint32_t        halDataAlign_t;
 #elif defined __GNUC__
 #define ASM_NOP __asm__ __volatile__ ("nop")
 #define WEAK_FUNC __attribute__((__weak__))
+
+/* ---------- MSVC compiler ---------- */
+#elif _MSC_VER
+#define ASM_NOP __asm NOP
 
 /* ----------- Unrecognized Compiler ----------- */
 #else

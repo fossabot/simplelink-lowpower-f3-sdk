@@ -148,7 +148,8 @@ void mac_software_src_match_update_poll_ind_call_timeout(zb_uint16_t short_addr,
 #endif /* ZB_MAC_POLL_INDICATION_CALLS_REDUCED */
 
 /* **** SOFTWARE PENDING BIT MATCHING ONLY **** */
-#elif defined ZB_MAC_SOFTWARE_PB_MATCHING
+/* Multipan has its own address matching. */
+#elif defined ZB_MAC_SOFTWARE_PB_MATCHING && !defined ZB_MULTIPAN
 
 #define ZB_SRC_MATCH_ADD_SHORT_ADDR(index, short_addr)  \
   mac_software_src_match_add_short_addr(short_addr)
@@ -185,7 +186,7 @@ void mac_software_src_match_update_poll_ind_call_timeout(zb_uint16_t short_addr,
   ZB_TRANSCEIVER_SRC_MATCH_DELETE_IEEE_ADDR(index, ieee_addr)
 
 /* **** HARDWARE PENDING BIT MATCHING ONLY **** */
-#elif (defined ZB_MAC_HARDWARE_PB_MATCHING)
+#elif (defined ZB_MAC_HARDWARE_PB_MATCHING) || defined (ZB_MULTIPAN)
 
 #define ZB_SRC_MATCH_ADD_SHORT_ADDR(index, short_addr) \
   ZB_TRANSCEIVER_SRC_MATCH_ADD_SHORT_ADDR(index, short_addr)

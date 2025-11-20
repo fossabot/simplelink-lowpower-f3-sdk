@@ -792,13 +792,72 @@ These symbols can be used by ELF-based tools (e.g. crc_tool) to manage the optio
                             { name: "Non-Invasive only"},
                             { name: "Require debug authentication" },
                             { name: "Debug not allowed" }
-                        ]
+                        ],
+                        onChange: (inst, ui) => {
+                            let hideDebugAuthConfigs = (inst.debugAuthorization != "Require debug authentication");
+                            ui["debugAuthSecurekeyId"].hidden = hideDebugAuthConfigs;
+                            ui["debugAuthSecurekeyPublicHash"].hidden = hideDebugAuthConfigs;
+                            ui["debugAuthNonSecurekeyId"].hidden = hideDebugAuthConfigs;
+                            ui["debugAuthNonSecurekeyPublicHash"].hidden = hideDebugAuthConfigs;
+                            ui["challengeVectorDeviceConst"].hidden = hideDebugAuthConfigs;
+                            ui["challengeVectorLifetime"].hidden = hideDebugAuthConfigs;
+                        }
                     },
                     {
                         name: "debugAllowBldr",
                         displayName: "Allow Bootloader Debugging",
                         default: true,
                         deprecated  : true
+                    },
+                    {
+                        name: "debugAuthSecurekeyId",
+                        displayName: "Secure Key Pair Id",
+                        longDescription: "Hex-formatted 8 byte Id value of Secure Key Pair",
+                        hidden: true,
+                        default: "ffffffffffffffff"
+                    },
+                    {
+                        name: "debugAuthSecurekeyPublicHash",
+                        displayName: "Secure Key Pair Public Key Hash",
+                        longDescription: "Hex-formatted SHA256-hash of user-supplied Public Key (DER format)",
+                        hidden: true,
+                        default: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                    },
+                    {
+                        name: "debugAuthNonSecurekeyId",
+                        displayName: "Non-Secure Key Pair Id",
+                        longDescription: "Hex-formatted 8 byte Id value of Non Secure Key Pair",
+                        hidden: true,
+                        default: "ffffffffffffffff"
+                    },
+                    {
+                        name: "debugAuthNonSecurekeyPublicHash",
+                        displayName: "Non-Secure Key Pair Public Key Hash",
+                        longDescription: "Hex-formatted SHA256-hash of user-supplied Public Key (DER format)",
+                        hidden: true,
+                        default: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                    },
+                    {
+                        name: "challengeVectorDeviceConst",
+                        displayName: "Constant To Use For Challenge Vector",
+                        longDescription: "Specifies whether to use device MAC address or zeroed constant for challenge vector",
+                        options: [
+                            { displayName: "Device MAC Address", name: "SCFG_DBGAUTH_DEVICE_MAC_CONST" },
+                            { displayName: "All Zeros", name: "SCFG_DBGAUTH_ZERO_CONST" }
+                        ],
+                        hidden: true,
+                        default: "SCFG_DBGAUTH_DEVICE_MAC_CONST"
+                    },
+                    {
+                        name: "challengeVectorLifetime",
+                        displayName: "Lifetime Of Challenge Vector",
+                        longDescription: "Specifies whether challenge vector uses a random value or a reusable zeroed value",
+                        options: [
+                            { displayName: "Random Challenge Vector", name: "SCFG_DBGAUTH_EPHEMERAL_LIFETIME" },
+                            { displayName: "Reusable Challenge Vector", name: "SCFG_DBGAUTH_ENDLESS_LIFETIME"}
+                        ],
+                        hidden: true,
+                        default: "SCFG_DBGAUTH_EPHEMERAL_LIFETIME"
                     },
                     {
                         name: "debugPwdId",
@@ -1949,6 +2008,26 @@ function validate(inst, validation) {
     if (inst.chipEraseRetain_mainSectors256_511 > 0xFFFFFFFF) {
         Common.logError(validation, inst, "chipEraseRetain_mainSectors256_511",
             "Must be 32-bit value");
+    }
+
+    if (!(inst.debugAuthNonSecurekeyPublicHash.match(/^[a-fA-F0-9]{0,64}$/))) {
+        Common.logError(validation, inst, "debugAuthNonSecurekeyPublicHash",
+            "Must be valid hex-formatted SHA256 hash");
+    }
+
+    if (!(inst.debugAuthSecurekeyPublicHash.match(/^[a-fA-F0-9]{0,64}$/))) {
+        Common.logError(validation, inst, "debugAuthSecurekeyPublicHash",
+            "Must be valid hex-formatted SHA256 hash");
+    }
+
+    if (!(inst.debugAuthSecurekeyId.match(/^[a-fA-F0-9]{0,16}$/))) {
+        Common.logError(validation, inst, "debugAuthSecurekeyId",
+            "Must be 64-bit hex-formatted value");
+    }
+
+    if (!(inst.debugAuthNonSecurekeyId.match(/^[a-fA-F0-9]{0,16}$/))) {
+        Common.logError(validation, inst, "debugAuthNonSecurekeyId",
+            "Must be 64-bit hex-formatted value");
     }
 
     if (!(inst.hsmPublicKeyHash.match(/^[a-fA-F0-9]{0,64}$/))) {

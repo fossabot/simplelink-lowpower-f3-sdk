@@ -92,7 +92,7 @@ extern uint8_t llGetNextConn(void);
 extern llConnState_t* llDataGetConnPtr(uint8_t connId);
 extern uint8 llConnExists(uint8_t* peerAddr, uint8_t peerAddrType);
 extern hciStatus_t hciCmdParserConnection(uint8_t* pData, uint16_t cmdOpCode);
-extern hciStatus_t hciCmdParserVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode);
+extern hciStatus_t hciCmdParserExtVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode);
 extern uint8_t llRxEntryDoneEventHandleStateConnection(void);
 extern void llProcessTxData(void);
 extern void LL_RxDataCompleteCback(uint16_t connHandle, uint8_t* pBuf, uint16_t len, uint8_t fragFlag, int8_t rssi);
@@ -114,13 +114,14 @@ extern void llsdaaDisableConnTXData(uint16_t connId);
 extern void llConnSetRejectIndExt(llConnState_t * connPtr, uint8 rejectOpcode, uint8 errorCode);
 extern void LL_GetConnTxUsageParams(llTxUsageParams_t* pConnTxParams);
 
+
 // Wrapper functions for the feature implementations
 llStatus_t OPT_LL_ConnActive(uint16_t connId);
 uint8_t OPT_llGetNextConn(void);
 llConnState_t* OPT_llDataGetConnPtr(uint8_t connId);
 uint8 OPT_llConnExists(uint8_t* peerAddr, uint8_t peerAddrType);
 hciStatus_t OPT_hciCmdParserConnection(uint8_t* pData, uint16_t cmdOpCode);
-hciStatus_t OPT_hciCmdParserVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode);
+hciStatus_t OPT_hciCmdParserExtVendorSpecificConnection(uint8_t* pData, uint16_t cmdOpCode);
 uint8_t OPT_llRxEntryDoneEventHandleStateConnection(void);
 void OPT_llProcessTxData(void);
 void OPT_LL_RxDataCompleteCback(uint16_t connHandle, uint8_t* pBuf, uint16_t len, uint8_t fragFlag, int8_t rssi);

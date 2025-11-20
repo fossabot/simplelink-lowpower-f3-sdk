@@ -132,7 +132,7 @@ const config = {
             displayName: "Max Size of PDU (bytes)",
             default: 69,
             longDescription: Docs.maxPDUSizeLongDescription
-        }
+        },
     ]
 };
 

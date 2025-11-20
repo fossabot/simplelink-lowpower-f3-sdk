@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, Texas Instruments Incorporated
+# Copyright (c) 2022-2025, Texas Instruments Incorporated
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ ti_init_package(NAMESPACE ThirdPartyHSMDDKLib)
 
 foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
     if(${TI_PLATFORM} STREQUAL "cc27xx")
-        ti_init_package(NAMESPACE ThirdPartyHSMDDKLib PACKAGE_NAME CC27XX)
+        ti_init_package(NAMESPACE ThirdPartyHSMDDKLib PACKAGE_NAME CC27XX DEPENDS_ON DriversLPF3 TiUtils)
 
         ti_add_package_dependency(DriverlibCC27XX)
         ti_add_library(
@@ -46,7 +46,7 @@ foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
             SOURCES ${SOURCES_CC27XX}
             ARCH m33f
             ADD_SDK_INCLUDE_PATH source
-            LINK_PUBLIC CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
+            LINK_PUBLIC Drivers::drivers_${TI_PLATFORM} CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
             Driverlib::${TI_PLATFORM}
         )
 
@@ -56,7 +56,7 @@ foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
             SOURCES ${SOURCES_ITS_CC27XX}
             ARCH m33f
             ADD_SDK_INCLUDE_PATH source
-            LINK_PUBLIC CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
+            LINK_PUBLIC Drivers::drivers_${TI_PLATFORM} CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
             Driverlib::${TI_PLATFORM}
         )
 
@@ -69,7 +69,7 @@ foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
 
         ti_export_package()
     elseif(${TI_PLATFORM} MATCHES "cc35")
-        ti_init_package(NAMESPACE ThirdPartyHSMDDKLib PACKAGE_NAME CC35XX)
+        ti_init_package(NAMESPACE ThirdPartyHSMDDKLib PACKAGE_NAME CC35XX DEPENDS_ON DriversWFF3 TiUtils)
 
         ti_add_package_dependency(DriverlibCC35XX)
         ti_add_library(
@@ -78,7 +78,7 @@ foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
             SOURCES ${SOURCES_CC35XX}
             ARCH m33f
             ADD_SDK_INCLUDE_PATH source
-            LINK_PUBLIC CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
+            LINK_PUBLIC Drivers::drivers_${TI_PLATFORM} CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
             Driverlib::${TI_PLATFORM}
         )
 
@@ -88,7 +88,7 @@ foreach(TI_PLATFORM ${SUPPORTED_PLATFORMS})
             SOURCES ${SOURCES_ITS_CC35XX}
             ARCH m33f
             ADD_SDK_INCLUDE_PATH source
-            LINK_PUBLIC CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
+            LINK_PUBLIC Drivers::drivers_${TI_PLATFORM} CMakeCommon::${TI_TOOLCHAIN_NAME}_${ARCH_${TI_PLATFORM}}
             Driverlib::${TI_PLATFORM}
         )
 

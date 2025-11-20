@@ -189,6 +189,15 @@ PACKED_TYPEDEF_STRUCT
   // while the RCL filterList will point to the numEntries (start of the RCL_FilterList)
 } alTable_t;
 
+// @brief Enum for filter list types.
+typedef enum
+{
+  LL_ACCEPT_LIST = 0,   // Accept List table (manges by the host)
+  LL_SCAN_FILTER_LIST,  // Scan Filter List table (for scanner command to handle
+                        // with duplicate filtering)
+  LL_DENY_LIST          // Deny List table (for advertiser command to ignore devices)
+} llFilterListType_e;
+
 /*******************************************************************************
  * LOCAL VARIABLES
  */
@@ -197,44 +206,37 @@ PACKED_TYPEDEF_STRUCT
  * GLOBAL VARIABLES
  */
 
-extern alTable_t *alTable;
-extern alTable_t *alTableScan;
-
 /*******************************************************************************
  * GLOBAL ROUTINES
  */
 
-extern void       AL_Init( alTable_t * );
+void       AL_Init( alTable_t *, uint8_t );
 
-extern void       AL_Scan_Init( alTable_t * );
+llStatus_t AL_Clear( alTable_t * );
 
-extern llStatus_t AL_Clear( alTable_t * );
+void       AL_ClearEntry( alEntry_t * );
 
-extern void       AL_ClearEntry( alEntry_t * );
+uint8      AL_GetSize( alTable_t * );
 
-extern uint8      AL_GetSize( alTable_t * );
+uint8      AL_GetNumFreeEntries(  alTable_t * );
 
-extern uint8      AL_GetNumFreeEntries(  alTable_t * );
+uint8      AL_FindEntry( alTable_t *, uint8 *, uint8 );
 
-extern uint8      AL_FindEntry( alTable_t *, uint8 *, uint8 );
+llStatus_t AL_AddEntry( alTable_t *, uint8 *, uint8, uint8 );
 
-extern llStatus_t AL_AddEntry( alTable_t *, uint8 *, uint8, uint8 );
+llStatus_t AL_RemoveEntry( alTable_t *, uint8 *, uint8 );
 
-extern llStatus_t AL_RemoveEntry( alTable_t *, uint8 *, uint8 );
+llStatus_t AL_SetAlIgnore( alTable_t *, uint8 *, uint8 );
 
-extern llStatus_t AL_SetAlIgnore( alTable_t *, uint8 *, uint8 );
+llStatus_t AL_ClearIgnoreList( alTable_t * );
 
-extern llStatus_t AL_ClearIgnoreList( alTable_t * );
+void       AL_Free( alEntry_t * );
 
-extern alEntry_t *AL_Alloc( uint8 );
+alEntry_t *AL_Copy( alEntry_t *, alEntry_t * );
 
-extern void       AL_Free( alEntry_t * );
+alTable_t *AL_GetFilterListPtr( llFilterListType_e );
 
-extern alEntry_t *AL_Copy( alEntry_t *, alEntry_t * );
-
-extern alTable_t *AL_GetALPtr( void );
-
-alTable_t *AL_GetScanFLPtr( void );
+alTable_t *AL_Alloc( uint8_t, llFilterListType_e );
 
 /*******************************************************************************
  */

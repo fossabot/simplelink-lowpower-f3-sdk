@@ -71,7 +71,7 @@ typedef enum zb_zgpd_comm_state_e
 zb_zgpd_comm_state_t;
 
 #define ZGPD_COMMISSIONING_IN_PROGRESS() \
-  ((ZGPD->comm_state == ZB_ZGPD_STATE_COMM_IN_PROGRESS)||(ZGPD->comm_state == ZB_ZGPD_STATE_COMM_SENT_SUCCESS))
+  (ZGPD->comm_state == ZB_ZGPD_STATE_COMM_IN_PROGRESS)
 
 #define ZGPD_IS_COMMISSIONED() \
   (ZGPD->comm_state == ZB_ZGPD_STATE_COMMISSIONED)
@@ -160,6 +160,15 @@ zb_zgpd_ch_options_t;
 #define ZGPD_MAX_MS_CLST_PER_DIR 2
 #define ZGPD_MAX_MS_CLUSTERS (ZGPD_MAX_MS_CLST_PER_DIR * 2)
 
+#define ZGPD_MAX_GPDF_SUCCESS_RETRY_COUNT 5
+
+/* See GP spec A.3.9.1 The procedure, 3. GPD commissioning state machine, item c
+   If the GPD automatically progresses to transmission of Success GPDF (without a separate user
+   6092 interaction/user trigger), then the Success GPDF SHALL be sent at least 50ms after the
+   6093 successful reception of GPD Commissioning Reply command.
+*/
+#define ZGPD_GPDF_SUCCESS_TX_DELAY_MS 50u
+
 #define ZGPD_MS_CLUSTERS_INFO_FILL(srv, cli)\
   (((srv) & 0x0F) | (((cli) & 0x0F) << 4))
 
@@ -242,6 +251,7 @@ typedef struct zb_zgpd_ctx_s
   zb_bool_t         rx_on_when_idle;
 
   zb_uint8_t        comm_state;
+  zb_uint8_t        retry_send_success_gpdf_count;
 
   zb_callback_t     user_cb;     /**< User callback for incoming data */
   zb_callback_t     comm_cb;     /**< Callback that is called after commissioning completes */

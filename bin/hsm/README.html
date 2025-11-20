@@ -63,7 +63,7 @@
 <ul>
 <li>Both CCS and Uniflash provide the same HSM FW provisioning functionality</li>
 <li>This method will have no other effects on the contents of MAIN FLASH meaning if your application was already programmed, it will still be there after provisioning</li>
-<li>Please see the “Programming the Hardware Security Module (HSM)” section of the SDK docs more details on how to use CCS or Uniflash to provision the HSM FW with the <code>*.bin</code> file in this directory</li>
+<li>Please see the “Programming the Hardware Security Module (HSM)” section of the SDK docs for more details on how to use CCS or Uniflash to provision the HSM FW with the <code>*.bin</code> file in this directory</li>
 </ul></li>
 <li>IAR
 <ul>
@@ -76,7 +76,7 @@
 <li>Requires the new HSM FW update binary to be staged into MAIN FLASH (max 96KB)</li>
 <li>Requires the app to communicate basic information to System ROM finally ending in a software reset of the device</li>
 <li>ROM will securely perform the HSM FW update and return functionality back to the app which can evaluate the result accordingly</li>
-<li>Please find the example demonstrating this method in the SDK at <code>&lt;sdk&gt;/examples/&lt;nortos|rtos&gt;/LP_EM_CC2745R10_Q1/hsm/hsmfwupdate</code></li>
+<li>Please find the example demonstrating this method in the SDK at <code>&lt;sdk&gt;/examples/&lt;nortos|rtos&gt;/&lt;board&gt;/hsm/hsmfwupdate</code></li>
 <li>The <code>hsmfwupdate</code> example has been pre-built for you resulting in a <code>*.out</code> file in this directory which you can program directly to your device</li>
 <li>Learn more about how to use this example by reading the <code>README.md</code> at the root of the <code>hsmfwupdate</code> example directory</li>
 </ul></li>

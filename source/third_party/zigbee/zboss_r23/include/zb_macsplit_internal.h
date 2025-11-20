@@ -214,6 +214,11 @@ void zb_get_tx_power_async_macsplit(zb_bufid_t param);
 #define zb_mlme_start_request                 zb_mlme_start_request_macsplit
 #define zb_mcps_purge_indirect_queue_request  zb_mcps_purge_indirect_queue_request_macsplit
 #define zb_mac_cancel_scan                    zb_mac_cancel_scan_macsplit
+
+/* These calls are needed for MAC cert tests. */
+#if defined ZB_MAC_TESTING_MODE
+#define zb_mac_resp_by_empty_frame            zb_mac_resp_by_empty_frame_macsplit
+#endif /* ZB_MAC_TESTING_MODE */
 #endif /* defined(ZB_MAC_INTERFACE_SINGLE) && defined(ZB_MACSPLIT_HOST) */
 
 /**
@@ -228,7 +233,7 @@ void zb_macsplit_handle_call(zb_bufid_t param, zb_transport_call_type_t call_typ
 
 zb_bool_t zb_macsplit_call_is_conf(zb_transport_call_type_t call_type);
 
-#if defined ZB_MACSPLIT_DEVICE
+#if defined ZB_TRACE_LEVEL && defined ZB_MACSPLIT_DEVICE
 void zb_macsplit_transport_put_trace_bytes(const zb_uint8_t *buf, zb_short_t len);
 void zb_macsplit_transport_send_trace(zb_uint8_t *buf, zb_short_t len);
 void zb_macsplit_transport_flush_trace(void);
@@ -281,9 +286,19 @@ void zb_macsplit_transport_handle_packet(void);
 
 void zb_macsplit_transport_recv_byte(zb_uint8_t byte);
 
+#if defined ZB_MACSPLIT_TRANSPORT_MUX && defined ZB_MACSPLIT_DEVICE
+void zb_macsplit_transport_recv_byte_from_mux(zb_uint8_t byte);
+#endif
+
 void zb_macsplit_spinel_recv_pkt(zb_uint8_t *ppkt, zb_uint_t pkt_len);
 
 void zb_macsplit_trace_dump_to_file(zb_uint8_t *rx_buf, zb_uint8_t len);
+
+#if defined ZB_MACSPLIT_HOST && defined ZB_MACSPLIT_SPINEL && !defined ZB_MACSPLIT_RESET_DEVICE_AT_START
+/* Sends empty hdlc frame to muxer just after host starts.
+   Needed only to wake muxer up and set connected state for ZB NLI. */
+void zb_macsplit_spinel_send_boot_ind_to_mux(void);
+#endif /* ZB_MACSPLIT_SPINEL && !ZB_MACSPLIT_RESET_DEVICE_AT_START */
 
 #define GET_MACSPLIT_MAC_ENCRYPTION_BUF() SEC_CTX_ENCRYPTION_BUF(GET_MACSPLIT_IFACE_ID())
 #define GET_MACSPLIT_MAC_ENCRYPTION_BUF2() SEC_CTX_ENCRYPTION_BUF2(GET_MACSPLIT_IFACE_ID())

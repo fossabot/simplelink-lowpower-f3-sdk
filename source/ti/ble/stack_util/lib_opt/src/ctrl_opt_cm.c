@@ -147,4 +147,9 @@ void OPT_llCmUpdateScanDuration(llConnState_t* connPtr)
     llCmUpdateScanDuration(connPtr);
 }
 
+bool OPT_llCmSwitchToAdjustmentIfNeeded(llConnState_t* connPtr, bool force)
+{
+    return llCmSwitchToAdjustmentIfNeeded(connPtr, force);
+}
+
 #endif /* defined(CONNECTION_MONITOR) */

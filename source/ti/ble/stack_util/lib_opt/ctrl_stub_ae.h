@@ -111,6 +111,8 @@ extern void llAESetFeatureBit(void);
 extern bool llAE_NextAdvIsExtended(void);
 extern uint8 LL_AE_GetNextChannel(void);
 extern void LL_AE_GetTxUsageParams(llTxUsageParams_t* pExtAdvTxParams);
+extern void setAeBleUserConfig(void);
+
 
 // Wrapper functions for the feature implementations
 llStatus_t OPT_llSetExtendedAdvParams(advSet_t* pAdvSet, aeSetParamCmd_t* pCmdParams);
@@ -141,5 +143,6 @@ void OPT_llAESetFeatureBit(void);
 bool OPT_llAE_NextAdvIsExtended(void);
 uint8 OPT_LL_AE_GetNextChannel(void);
 void OPT_LL_AE_GetTxUsageParams(llTxUsageParams_t* pExtAdvTxParams);
+void OPT_setAeBleUserConfig(void);
 
 #endif /* CTRL_AE_H_ */

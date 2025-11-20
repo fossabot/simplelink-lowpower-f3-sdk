@@ -25,8 +25,8 @@ from ble_device import (
     CentralEventType,
     ConnectionRoleType,
     CmEventType,
-    CmrConnectionRoleTypes,
     CmConnUpdateType,
+    CmPacketStatus,
     ConnectionEventStatus,
     CmConnUpdateType,
 )
@@ -118,14 +118,27 @@ def print_stop_info(stop_event):
 
 
 def print_report(report):
-    print(f"Received new report")
-    print(f"Connection Handle: {report['connection_handle']}")
-    print(f"Status:            {report['status']}")
-    print(f"Packet Length:     {report['packet_len']}")
-    print(f"Connection Role:   {CmrConnectionRoleTypes(report['conn_role']).name}")
-    print(f"RSSI:              {report['rssi']}")
-    print(f"SN:                {report['sn']}")
-    print(f"NESN:              {report['nesn']}")
+    print("Received new report")
+    print(f"Event:                 {report['event']}")
+    print(f"Access Address:        {report['access_addr']}")
+    print(f"Connection Handle:     {report['connection_handle']}")
+    print(f"Connection Event :     {report['connection_event_counter']}")
+    print(f"Channel:               {report['channel']}")
+    print("Packets:")
+    print(f"  Packet1 Timestamp:     {report['packets'][0]['timestamp']}")
+    print(
+        f"  Packet1 Status:        {CmPacketStatus(report['packets'][0]['status']).name}"
+    )
+    print(f"  Packet1 RSSI:          {report['packets'][0]['rssi']}")
+    print(f"  Packet1 Packet Length: {report['packets'][0]['packet_len']}")
+    print(f"  Packet1 SN/NESN:       {report['packets'][0]['sn_nesn']}")
+    print(f"  Packet2 Timestamp:     {report['packets'][1]['timestamp']}")
+    print(
+        f"  Packet2 Status:        {CmPacketStatus(report['packets'][1]['status']).name}"
+    )
+    print(f"  Packet2 RSSI:          {report['packets'][1]['rssi']}")
+    print(f"  Packet2 Packet Length: {report['packets'][1]['packet_len']}")
+    print(f"  Packet2 SN/NESN:       {report['packets'][1]['sn_nesn']}")
     print("------------------------------------------------------")
 
 
@@ -167,7 +180,7 @@ def update_connection(conn_node, cm_node):
             cm_node.cm.update_conn(evt)
 
 
-def enable_connection_monitor(car_node, cmr_node, conn_handle, connection_role):
+def enable_connection_monitor(car_node, cmr_node, conn_handle):
     # Get the information of the active connection
     car_node.cm.start_cm_serving(conn_handle)
 
@@ -181,8 +194,6 @@ def enable_connection_monitor(car_node, cmr_node, conn_handle, connection_role):
         time_delta=50000,
         time_delta_err=0,
         max_sync_attempts=3,
-        adjustment_events=4,
-        conn_role=connection_role,
         data_len=conn_info["data_len"],
         data=conn_info["data"],
     )
@@ -309,16 +320,8 @@ def main():
                     )
                     print_l2cap_conn(l2cap_conn_event)
 
-                # Transfer the connection data to the connection monitor to start monitoring the connection
-                cm_conn_role = CmrConnectionRoleTypes.CM_CONNECTION_ROLE_PERIPHERAL
-                if connection_role == ConnectionRoleType.CENTRAL_ROLE:
-                    cm_conn_role = CmrConnectionRoleTypes.CM_CONNECTION_ROLE_CENTRAL
-
                 enable_connection_monitor(
-                    car_node,
-                    cmr_node,
-                    connection_data["connection_handle"],
-                    cm_conn_role,
+                    car_node, cmr_node, connection_data["connection_handle"]
                 )
 
             if auto_update == True:

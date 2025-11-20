@@ -522,9 +522,26 @@ zb_ret_t zb_channel_page_list_unset_channel(zb_channel_list_t list,
                                             zb_uint8_t         idx,
                                             zb_uint8_t         channel_number);
 
+/**
+ * @brief Counts a number of set channels at the specified index in the channel list.
+ *
+ * @param list - channel list
+ * @param idx - index of channel page for which channel mask a number of channels should be counted
+ *
+ * @return a number of set channels
+ */
 zb_uint8_t zb_channel_page_list_get_channels_num(zb_channel_list_t list,
                                                  zb_uint8_t         idx);
 
+/**
+ * @brief Counts a number of set channels in the provided channel mask.
+ *
+ * @param page - channel page
+ * @param channel_mask - channel mask
+ *
+ * @return a number of set channels
+ */
+zb_uint8_t zb_channel_mask_get_channels_num(zb_uint8_t page, zb_uint32_t channel_mask);
 
 #ifdef ZB_MAC_CONFIGURABLE_TX_POWER
 /**

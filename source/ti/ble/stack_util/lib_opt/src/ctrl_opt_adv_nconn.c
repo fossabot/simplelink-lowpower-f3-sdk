@@ -130,9 +130,9 @@ hciStatus_t OPT_hciCmdParserAdvertiser(uint8_t* pData, uint16_t cmdOpCode)
     return hciCmdParserAdvertiser(pData, cmdOpCode);
 }
 
-hciStatus_t OPT_hciCmdParserVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode)
+hciStatus_t OPT_hciCmdParserExtVendorSpecificBroadcaster(uint8_t* pData, uint16_t cmdOpCode)
 {
-    return hciCmdParserVendorSpecificBroadcaster(pData, cmdOpCode);
+    return hciCmdParserExtVendorSpecificBroadcaster(pData, cmdOpCode);
 }
 
 void OPT_LL_rclAdvRxEntryDone(void)
@@ -175,7 +175,7 @@ void OPT_LL_DisableAdvSets(void)
     LL_DisableAdvSets();
 }
 
-cmErrorCodes_e OPT_llCmDisableCurAdv(void)
+uint8_t OPT_llCmDisableCurAdv(void)
 {
     return llCmDisableCurAdv();
 }

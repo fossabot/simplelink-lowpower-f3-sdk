@@ -126,6 +126,12 @@ function create(phyGroup) {
         var regulatoryMask     = getRegulatoryDomainMask(regulatoryDomainNameList);
         var maxTxPowerInt      = Math.floor(maxTxPower * 2) >> 1;
         var maxTxPowerFract    = Math.floor(maxTxPower * 2) & 1;
+        if (minFreq < 0) {
+            minFreq = 0x0000;
+        }
+        if (maxFreq < 0) {
+            maxFreq = 0xFFFF;
+        }
         return "{ .minFreq = " + minFreq + ", .maxFreq = " + maxFreq + ", .regulatoryMask = 0x" + hexString(regulatoryMask, 2) + ", .maxTxPower = { .fraction = " + maxTxPowerFract + ", .dBm = " + maxTxPowerInt + " } }"
     }
 
@@ -172,131 +178,6 @@ function create(phyGroup) {
             mask |= 0xFF;
         }
         return mask
-    }
-
-    function packetTxGenView() {
-        var sections = [];
-
-        // Add header
-        var n = 0;
-        sections[n++] = "Transmitted packet (non-connectable advertising event)";
-
-        // Add preamble
-        sections[n++] = "Preamble;010101...";
-
-        // Add access address
-        sections[n++] = "Access address;" + byteString(valueToBytesBe(getRclCommandField("CMD_GENERIC_TX.syncWord"), 4));
-
-        // Add PDU header
-        var packetData = [getDataArray()];
-        sections[n++] = "PDU header;" + byteString(packetData.slice(0, 0 + 2));
-
-        // Add extended header
-        sections[n++] = "Extended header;" + byteString(packetData.slice(2, 2 + 1)) + ";" + byteString(packetData.slice(3, 3 + 1)) + ";" +
-                        byteString(packetData.slice(4, 4 + 6)) + ";" + byteString(packetData.slice(10, 10 + 2));
-
-        // Constrain displayed payload to 100 bytes
-        var payloadSuffix = "";
-        var maxPayloadLength = 100;
-        var payloadLength = packetData.length - 12;
-        if (payloadLength > maxPayloadLength) {
-            payloadSuffix = " + " + (payloadLength - maxPayloadLength) + " byte(s)"
-            payloadLength = maxPayloadLength;
-        }
-
-        // Add payload
-        if (getTestProperty("seqNumberEnable") == 0) {
-            sections[n++] = "Advertising data;%" + byteString(packetData.slice(12, 12 + payloadLength)) + payloadSuffix;
-        } else {
-            sections[n++] = "Advertising data;Seq.;%" + byteString(packetData.slice(12 + 2, 12 + payloadLength)) + payloadSuffix;
-        }
-
-        // Add CRC
-        sections[n++] = genCrcSection(getRclRegisterField("PBE_GENERIC_RAM.NUMCRCBITS.VAL,sub_phy:1_mbps,test"));
-
-        return sections;
-    }
-
-    function packetTxGenView() {
-        var sections = [];
-
-        // Add header
-        var n = 0;
-        sections[n++] = "Transmitted packet (SmartRF Studio 7 compatible)";
-
-        // Add preamble
-        sections[n++] = "Preamble;00 00 00 00";
-
-        // Add start of frame delimiter (SDF)
-        sections[n++] = "SFD;" + byteString([getPhyProperty("sfd")]);
-
-        // Add length
-        var packetLengthSize = 1;
-        var packetData = [getDataArray()];
-        sections[n++] = "Length;" + byteString(packetData.slice(0, 0 + packetLengthSize));
-
-        // Constrain displayed payload to 100 bytes
-        var payloadSuffix = "";
-        var maxPayloadLength = 100;
-        var payloadLength = packetData.length - packetLengthSize;
-        if (payloadLength > maxPayloadLength) {
-            payloadSuffix = " + " + (payloadLength - maxPayloadLength) + " byte(s)"
-            payloadLength = maxPayloadLength;
-        }
-
-        // Add payload
-        if (getTestProperty("seqNumberEnable") == 0) {
-            sections[n++] = "Payload;%" + byteString(packetData.slice(packetLengthSize, packetLengthSize + payloadLength)) + payloadSuffix;
-        } else {
-            sections[n++] = "Payload;Seq.;%" + byteString(packetData.slice(packetLengthSize + 2, packetLengthSize + payloadLength)) + payloadSuffix;
-        }
-
-        // Add CRC
-        sections[n++] = genCrcSection(getRclRegisterField("PBE_GENERIC_RAM.NUMCRCBITS.VAL,test"));
-
-        return sections;
-    }
-
-    function packetTxGenView() {
-        var sections = [];
-
-        // Add header
-        var n = 0;
-        sections[n++] = "Transmitted packet";
-
-        // Add preamble
-        sections[n++] = "Preamble;010101...";
-
-        // Add synchronization word
-        sections[n++] = "Sync. word;" + byteString(valueToBytesBe(getPhyProperty("syncWord"), 4));
-
-        // Add header?
-        var packetLengthSize = getPhyProperty("packetLengthSize");
-        var packetData = [getDataArray()];
-        if (packetLengthSize > 0) {
-            sections[n++] = "Header;" + byteString(packetData.slice(0, 0 + packetLengthSize));
-        }
-
-        // Constrain displayed payload to 100 bytes
-        var payloadSuffix = "";
-        var maxPayloadLength = 100;
-        var payloadLength = packetData.length - packetLengthSize;
-        if (payloadLength > maxPayloadLength) {
-            payloadSuffix = " + " + (payloadLength - maxPayloadLength) + " byte(s)"
-            payloadLength = maxPayloadLength;
-        }
-
-        // Add payload
-        if (getTestProperty("seqNumberEnable") == 0) {
-            sections[n++] = "Payload;%" + byteString(packetData.slice(packetLengthSize, packetLengthSize + payloadLength)) + payloadSuffix;
-        } else {
-            sections[n++] = "Payload;Seq.;%" + byteString(packetData.slice(packetLengthSize + 2, packetLengthSize + payloadLength)) + payloadSuffix;
-        }
-
-        // Add CRC
-        sections[n++] = genCrcSection(getRclRegisterField("PBE_GENERIC_RAM.NUMCRCBITS.VAL,test"));
-
-        return sections;
     }
 
     function zeroPadStart(valueString, width) {
@@ -346,6 +227,15 @@ function create(phyGroup) {
         return Math.floor(getPpFrequency() * 1e6);
     }
 
+    function testGenRegulatoryDomainMask() {
+
+        // Find the name of the regulatory domain
+        var regulatoryDomain = getPhyProperty("regulatoryDomain");
+
+        // Convert to mask
+        return getRegulatoryDomainMask(regulatoryDomain);
+    }
+
     // Exported functions
     return {
         setContext: setContext,
@@ -361,10 +251,8 @@ function create(phyGroup) {
         getPpFrequencyBle: getPpFrequencyBle,
         getPpFrequency154: getPpFrequency154,
         getRegulatoryDomainMask: getRegulatoryDomainMask,
-        packetTxGenView: packetTxGenView,
-        packetTxGenView: packetTxGenView,
-        packetTxGenView: packetTxGenView,
         genCrcSection: genCrcSection,
-        updCfRfFrequency: updCfRfFrequency
+        updCfRfFrequency: updCfRfFrequency,
+        testGenRegulatoryDomainMask: testGenRegulatoryDomainMask
     }
 }

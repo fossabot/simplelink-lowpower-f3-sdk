@@ -101,7 +101,8 @@ const moduleStatic = {
             displayName: "Generate BLE Libraries",
             default: true,
             hidden: true,
-            description: "Configures genLibs usage for local libraries. Always hidden"
+            description: "Configures genLibs usage for local libraries. Always hidden",
+            onChange: onGenLibsChange
         },
         {
             name: "calledFromDeviceRole",
@@ -679,6 +680,9 @@ function onChannelSoundingChange(inst, ui) {
     inst.channelSounding ? inst.hideChannelSoundingGroup = false : inst.hideChannelSoundingGroup = true;
     Common.hideGroup(Common.getGroupByName(inst.$module.config, "channelSoundingConfig"), inst.hideChannelSoundingGroup, ui);
 
+    // The ranging server external control mode should be hidden
+    ui.rangingServerExtCtrlMode.hidden = true;
+
     // The ranging client external control mode should be hidden
     ui.rangingClientExtCtrlMode.hidden = true;
 
@@ -704,6 +708,11 @@ function onL2CAPCOCChange(inst,ui)
 {
     inst.hideL2CAPGroup = inst.L2CAPCOC ? false : true;
     Common.hideGroup(Common.getGroupByName(inst.$module.config, "l2capConfig"), inst.hideL2CAPGroup, ui);
+}
+
+function onGenLibsChange(inst, ui)
+{
+    ui.enableLogging.hidden = inst.genLibs;
 }
 
 /*
@@ -920,7 +929,6 @@ function getAppConfigOpts()
     bleMod.peerConnParamUpdateRejectInd && result.push("-DNOTIFY_PARAM_UPDATE_RJCT");
     bleMod.noOsalSnv && result.push("-DNO_OSAL_SNV");
     bleMod.icallEvents && result.push("-DICALL_EVENTS");
-    bleMod.icallStackAddress && result.push("-DICALL_STACK0_ADDR");
     bleMod.appExternalControlMode && result.push("-DAPP_EXTERNAL_CONTROL");
 
     result.push("-DICALL_MAX_NUM_ENTITIES="+bleMod.maxNumEntIcall,
@@ -982,6 +990,37 @@ function moduleInstances(inst)
     dependencyModule = dependencyModule.concat(peripheralScript.moduleInstances(inst));
     dependencyModule = dependencyModule.concat(broadcasterScript.moduleInstances(inst));
     dependencyModule = dependencyModule.concat(csScript.moduleInstances(inst));
+
+    // If logging is enabled, push a dependency on a log module. args.$name must
+    // match the log module name used in your compilation units. Larger
+    // components may wish to push multiple modules for more granular log
+    // enabling.
+    if (inst.enableLogging === true) {
+        const devFamily = Common.device2DeviceFamily(system.deviceData.deviceId);
+        let defaultLogSink = "ti/log/LogSinkBuf";
+        if (devFamily == "DeviceFamily_CC27XX") {
+            defaultLogSink = "ti/log/LogSinkITM";
+        }
+        dependencyModule.push(
+            {
+                name: "BleCtrlLogModule",
+                displayName: "BLE Controller Log Configuration",
+                moduleName: "/ti/log/LogModule",
+                collapsed: true,
+                args: {
+                    enable_DEBUG: false,
+                    enable_INFO: true,
+                    enable_VERBOSE: false,
+                    enable_WARNING: true,
+                    enable_ERROR: true,
+                    loggerSink: defaultLogSink
+                },
+                requiredArgs: {
+                    $name: "LogModule_BleCtrl"
+                }
+            }
+        );
+    }
 
     if(inst.gattBuilder)
     {

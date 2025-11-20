@@ -4,7 +4,7 @@
  *
  *  Description:    Defines and prototypes for the CAN peripheral.
  *
- *  Copyright (c) 2023 Texas Instruments Incorporated
+ *  Copyright (c) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -303,10 +303,7 @@ __STATIC_INLINE void CANSSDisableInt(uint32_t flags)
 //! \return None
 //
 //*****************************************************************************
-__STATIC_INLINE void CANSSSetEndOfInt(uint32_t eoi)
-{
-    HWREG(CANFD_BASE + CANFD_O_MCANSS_EOI) = eoi;
-}
+void CANSSSetEndOfInt(uint32_t eoi) __attribute__((weak));
 
 //*****************************************************************************
 //
@@ -475,12 +472,7 @@ __STATIC_INLINE uint32_t CANGetRawIntStatus(uint8_t lineNum)
 //! \return None
 //
 //*****************************************************************************
-__STATIC_INLINE void CANClearInt(uint8_t lineNum, uint32_t flags)
-{
-    uint32_t offset = (lineNum == CAN_INT_LINE0) ? CANFD_O_ICLR0 : CANFD_O_ICLR1;
-
-    HWREG(CANFD_BASE + offset) = flags;
-}
+void CANClearInt(uint8_t lineNum, uint32_t flags) __attribute__((weak));
 
 //*****************************************************************************
 //
@@ -516,10 +508,7 @@ __STATIC_INLINE void CANSSSetClockDivider(uint32_t ratio)
 //! \return None
 //
 //*****************************************************************************
-__STATIC_INLINE void CANSSSetClkStopCtrl(uint32_t flags)
-{
-    HWREG(CANFD_BASE + CANFD_O_MCANSS_CLKCTL) |= flags;
-}
+void CANSSSetClkStopCtrl(uint32_t flags) __attribute__((weak));
 
 //*****************************************************************************
 //
@@ -536,10 +525,7 @@ __STATIC_INLINE void CANSSSetClkStopCtrl(uint32_t flags)
 //! \return None
 //
 //*****************************************************************************
-__STATIC_INLINE void CANSSClearClkStopCtrl(uint32_t flags)
-{
-    HWREG(CANFD_BASE + CANFD_O_MCANSS_CLKCTL) &= (uint32_t)~flags;
-}
+void CANSSClearClkStopCtrl(uint32_t flags) __attribute__((weak));
 
 //*****************************************************************************
 //

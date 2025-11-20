@@ -69,6 +69,8 @@
  
  
  *****************************************************************************/
+#ifndef LL_CS_MGR_INTERNAL_H
+#define LL_CS_MGR_INTERNAL_H
 
 /*******************************************************************************
  * INCLUDES
@@ -111,7 +113,7 @@
  * input parameters
  *
  * @param       connId - connection Id
- * @param       configId - CS config Id
+ * @param       pConfigSet - pointer to configuration set
  *
  * output parameters
  *
@@ -119,7 +121,7 @@
  *
  * @return      None
  */
-void llCsSelectTimeConfig(uint16 connId, uint8 configId);
+void llCsSelectTimeConfig(uint16 connId, csConfigurationSet_t* pConfigSet);
 
 /*******************************************************************************
  * @fn          llCsGetBestTime
@@ -139,3 +141,5 @@ void llCsSelectTimeConfig(uint16 connId, uint8 configId);
  * @return      Best Time Config
  */
 uint8 llCsGetBestTime(uint16_t timeCapability, uint8 type);
+
+#endif // LL_CS_MGR_INTERNAL_H

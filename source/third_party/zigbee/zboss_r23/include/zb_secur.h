@@ -161,7 +161,8 @@ typedef ZB_PACKED_PRE struct zb_aps_device_key_pair_set_v2_s
   zb_bitfield_t  aps_link_key_type:1;         /*!< @ref zb_secur_aps_link_key_type_t: unique vs global (r20 stuff) */
   zb_bitfield_t  kn_methods_present:1; /*!< If true, then supported_kn_methods and supported_kn_secrets fields are present */
   zb_bitfield_t  aps_frame_cnt_sync_supported:1;
-  zb_bitfield_t  reserved: 4;
+  zb_bitfield_t  use_unverified:1; /*!< Allow to use unverified key to encrypting (for confirm key frame)*/
+  zb_bitfield_t  reserved: 3;
 
   zb_uint8_t     supported_kn_methods; /*!< Supported Key negotiation methods */
   zb_uint8_t     supported_kn_secrets; /*!< Supported Key negotiation secrets */
@@ -1112,7 +1113,7 @@ typedef ZB_PACKED_PRE struct zb_apsme_request_key_ind_s
  */
 typedef struct zb_apsme_verify_key_req_s
 {
-  zb_ieee_addr_t dest_address;  /*!< Destination address. ONly TC is valid  */
+  zb_ieee_addr_t dest_address;  /*!< Destination address. Only TC is valid  */
   zb_uint8_t key_type;          /*!< key type. Only ZB_TC_LINK_KEY is legal.  */
   zb_uint8_t use_relay;
 } zb_apsme_verify_key_req_t;
@@ -1455,12 +1456,14 @@ zb_bool_t zb_secur_aps_accept_policy(zb_uint8_t cmd_id, zb_bool_t secured, zb_ui
  */
 void zb_aps_in_tunnel_cmd(zb_uint8_t param);
 
+#ifdef ZB_JOIN_CLIENT
 /**
    Handle Start Key Update Request.
 
    @param param - packet buffer with request
  */
 void zb_zdo_secur_start_key_update_req_handle(zb_uint8_t param);
+#endif  /* ZB_JOIN_CLIENT */
 
 /**
    Fills ctx with private key and public point key for CURVE25519 ECDHE process.
@@ -1856,7 +1859,7 @@ zb_ret_t zb_zdo_ecdhe_common_ctx_find_start_key_neg_rsp_param(zb_uint8_t param, 
 
 void zdo_secur_confirm_key_legacy_confirm(zb_ieee_addr_t ieee_addr);
 void zdo_secur_confirm_key_dlk_confirm(zb_secur_ecdhe_common_ctx_t *dlk_ctx);
-void zb_confirm_key_ack_received(zb_secur_ecdhe_common_ctx_t *dlk_ctx_p);
+void zb_confirm_key_ack_received(zb_secur_ecdhe_common_ctx_t *dlk_ctx_p, zb_address_ieee_ref_t addr_ref);
 #endif
 
 #ifndef ZB_COORDINATOR_ONLY

@@ -306,6 +306,18 @@ int_fast16_t HSMLPF3_wakeUp(void);
 int_fast16_t HSMLPF3_init(void);
 
 /*!
+ *  @brief  Is HSM capable of decoupling DMA operations from ECC operations.
+ *
+ *  Checks the HSM FW version to arrive at that conclusion.
+ *
+ *  @pre    #HSMLPF3_init()
+ *
+ *  @retval true                                  ECDH and ECDSA DMA operations can happen on their own.
+ *  @retval false                                 ECDH and ECDSA DMA operations have to happen within the ECC operation.
+ */
+bool HSMLPF3_isStandaloneDMASupportEnabled(void);
+
+/*!
  *  @brief  Provisions the HUK to the HSM
  *
  *  @pre    #HSMLPF3_init() to initialize and boot up the HSM.
@@ -560,7 +572,7 @@ void HSMLPF3_constructECDHVerifyKeysPhysicalToken(ECDHLPF3HSM_Object *object);
  *
  *  @param  [in] object             ECDSALPF3HSM object
  */
-void HSMLPF3_constructECDSASignPhysicalToken(ECDSALPF3HSM_Object *object);
+void HSMLPF3_constructECDSAPhysicalToken(ECDSALPF3HSM_Object *object);
 
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
 /*!

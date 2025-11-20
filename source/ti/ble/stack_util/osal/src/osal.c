@@ -646,8 +646,6 @@ static int8 osal_event_send( uint8 type, uint8 destination_task, uint8 *msg_ptr 
  */
 uint8 osal_msg_send( uint8 destination_task, uint8 *msg_ptr )
 {
-  BLE_LOG_INT_INT(0, BLE_LOG_MODULE_OSAL_TASK, "OASL: msg send from taskId=%d, to taskId=%d\n", osal_self(), destination_task);
-
   if (destination_task & OSAL_PROXY_ID_FLAG)
   {
     return( osal_event_send( OSAL_EVENT_MSG, destination_task, msg_ptr ) );

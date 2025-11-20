@@ -43,6 +43,17 @@
 #define ZB_NLI_ID 2u
 #define INTERNAL_NLI_ID 3u  ///< NLI for communications between host muxer and device muxer.
 
+#define ZB_MUX_TRACE_MAX_HDLC_SIZE 512u
+
+#if defined ZB_TRACE_OVER_MUX
+#define ZB_MUX_TRACE_LOG_PREFIX "<dbg> zboss   "  /* devtools/win_com_dump.c, read_nordic_or_zephyr_logs() */
+#define ZB_MUX_TRACE_LOG_PREFIX_LENGTH 14u         /* without trailing '\0' */
+
+void zb_mux_put_trace_bytes(const zb_uint8_t *buf, zb_uint16_t len);
+void zb_mux_trace_flush(void);
+void zb_mux_send_trace(const zb_uint8_t *buf, zb_uint16_t len);
+#endif /* #if defined ZB_TRACE_OVER_MUX */
+
 ZB_RING_BUFFER_DECLARE(zb_mux_buf, zb_uint8_t, ZB_MUX_MAX_BUF_SIZE);
 
 typedef struct {
@@ -104,6 +115,14 @@ zb_ret_t zb_mux_hdlc_stream_demux(zb_mux_combined_device_t *combined_device);
 zb_ret_t zb_mux_hdlc_intercept(zb_mux_nli_device_t *nli_device, zb_uint32_t frame_size);
 zb_mux_nli_device_t * zb_mux_nli_device_get(zb_uint8_t nli);
 
-zb_ret_t zb_mux_put_bytes(const zb_uint8_t *aBuf, zb_uint16_t aBufLength);
+zb_ret_t zb_mux_device_multiplex_zb_macsplit_data(const zb_uint8_t *aBuf, zb_uint16_t aBufLength);
+
+#ifdef ZB_MACSPLIT_HOST
+int platform_setproperty_pty(osif_ipc_handle_t fd, const char *path);
+void platform_setproperty(void);
+void platform_init(void);
+void platform_trigger_bootlader(void);
+void platform_deinit(void);
+#endif /* ZB_MACSPLIT_HOST */
 
 #endif  /* ZB_MUX_H */

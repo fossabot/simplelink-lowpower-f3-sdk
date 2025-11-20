@@ -122,7 +122,7 @@ if(system.getRTOS() === "freertos")
     /* ======== FreeRTOS ======== */
     const FreeRTOS = scripting.addModule("/freertos/FreeRTOS");
     FreeRTOS.heapSize = 0x00001BBC;
-    FreeRTOS.idleStackSize = 256;
+    FreeRTOS.idleStackSize = 512;
     FreeRTOS.timerStackSize = 256;
 }
 

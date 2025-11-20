@@ -146,7 +146,7 @@ MAIN()
   zb_set_network_coordinator_role(DEFAULT_CHANLIST);
 
   /* Set keepalive mode to mac data poll so sleepy zeds consume less power */
-  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE); 
+  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE);
 #ifdef DEFAULT_NWK_KEY
   zb_uint8_t nwk_key[16] = DEFAULT_NWK_KEY;
   zb_secur_setup_nwk_key(nwk_key, 0);
@@ -164,7 +164,7 @@ MAIN()
 #endif //ZBOSS_REV23
 
   /* Set keepalive mode to mac data poll so sleepy zeds consume less power */
-  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE); 
+  zb_set_keepalive_mode(MAC_DATA_POLL_KEEPALIVE);
 
 #elif defined ZB_ED_ROLE
   zb_set_network_ed_role(DEFAULT_CHANLIST);
@@ -211,7 +211,7 @@ MAIN()
 #ifndef ZB_COORDINATOR_ROLE
     ZB_SCHEDULE_APP_ALARM(off_network_attention, 0, 1 * ZB_TIME_ONE_SECOND);
 #endif /* ZB_COORDINATOR_ROLE */
-    
+
     /* Call the application-specific main loop */
     my_main_loop();
   }
@@ -325,6 +325,30 @@ void start_finding_binding(zb_uint8_t param)
   zb_bdb_finding_binding_initiator(ZB_SWITCH_ENDPOINT, finding_binding_cb);
 }
 
+void set_tx_power(zb_int8_t power)
+{
+  zb_uint32_t chanlist = DEFAULT_CHANLIST;
+  for (zb_uint8_t i = 0; i < 32; i++) {
+    if (chanlist & (1U << i)) {
+      zb_bufid_t buf = zb_buf_get_out();
+      if (!buf)
+      {
+        Log_printf(LogModule_Zigbee_App, Log_WARNING, "no buffer available");
+        return;
+      }
+
+      zb_tx_power_params_t *power_params = (zb_tx_power_params_t *)zb_buf_begin(buf);
+      power_params->status = RET_OK;
+      power_params->page = 0;
+      power_params->channel = i;
+      power_params->tx_power = power;
+      power_params->cb = NULL;
+
+      zb_set_tx_power_async(buf);
+    }
+  }
+}
+
 void zboss_signal_handler(zb_uint8_t param)
 {
   zb_zdo_app_signal_hdr_t *sg_p = NULL;
@@ -340,7 +364,7 @@ void zboss_signal_handler(zb_uint8_t param)
       case ZB_ZDO_SIGNAL_SKIP_STARTUP:
 #ifndef ZB_MACSPLIT_HOST
         Log_printf(LogModule_Zigbee_App, Log_INFO, "ZB_ZDO_SIGNAL_SKIP_STARTUP: boot, not started yet");
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         zboss_start_continue();
 #endif /* ZB_MACSPLIT_HOST */
         break;
@@ -348,7 +372,7 @@ void zboss_signal_handler(zb_uint8_t param)
 #ifdef ZB_MACSPLIT_HOST
       case ZB_MACSPLIT_DEVICE_BOOT:
         Log_printf(LogModule_Zigbee_App, Log_INFO, "ZB_MACSPLIT_DEVICE_BOOT: boot, not started yet");
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         zboss_start_continue();
         break;
 #endif /* ZB_MACSPLIT_HOST */
@@ -360,7 +384,7 @@ void zboss_signal_handler(zb_uint8_t param)
           zb_bdb_reset_via_local_action(0);
           perform_factory_reset = ZB_FALSE;
         }
-        zb_set_tx_power(DEFAULT_TX_PWR);
+        set_tx_power(DEFAULT_TX_PWR);
         bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
 
         buf = zb_buf_get_out();
@@ -377,7 +401,7 @@ void zboss_signal_handler(zb_uint8_t param)
         req_param->tc_significance = 1;
 
         zb_zdo_mgmt_permit_joining_req(buf, permit_joining_cb);
-      
+
 #ifdef ZB_USE_BUTTONS
         zb_button_register_handler(0, 0, button_press_handler);
 #endif /* ZB_USE_BUTTONS */

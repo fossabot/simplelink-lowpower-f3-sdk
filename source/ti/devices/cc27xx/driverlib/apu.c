@@ -37,46 +37,10 @@
 #include "../inc/hw_types.h"
 #include "apu.h"
 
-//*****************************************************************************
-//
-// Enum definnes for the APU_API register, to control APU operation.
-//
-//*****************************************************************************
-enum APUApi
-{
-    APU_API_NOP               = 0x0000,
-    APU_API_CONFIG            = 0x0001,
-    APU_API_DOTPROD           = 0x0002,
-    APU_API_VECTMULT          = 0x0003,
-    APU_API_VECTSUM           = 0x0004,
-    APU_API_MATMATMULT        = 0x0005,
-    APU_API_UNITCIRC          = 0x0006,
-    APU_API_SYMMATRIXVECTPROD = 0x0007,
-    APU_API_MATRIXMULT        = 0x0008,
-    APU_API_HERMATRIXMULT     = 0x0009,
-    APU_API_SYMMATRIXMULT     = 0x000A,
-    APU_API_MATRIXSUM         = 0x000B,
-    APU_API_SCALARMULT        = 0x000C,
-    APU_API_MATRIXSCALARSUM   = 0x000D,
-    APU_API_POLAR             = 0x000E,
-    APU_API_CARTESIAN         = 0x000F,
-    APU_API_COVMATRIX         = 0x0010,
-    APU_API_EIGEN             = 0x0011,
-    APU_API_R2C               = 0x0012,
-    APU_API_MATRIXNORM        = 0x0013,
-    APU_API_FFT               = 0x0014,
-    APU_API_DCT               = 0x0015,
-    APU_API_SORT              = 0x0016,
-    APU_API_GAUSS             = 0x0017,
-    APU_API_HERMLO            = 0x0018,
-    APU_API_MAXMIN            = 0x0019,
-};
-
 //****************************************************************************
 // Generic Definition
 //****************************************************************************
 #define APU_MSGBOX_CMDOK 0x0001 //!< Indicate operation has completed
-#define APU_HEAP_ADDR    0x03CE //!< 50 positions for Heap, from 974->1023
 
 //*****************************************************************************
 //
@@ -87,8 +51,9 @@ void APUWaitOnIrq(void)
 {
     // Wait for RIS API to be set
     while (!(HWREG(APU_BASE + APU_O_RIS) & APU_RIS_API_M)) {}
-    // Clear RIS API
-    HWREG(APU_BASE + APU_O_ICLR) = APU_ICLR_API_YES;
+    // Due to errata SYS_211, clear all interrupts even if only one is used to
+    // avoid unintended side effects
+    HWREG(APU_BASE + APU_O_ICLR) = 0x0000000F;
 }
 
 //*****************************************************************************
@@ -123,7 +88,9 @@ void APUSetConfig(uint32_t memConfig)
 {
     // Enable APU
     HWREG(APU_BASE + APU_O_ENABLE) = APU_ENABLE_TOPSM_ONE;
-    HWREG(APU_BASE + APU_O_INIT)   = APU_INIT_TOPSM_ONE;
+    // Due to errata SYS_211, initialize everything to avoid unintended side
+    // effects
+    HWREG(APU_BASE + APU_O_INIT)   = 0x000000FF;
     // Ensure APU is in wait before calling API
     // Prevent back-to-back-writes
     ASM_4_NOPS();
@@ -145,7 +112,8 @@ void APUSetConfig(uint32_t memConfig)
         HWREG(APU_BASE + APU_O_CMDPAR0) = APU_LSECTL_MEMORY_MIRRORED;
     }
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_CONFIG;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_CONFIG;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -155,7 +123,8 @@ void APUSetConfig(uint32_t memConfig)
 //*****************************************************************************
 void APUNop(void)
 {
-    HWREG(APU_BASE + APU_O_API) = APU_API_NOP;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_NOP;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -178,7 +147,8 @@ void APUVectorDot(uint16_t N, void *pInputA, void *pInputB, void *pResult)
     // Instruct APU not to do conjugate input B before dot product
     HWREG(APU_BASE + APU_O_CMDPAR1) = 0;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_DOTPROD;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_DOTPROD;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -201,7 +171,8 @@ void APUVectorDotConj(uint16_t N, void *pInputA, void *pInputB, void *pResult)
     // Instruct APU to do conjugate input B before dot product
     HWREG(APU_BASE + APU_O_CMDPAR1) = 1;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_DOTPROD;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_DOTPROD;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -227,7 +198,8 @@ void APUVectorMult(uint16_t N, void *pInputA, void *pInputB, void *pResult)
     // Using CMDPAR1 to conjugate
     HWREG(APU_BASE + APU_O_CMDPAR1) = 0;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -252,7 +224,8 @@ void APUVectorScalarMult(uint16_t N, void *pInputA, void *pInputB, void *pResult
     // Using CMDPAR1 to conjugate
     HWREG(APU_BASE + APU_O_CMDPAR1) = 0;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -279,7 +252,8 @@ void APUVectorMultConj(uint16_t N, void *pInputA, void *pInputB, void *pResult)
     // Using CMDPAR1 to conjugate
     HWREG(APU_BASE + APU_O_CMDPAR1) = 1;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_VECTMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -302,7 +276,8 @@ void APUVectorSum(uint16_t N, void *pInputA, void *pInputB, uint16_t op, void *p
     // increment of vector B (1 for vector + vector, 0 for vector + scalar)
     HWREG(APU_BASE + APU_O_CMDPAR5) = 1;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_VECTSUM;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_VECTSUM;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -325,7 +300,8 @@ void APUVectorScalarSum(uint16_t N, void *pInputA, void *pInputB, uint16_t op, v
     // Increment of vector B (1 for vector + vector, 0 for vector + scalar)
     HWREG(APU_BASE + APU_O_CMDPAR5) = 0;
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_VECTSUM;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_VECTSUM;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -348,7 +324,8 @@ void APUMatrixMult(uint16_t M, uint16_t N, uint16_t P, void *pInputA, void *pInp
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_MATMATMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_MATMATMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -371,7 +348,8 @@ void APUMatrixMultHerm(uint16_t M, void *pInputA, void *pInputB, void *pResult)
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_HERMATRIXMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_HERMATRIXMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -394,7 +372,8 @@ void APUMatrixMultSym(uint16_t M, void *pInputA, void *pInputB, void *pResult)
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_SYMMATRIXMULT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_SYMMATRIXMULT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -415,7 +394,8 @@ void APUMatrixSum(uint16_t M, uint16_t N, void *pInputA, void *pInputB, void *pR
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_MATRIXSUM;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_MATRIXSUM;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -454,7 +434,8 @@ void APUVectorCart2Pol(uint16_t N, void *pInput, void *pResult)
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_POLAR;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_POLAR;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -473,7 +454,8 @@ void APUVectorPol2Cart(uint16_t N, void *pInput, void *pResult, void *pTemp)
     // Result offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_CARTESIAN;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_CARTESIAN;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -490,7 +472,8 @@ void APUVectorSort(uint16_t N, void *pInput)
     // Input vector A offset in memory
     HWREG(APU_BASE + APU_O_CMDPAR2) = APU_GET_DATA_MEM_OFFSET(pInput);
 
-    HWREG(APU_BASE + APU_O_API) = APU_API_SORT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_SORT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -512,7 +495,8 @@ void APUSpSmoothCovMatrix(uint16_t N, void *pInput, uint16_t L, void *pResult, u
     HWREG(APU_BASE + APU_O_CMDPAR4) = fb;
 
     // HWREG(APU_BASE + APU_O_CMDPAR) = length;
-    HWREG(APU_BASE + APU_O_API) = APU_API_COVMATRIX;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_COVMATRIX;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -549,7 +533,8 @@ void APUJacobiEVD(uint16_t N, void *pInput, void *pResultV, uint16_t maxIter, fl
     *(mem_ptr_eps + 1) = 0;
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_EIGEN;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_EIGEN;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -575,7 +560,8 @@ void APUGaussJordanElim(uint16_t M, uint16_t N, void *pInput, float epsTol)
     *(mem_ptr + 1) = 0;
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_GAUSS;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_GAUSS;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -595,7 +581,8 @@ void APUMatrixNorm(uint16_t M, uint16_t N, void *pInput, void *pResult)
     HWREG(APU_BASE + APU_O_CMDPAR3) = APU_GET_DATA_MEM_OFFSET(pResult);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_MATRIXNORM;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_MATRIXNORM;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -613,7 +600,8 @@ void APUComputeFft(uint16_t N, void *pX)
     HWREG(APU_BASE + APU_O_CMDPAR2) = APU_GET_DATA_MEM_OFFSET(pX);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -631,7 +619,8 @@ void APUComputeIfft(uint16_t N, void *pX)
     HWREG(APU_BASE + APU_O_CMDPAR2) = APU_GET_DATA_MEM_OFFSET(pX);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -649,7 +638,8 @@ void APUConfigFft(uint16_t N, void *pX)
     HWREG(APU_BASE + APU_O_CMDPAR2) = APU_GET_DATA_MEM_OFFSET(pX);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_FFT;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -671,7 +661,8 @@ void APUUnitCircle(uint16_t N, uint16_t M, uint16_t phase, uint16_t conj, void *
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_UNITCIRC;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_UNITCIRC;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 //*****************************************************************************
 //
@@ -699,7 +690,8 @@ void APUVectorMaxMin(uint16_t N, void *pInput, float thresh, uint16_t op, void *
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_MAXMIN;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_MAXMIN;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -721,7 +713,8 @@ void APUVectorR2C(uint16_t N, void *pInputA, void *pInputB, uint16_t op, void *p
     HWREG(APU_BASE + APU_O_CMDPAR4) = APU_GET_DATA_MEM_OFFSET(pResult);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_R2C;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_R2C;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }
 
 //*****************************************************************************
@@ -739,5 +732,6 @@ void APUHermLo(uint16_t N, void *pInput, void *pResult)
     HWREG(APU_BASE + APU_O_CMDPAR2) = APU_GET_DATA_MEM_OFFSET(pResult);
 
     // Start APU
-    HWREG(APU_BASE + APU_O_API) = APU_API_HERMLO;
+    HWREG(APU_BASE + APU_O_API)    = APU_API_HERMLO;
+    HWREG(APU_BASE + APU_O_MSGBOX) = APU_MSGBOX_VAL_ALLONES;
 }

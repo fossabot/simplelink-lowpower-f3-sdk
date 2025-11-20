@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (c) 2019-2025, Texas Instruments Incorporated - http://www.ti.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,14 +36,25 @@
  */
 "use strict";
 
-/* get Common /ti/drivers utility functions */
+/* Get Common /ti/drivers utility functions */
 let Common = system.getScript("/ti/drivers/Common.js");
 let logError = Common.logError;
+let logWarning = Common.logWarning;
 
-/* get /ti/drivers family name from device object */
+/* Get /ti/drivers family name from device object */
 let family = Common.device2Family(system.deviceData, "CAN");
 
-/* generic configuration parameters for CAN instances */
+/* Get device ID */
+let deviceId = system.deviceData.deviceId;
+
+/* Default Rx ring buffer size based on device.
+ * CC27xx devices have more RAM and have 24 elements, others have 6.
+ */
+let defaultRxRingBufferSize = deviceId.match(/CC27/) ? 24 : 6;
+
+let recommendedMinRxRingBufferSize = 3;
+
+/* Generic configuration parameters for CAN instances */
 let config = [
     {
         name: "nomBitRate",
@@ -121,9 +132,9 @@ let config = [
             "(MRAM), they are copied into the ring buffer and the Rx callback is " +
             "executed. When CAN_read() is called, the Rx element is freed from " +
             "the ring buffer. If the ring buffer is full when a message is received, " +
-            "it will be discarded. The size can be changed based on the application " +
-            "and MRAM configuration. Each Rx element occupies 78-bytes.",
-        default     : 6
+            "it will remain in the HW FIFO. The size can be changed based on the application " +
+            "and MRAM configuration. Each Rx element occupies 78 bytes.",
+        default     : defaultRxRingBufferSize
     },
     {
         name        : "txRingBufferSize",
@@ -134,7 +145,7 @@ let config = [
             "CAN_write() is called, the Tx element is copied into the ring buffer. " +
             "After a MRAM Tx buffer is freed, the Tx element will be moved from the ring " +
             "buffer to the MRAM Tx FIFO/Queue buffer for transmission. The size can be changed " +
-            "based on the application and MRAM configuration. Each Tx element occupies 100-bytes. " +
+            "based on the application and MRAM configuration. Each Tx element occupies 100 bytes. " +
             "Set to 0 to use MRAM Tx buffers only.",
         default     : 0
     }
@@ -226,6 +237,12 @@ function validate(inst, validation)
         message = 'Rx Element Ring Buffer Size must be greater than 0';
         logError(validation, inst, "rxRingBufferSize", message);
     }
+    else if (inst.rxRingBufferSize < recommendedMinRxRingBufferSize)
+    {
+        message = 'Rx Element Ring Buffer Size is less than the recommended minimum of ' +
+                recommendedMinRxRingBufferSize;
+        logWarning(validation, inst, "rxRingBufferSize", message);
+    }
 }
 
 /*
@@ -252,7 +269,15 @@ The [__CAN driver__][1] provides APIs to control a single external or onboard Co
     config: Common.addNameConfig(config, "/ti/drivers/CAN", "CONFIG_CAN_"),
     validate: validate,
     moduleInstances: moduleInstances,
-    modules: Common.autoForceModules(["Board", "Power"]),
+    modules: (inst) => {
+        let forcedModules = ["Board", "Power"];
+
+        /* Due to errata SYS_211, add DMA module for CC2745 768k/1M flash devices */
+        if (deviceId.match(/CC2745[A-Z](7|10)/)) {
+            forcedModules.push("DMA");
+        }
+        return Common.autoForceModules(forcedModules)();
+    },
     templates: {
         boardc: "/ti/drivers/can/CAN.Board.c.xdt",
         boardh: "/ti/drivers/can/CAN.Board.h.xdt"

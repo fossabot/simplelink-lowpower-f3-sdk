@@ -51,9 +51,10 @@
  */
 
 #include "ti/ble/stack_util/health_toolkit/assert.h"
-#include "ti/ble/stack_util/comdef.h"
+#include "ti/ble/stack_util/health_toolkit/ble_sys_stat.h"
 #include "ti/ble/stack_util/comdef.h"
 #include <ti/drivers/Power.h>
+#include <ti/log/Log.h>
 
 /*******************************************************************************
  * MACROS
@@ -157,6 +158,7 @@ void halAssertInit( assertCback_t initAssertCback, uint8 initLegacyMode )
  */
 void halAssertHandler( void )
 {
+  Log_printf(LogModule_BleCtrl, Log_ERROR, "HAL Assert Handler called. SystemStatus: 0x%08X", BleSysStat_getllSysStat());
 #if defined( HAL_ASSERT_RESET )
   Power_reset();
 #elif defined( HAL_ASSERT_SPIN )

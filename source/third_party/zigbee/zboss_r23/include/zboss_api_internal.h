@@ -60,12 +60,10 @@ zb_mac_pending_data_t;
  */
 typedef ZB_PACKED_PRE struct zb_aps_retrans_ent_s
 {
-  zb_uint16_t  clusterid;       /*!< Cluster ID*/
   zb_address_ieee_ref_t addr_ref;       /*!< Destination address*/
-  zb_uint8_t   aps_counter;     /*!< APS counter */
-  zb_uint8_t   src_endpoint;    /*!< Source endpoint */
-  zb_uint8_t   dst_endpoint;    /*!< Destination endpoint */
-  zb_uint8_t   buf;             /*!< Buffer index for retranslate */
+  zb_uint8_t   buf;                     /*!< Buffer index for retranslate */
+  zb_uint8_t   radius;                  /*!< Radius */
+  zb_uint8_t   aps_hdr_off_from_end;    /*!< APS Header offset from end of packet */
 
   zb_bitfield_t aps_retries:3;  /*!< Number of attempts */
   zb_bitfield_t nwk_insecure:1; /*!< Flag 'Is NWK secure' */
@@ -615,7 +613,8 @@ b.	If  ParentPreference indicates ?CSL Support? preferred, then parents advertis
   zb_bitfield_t             mac_iface_idx:2;  /*!< An index into the MAC Interface Table
                                                * indicating what interface the neighbor or
                                                * child is bound to. */
-  zb_bitfield_t             reserved:5;
+  zb_bitfield_t             pan_coordinator:1;
+  zb_bitfield_t             reserved:4;
 } ZB_PACKED_STRUCT
 zb_nwk_disc_tbl_ent_t;
 
@@ -632,6 +631,7 @@ zb_nwk_disc_tbl_ent_t;
 #define ZB_MAC_TX_WAIT_CSMACA            1U
 #define ZB_MAC_TX_WAIT_ZGP               2U
 #define ZB_MAC_TX_WAIT_NONE              3U
+#define ZB_MAC_TX_WAIT_CSL               4U
 /** @} */
 
 /**

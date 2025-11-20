@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, Texas Instruments Incorporated
+ * Copyright (c) 2023-2025, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 #include <ti/drivers/cryptoutils/aes/AESCommonLPF3.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKey.h>
 #include <ti/drivers/cryptoutils/sharedresources/CryptoResourceLPF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/utils/CryptoUtils.h>
 
 #include <ti/drivers/cryptoutils/hsm/HSMLPF3.h>
@@ -345,6 +346,9 @@ static void AESGCMLPF3HSM_postProcessingCommon(AESGCM_Handle handle, int_fast16_
     {
         object->segmentedOperationInProgress = false;
     }
+
+    /* Release the CommonResource semaphore. */
+    CommonResourceXXF3_releaseLock();
 
     /* Free all assets. This includes key-related asset and state-related asset (temporary asset). */
     if (AESGCMLPF3HSM_freeAllAssets(handle) != AESGCM_STATUS_SUCCESS)
@@ -846,6 +850,14 @@ static int_fast16_t AESGCMLPF3HSM_performHSMOperation(AESGCM_Handle handle)
 
     AESGCMLPF3HSM_setupObjectMetaData(object);
 
+    /* Due to errata SYS_211, get HSM lock to avoid AHB bus master transactions. */
+    if (!CommonResourceXXF3_acquireLock(object->common.semaphoreTimeout))
+    {
+        HSMLPF3_releaseLock();
+
+        return AESGCM_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
     hsmRetval = HSMLPF3_submitToken((HSMLPF3_ReturnBehavior)object->common.returnBehavior,
                                     AESGCMLPF3HSM_postProcessingFxn,
                                     (uintptr_t)handle);
@@ -862,6 +874,9 @@ static int_fast16_t AESGCMLPF3HSM_performHSMOperation(AESGCM_Handle handle)
 
     if (hsmRetval != HSMLPF3_STATUS_SUCCESS)
     {
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
+
         /* In the case of failure to initialize the operation, we need to free all assets allocated.
          * Capturing the return status of this operation is pointless since we are returning an
          * error code anyways.

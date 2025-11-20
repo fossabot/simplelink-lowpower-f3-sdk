@@ -123,14 +123,17 @@ struct RCL_CMD_BLE_CS_IQ_SAMPLE_t {
  */
 struct RCL_CMD_BLE_CS_t {
     RCL_Command common;
-    struct {
-        uint16_t role:2;                         /*!< Role of the device @ref RCL_CmdBleCs_Role */
-        uint16_t phy:2;                          /*!< Phy used for packet exchange @ref RCL_CmdBleCs_Phy */
-        uint16_t repeatSteps:1;                  /*!< Enable continuous repetition of step list */
-        uint16_t chFilterEnable:1;               /*!< Enable filtering of restricted channels at (2402, 2403, 2425, 2426, 2427, 2479, 2480 MHz) */
-        uint16_t precal:1;                       /*!< Enable usage of DC precalibration values */
-        uint16_t reserved:1;
-        uint16_t nSteps:8;                       /*!< Total number of steps within the BLE CS Sub-Event */
+    union {
+        struct {
+            uint16_t role:2;                         /*!< Role of the device @ref RCL_CmdBleCs_Role */
+            uint16_t phy:2;                          /*!< Phy used for packet exchange @ref RCL_CmdBleCs_Phy */
+            uint16_t repeatSteps:1;                  /*!< Enable continuous repetition of step list */
+            uint16_t chFilterEnable:1;               /*!< Enable filtering of restricted channels at (2402, 2403, 2425, 2426, 2427, 2479, 2480 MHz) */
+            uint16_t precal:1;                       /*!< Enable usage of DC precalibration values */
+            uint16_t reserved:1;
+            uint16_t nSteps:8;                       /*!< Total number of steps within the BLE CS Sub-Event */
+        };
+        uint16_t val;
     } mode;
 
     struct {

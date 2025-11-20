@@ -364,8 +364,10 @@ zb_uint8_t zb_zgpd_mac_num_gen();
 #define ZB_MAC_GET_ACK_RECEIVED_PEND() (MAC_ICTX().ack_received & (~1U))
 
 #define ZB_MAC_GET_ACK_TIMED_OUT()   (MAC_CTX().flags.mac_ack_timed_out)
+#ifndef ZB_MULTIPAN
 #define ZB_MAC_SET_ACK_TIMED_OUT()   (MAC_CTX().flags.mac_ack_timed_out = ZB_TRUE)
 #define ZB_MAC_CLEAR_ACK_TIMED_OUT() (MAC_CTX().flags.mac_ack_timed_out = ZB_FALSE)
+#endif
 
 #else  /* ZB_MANUAL_ACK */
 
@@ -410,15 +412,6 @@ zb_uint8_t zb_zgpd_mac_num_gen();
 
   /* Pending bitmap size. Each bit refers to corresponding element in child hash table */
 #define ZB_PENDING_BITMAP_SIZE ((ZB_CHILD_HASH_TABLE_SIZE + 31U) / 32U)
-
-/* Receive queue routines */
-#ifdef ZB_MAC_RX_QUEUE_CAP
-
-/* main ring buffer, that contains whole packets itself */
-ZB_RING_BUFFER_DECLARE(zb_rx_queue, zb_uint8_t, ZB_MAC_RX_QUEUE_CAP);
-
-#endif  /* ZB_USE_RX_QUEUE */
-
 
 #define POLL_INDICATION_SHORT_ADDR 2U /*16-bit short address*/
 #define POLL_INDICATION_EXT_ADDR   3U /*64-bit extended address*/
@@ -599,7 +592,9 @@ typedef struct zb_mac_ctx_s
   zb_time_t poll_timestamp_table[ZB_CHILD_HASH_TABLE_SIZE];
 #endif /* ZB_MAC_POLL_INDICATION_CALLS_REDUCED */
 #endif  /* ZB_MAC_SOFTWARE_PB_MATCHING */
-#else
+
+#else /* ZB_CONFIGURABLE_MEM */
+
 #ifdef ZB_MAC_SOFTWARE_PB_MATCHING
   zb_uint16_t *child_hash_table;
   zb_uint32_t *pending_bitmap;
@@ -635,7 +630,9 @@ typedef struct zb_mac_ctx_s
     zb_bitfield_t ack_wait_disabled:1;            /* MAC ack waiting and retransmissions disabled for
                                                    * TP/154/MAC/CHANNEL-ACCESS-03 test*/
     zb_bitfield_t keep_pkt_in_pending_queue:1;    /* Don't send packet from pending queue even if got data_req */
-    zb_bitfield_t reserved: 2;                    /* padding */
+    zb_bitfield_t invalid_fcs_counter: 3;         /* Invalid FCS for TP/154/MAC/FRAME-VALIDATION-01 */
+                                                  /* FCS should be broken 4 times: for the 1st sending and 3 retransmissions */
+    zb_bitfield_t reserved: 7;                    /* padding */
   } cert_hacks;
 #endif
   zb_time_t poll_rate; /*!< MAC poll rate */

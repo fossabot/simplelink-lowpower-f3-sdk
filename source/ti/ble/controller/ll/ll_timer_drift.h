@@ -99,6 +99,9 @@ extern "C"
 /*******************************************************************************
  * MACROS
  */
+// timeElapsedInUs is in uS
+// scaFactor is in PPM
+#define LL_TIMER_DRIFT_CALC(timeElapsedInUs, scaFactor)   (((((uint32_t) timeElapsedInUs) * scaFactor) / RAT_TICKS_IN_100US) + 1)
 
 /*******************************************************************************
  * CONSTANTS
@@ -130,7 +133,7 @@ extern "C"
 extern uint16 llCalcScaFactor( uint8 centralSCA );
 extern uint32 llCalcPeriodicScaDriftPerInterval( uint8 perAdvSCA , uint16 periodicInterval);
 uint32_t llScaOrdValueToPPM( uint8_t ordSCA );
-uint32_t llCsCalcTimerDrift(uint32_t offset, uint32_t subeventInterval, uint16_t scaFactor);
+uint8_t llGetScaIndex( uint16_t scaFactor );
 
 #ifdef __cplusplus
 }

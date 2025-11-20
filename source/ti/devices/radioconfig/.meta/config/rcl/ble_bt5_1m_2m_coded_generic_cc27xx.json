@@ -78,227 +78,275 @@
         ]
       }
     ],
-    "phy_properties": {
-      "category": "Run-time properties",
-      "type": "run_time",
-      "property": [
-        {
-          "name": "subPhy",
-          "label": "Sub-PHY",
-          "type": "feature:sub_phy",
-          "value": "1_mbps",
-          "desc_id": "bleSubPhy"
-        },
-        {
-          "name": "codedTxRate",
-          "label": "Coded rate in TX",
-          "type": "feature:coded_tx_rate",
-          "value": "s8",
-          "desc_id": "bleCodedTxRate",
-          "script": {
-            "role": "activate",
-            "#text": "\"getPhyProperty(\"subPhy\")\" == \"coded\""
+    "phy_properties": [
+      {
+        "category": "Run-time properties",
+        "type": "run_time",
+        "property": [
+          {
+            "name": "subPhy",
+            "label": "Sub-PHY",
+            "type": "feature:sub_phy",
+            "value": "1_mbps",
+            "desc_id": "bleSubPhy"
+          },
+          {
+            "name": "codedTxRate",
+            "label": "Coded rate in TX",
+            "type": "feature:coded_tx_rate",
+            "value": "s8",
+            "desc_id": "bleCodedTxRate",
+            "script": {
+              "role": "activate",
+              "#text": "\"getPhyProperty(\"subPhy\")\" == \"coded\""
+            }
+          },
+          {
+            "name": "bleChannel",
+            "label": "Channel",
+            "type": "dec",
+            "step": "1",
+            "min": "0",
+            "max": "39",
+            "value": "17",
+            "enum": [
+              {
+                "value": "0",
+                "label": "0 (2404 MHz)"
+              },
+              {
+                "value": "1",
+                "label": "1 (2406 MHz)"
+              },
+              {
+                "value": "2",
+                "label": "2 (2408 MHz)"
+              },
+              {
+                "value": "3",
+                "label": "3 (2410 MHz)"
+              },
+              {
+                "value": "4",
+                "label": "4 (2412 MHz)"
+              },
+              {
+                "value": "5",
+                "label": "5 (2414 MHz)"
+              },
+              {
+                "value": "6",
+                "label": "6 (2416 MHz)"
+              },
+              {
+                "value": "7",
+                "label": "7 (2418 MHz)"
+              },
+              {
+                "value": "8",
+                "label": "8 (2420 MHz)"
+              },
+              {
+                "value": "9",
+                "label": "9 (2422 MHz)"
+              },
+              {
+                "value": "10",
+                "label": "10 (2424 MHz)"
+              },
+              {
+                "value": "11",
+                "label": "11 (2428 MHz)"
+              },
+              {
+                "value": "12",
+                "label": "12 (2430 MHz)"
+              },
+              {
+                "value": "13",
+                "label": "13 (2432 MHz)"
+              },
+              {
+                "value": "14",
+                "label": "14 (2434 MHz)"
+              },
+              {
+                "value": "15",
+                "label": "15 (2436 MHz)"
+              },
+              {
+                "value": "16",
+                "label": "16 (2438 MHz)"
+              },
+              {
+                "value": "17",
+                "label": "17 (2440 MHz)"
+              },
+              {
+                "value": "18",
+                "label": "18 (2442 MHz)"
+              },
+              {
+                "value": "19",
+                "label": "19 (2444 MHz)"
+              },
+              {
+                "value": "20",
+                "label": "20 (2446 MHz)"
+              },
+              {
+                "value": "21",
+                "label": "21 (2448 MHz)"
+              },
+              {
+                "value": "22",
+                "label": "22 (2450 MHz)"
+              },
+              {
+                "value": "23",
+                "label": "23 (2452 MHz)"
+              },
+              {
+                "value": "24",
+                "label": "24 (2454 MHz)"
+              },
+              {
+                "value": "25",
+                "label": "25 (2456 MHz)"
+              },
+              {
+                "value": "26",
+                "label": "26 (2458 MHz)"
+              },
+              {
+                "value": "27",
+                "label": "27 (2460 MHz)"
+              },
+              {
+                "value": "28",
+                "label": "28 (2462 MHz)"
+              },
+              {
+                "value": "29",
+                "label": "29 (2464 MHz)"
+              },
+              {
+                "value": "30",
+                "label": "30 (2466 MHz)"
+              },
+              {
+                "value": "31",
+                "label": "31 (2468 MHz)"
+              },
+              {
+                "value": "32",
+                "label": "32 (2470 MHz)"
+              },
+              {
+                "value": "33",
+                "label": "33 (2472 MHz)"
+              },
+              {
+                "value": "34",
+                "label": "34 (2474 MHz)"
+              },
+              {
+                "value": "35",
+                "label": "35 (2476 MHz)"
+              },
+              {
+                "value": "36",
+                "label": "36 (2478 MHz)"
+              },
+              {
+                "value": "37",
+                "label": "37 (2402 MHz, advertising)"
+              },
+              {
+                "value": "38",
+                "label": "38 (2426 MHz, advertising)"
+              },
+              {
+                "value": "39",
+                "label": "39 (2480 MHz, advertising)"
+              },
+              {
+                "value": "40",
+                "label": "Specify custom frequency"
+              }
+            ]
+          },
+          {
+            "name": "frequency",
+            "label": "Custom frequency",
+            "type": "dec",
+            "unit": "MHz",
+            "step": "1",
+            "min": "2400",
+            "max": "2480",
+            "value": "2440",
+            "desc_id": "bleFrequency",
+            "decimals": "4",
+            "script": {
+              "role": "activate",
+              "#text": "getPhyProperty(\"bleChannel\") == 40"
+            }
+          },
+          {
+            "name": "txPower",
+            "label": "TX output power",
+            "type": "tx_power",
+            "value": "5"
+          },
+          {
+            "name": "regulatoryDomain",
+            "label": "Regulatory domain",
+            "type": "string",
+            "value": "none",
+            "enum": [
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "etsi",
+                "label": "ETSI (Europe)"
+              },
+              {
+                "value": "fcc",
+                "label": "FCC (USA)"
+              },
+              {
+                "value": "miit",
+                "label": "MIIT (China)"
+              }
+            ]
           }
-        },
-        {
-          "name": "bleChannel",
-          "label": "Channel",
+        ]
+      },
+      {
+        "category": "Packet data",
+        "property": {
+          "name": "whitening",
+          "label": "Whitening",
           "type": "dec",
-          "step": "1",
           "min": "0",
-          "max": "39",
-          "value": "17",
+          "max": "1",
+          "value": "1",
+          "desc_id": "bleWhitening",
           "enum": [
             {
               "value": "0",
-              "label": "0 (2404 MHz)"
+              "label": "Disabled"
             },
             {
               "value": "1",
-              "label": "1 (2406 MHz)"
-            },
-            {
-              "value": "2",
-              "label": "2 (2408 MHz)"
-            },
-            {
-              "value": "3",
-              "label": "3 (2410 MHz)"
-            },
-            {
-              "value": "4",
-              "label": "4 (2412 MHz)"
-            },
-            {
-              "value": "5",
-              "label": "5 (2414 MHz)"
-            },
-            {
-              "value": "6",
-              "label": "6 (2416 MHz)"
-            },
-            {
-              "value": "7",
-              "label": "7 (2418 MHz)"
-            },
-            {
-              "value": "8",
-              "label": "8 (2420 MHz)"
-            },
-            {
-              "value": "9",
-              "label": "9 (2422 MHz)"
-            },
-            {
-              "value": "10",
-              "label": "10 (2424 MHz)"
-            },
-            {
-              "value": "11",
-              "label": "11 (2428 MHz)"
-            },
-            {
-              "value": "12",
-              "label": "12 (2430 MHz)"
-            },
-            {
-              "value": "13",
-              "label": "13 (2432 MHz)"
-            },
-            {
-              "value": "14",
-              "label": "14 (2434 MHz)"
-            },
-            {
-              "value": "15",
-              "label": "15 (2436 MHz)"
-            },
-            {
-              "value": "16",
-              "label": "16 (2438 MHz)"
-            },
-            {
-              "value": "17",
-              "label": "17 (2440 MHz)"
-            },
-            {
-              "value": "18",
-              "label": "18 (2442 MHz)"
-            },
-            {
-              "value": "19",
-              "label": "19 (2444 MHz)"
-            },
-            {
-              "value": "20",
-              "label": "20 (2446 MHz)"
-            },
-            {
-              "value": "21",
-              "label": "21 (2448 MHz)"
-            },
-            {
-              "value": "22",
-              "label": "22 (2450 MHz)"
-            },
-            {
-              "value": "23",
-              "label": "23 (2452 MHz)"
-            },
-            {
-              "value": "24",
-              "label": "24 (2454 MHz)"
-            },
-            {
-              "value": "25",
-              "label": "25 (2456 MHz)"
-            },
-            {
-              "value": "26",
-              "label": "26 (2458 MHz)"
-            },
-            {
-              "value": "27",
-              "label": "27 (2460 MHz)"
-            },
-            {
-              "value": "28",
-              "label": "28 (2462 MHz)"
-            },
-            {
-              "value": "29",
-              "label": "29 (2464 MHz)"
-            },
-            {
-              "value": "30",
-              "label": "30 (2466 MHz)"
-            },
-            {
-              "value": "31",
-              "label": "31 (2468 MHz)"
-            },
-            {
-              "value": "32",
-              "label": "32 (2470 MHz)"
-            },
-            {
-              "value": "33",
-              "label": "33 (2472 MHz)"
-            },
-            {
-              "value": "34",
-              "label": "34 (2474 MHz)"
-            },
-            {
-              "value": "35",
-              "label": "35 (2476 MHz)"
-            },
-            {
-              "value": "36",
-              "label": "36 (2478 MHz)"
-            },
-            {
-              "value": "37",
-              "label": "37 (2402 MHz, advertising)"
-            },
-            {
-              "value": "38",
-              "label": "38 (2426 MHz, advertising)"
-            },
-            {
-              "value": "39",
-              "label": "39 (2480 MHz, advertising)"
-            },
-            {
-              "value": "40",
-              "label": "Specify custom frequency"
+              "label": "Enabled"
             }
           ]
-        },
-        {
-          "name": "frequency",
-          "label": "Custom frequency",
-          "type": "dec",
-          "unit": "MHz",
-          "step": "1",
-          "min": "2400",
-          "max": "2480",
-          "value": "2440",
-          "desc_id": "bleFrequency",
-          "decimals": "4",
-          "script": {
-            "role": "activate",
-            "#text": "getPhyProperty(\"bleChannel\") == 40"
-          }
-        },
-        {
-          "name": "txPower",
-          "label": "TX output power",
-          "type": "tx_power",
-          "value": "5"
         }
-      ]
-    },
+      }
+    ],
     "rcl_test_mode": [
       {
         "mode": "packet_tx",
@@ -1344,6 +1392,9 @@
                   "LRFDMDM.BAUDCOMP.SCALEVAL": {
                     "value": "3"
                   },
+                  "LRFDMDM.MODCTRL.TONEINSERT": {
+                    "value": "0"
+                  },
                   "LRFDRFE.SPARE2.VAL": {
                     "value": "41542"
                   },
@@ -1760,6 +1811,9 @@
                   },
                   "LRFDMDM.BAUDCOMP.SCALEVAL": {
                     "value": "3"
+                  },
+                  "LRFDMDM.MODCTRL.TONEINSERT": {
+                    "value": "0"
                   },
                   "LRFDRFE.SPARE2.VAL": {
                     "value": "41815"
@@ -2253,6 +2307,9 @@
                   "LRFDMDM.BAUDCOMP.SCALEVAL": {
                     "value": "3"
                   },
+                  "LRFDMDM.MODCTRL.TONEINSERT": {
+                    "value": "0"
+                  },
                   "LRFDRFE.RSSIOFFSET.VAL": {
                     "value": "0"
                   },
@@ -2311,7 +2368,7 @@
             "name": "PBE_GENERIC_RAM.WHITEINIT.VAL",
             "script": {
               "role": "update",
-              "#text": "0x40 | getPhyProperty(\"bleChannel\")"
+              "#text": "(getPhyProperty(\"whitening\") == 1) ? (0x40 | getPhyProperty(\"bleChannel\")) : 0x00"
             }
           },
           {

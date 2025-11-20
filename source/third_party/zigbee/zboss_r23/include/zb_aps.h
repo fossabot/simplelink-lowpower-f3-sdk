@@ -537,6 +537,9 @@ zb_ret_t zb_aps_get_ieee_source_from_cmd_frame(zb_uint8_t cmd_id, zb_uint8_t cmd
 
 void zb_aps_clear_after_leave(zb_uint16_t address);
 
+zb_ret_t zb_check_bind_trans(zb_uint8_t param);
+void zb_aps_stop_retransmission(zb_ushort_t retrans_table_index);
+
 void zb_apsme_remove_all_groups_internal(void);
 void apsme_forget_device(void);
 void aps_send_fail_confirm(zb_uint8_t param, zb_ret_t status);

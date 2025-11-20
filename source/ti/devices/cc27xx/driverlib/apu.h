@@ -58,6 +58,41 @@
 extern "C" {
 #endif
 
+//*****************************************************************************
+//
+// Enum defines for the APU_API register, to control APU operation.
+//
+//*****************************************************************************
+enum APUApi
+{
+    APU_API_NOP               = 0x0000,
+    APU_API_CONFIG            = 0x0001,
+    APU_API_DOTPROD           = 0x0002,
+    APU_API_VECTMULT          = 0x0003,
+    APU_API_VECTSUM           = 0x0004,
+    APU_API_MATMATMULT        = 0x0005,
+    APU_API_UNITCIRC          = 0x0006,
+    APU_API_SYMMATRIXVECTPROD = 0x0007,
+    APU_API_MATRIXMULT        = 0x0008,
+    APU_API_HERMATRIXMULT     = 0x0009,
+    APU_API_SYMMATRIXMULT     = 0x000A,
+    APU_API_MATRIXSUM         = 0x000B,
+    APU_API_SCALARMULT        = 0x000C,
+    APU_API_MATRIXSCALARSUM   = 0x000D,
+    APU_API_POLAR             = 0x000E,
+    APU_API_CARTESIAN         = 0x000F,
+    APU_API_COVMATRIX         = 0x0010,
+    APU_API_EIGEN             = 0x0011,
+    APU_API_R2C               = 0x0012,
+    APU_API_MATRIXNORM        = 0x0013,
+    APU_API_FFT               = 0x0014,
+    APU_API_DCT               = 0x0015,
+    APU_API_SORT              = 0x0016,
+    APU_API_GAUSS             = 0x0017,
+    APU_API_HERMLO            = 0x0018,
+    APU_API_MAXMIN            = 0x0019,
+};
+
 //****************************************************************************
 // Generic Definition
 //****************************************************************************
@@ -66,8 +101,10 @@ extern "C" {
 #define APU_MEMORY_INTERLEAVED 1 //!< Set APU memory in interleaved mode
 #define APU_MEMORY_MIRRORED    0 //!< Set APU memory in mirrored mode
 
+#define APU_HEAP_ADDR 0x03CE //!< 50 positions for Heap, from 974->1023
+
 //****************************************************************************
-// Operator defininitions
+// Operator definitions
 //****************************************************************************
 #define APU_OP_R2C   0 //!< C=real(A)+j*real(B)
 #define APU_OP_R2CC  1 //!< C=real(A)-j*real(B)
@@ -717,6 +754,9 @@ void APUJacobiEVD(uint16_t N, void *pInput, void *pResultV, uint16_t maxIter, fl
 //! out-place ever needed, the input matrix must be copied before calling this
 //! function.
 //!
+//! \deprecated Due to errata SYS_211, this function shall not be used. Instead,
+//! use the equivalent function provided in the driver: APULPF3_jacobiEVDDma()
+//!
 //! \param M number of rows of input/output matrices
 //! \param N number of columns of input/output matrices (N >= M)
 //! \param pInput a pointer to the base of the input matrix and the output
@@ -802,6 +842,10 @@ void APUComputeFft(uint16_t N, void *pX);
 //! by the output using in-place transformation. If out-place ever needed,
 //! the input vector must be copied before calling this function.
 //!
+//! \deprecated Due to errata SYS_211, this function shall not be used. Instead,
+//! use the equivalent function provided in the driver:
+//! APULPF3_gaussJordanElimDma().
+//!
 //! \param N length of input/output vectors
 //! \param pX a pointer to the base of the input/output vector, in APU memory
 //!
@@ -856,6 +900,10 @@ void APUUnitCircle(uint16_t N, uint16_t M, uint16_t phase, uint16_t conj, void *
 //! \endcode
 //! in which, X and Y is the N-length complex vector, and thresh is a real
 //! scalar.
+//!
+//! \deprecated Due to errata SYS_211, this function shall not be used. Instead,
+//! use the equivalent function provided in the driver:
+//! APULPF3_vectorMaxMinDma().
 //!
 //! \param N length of input/output vectors
 //! \param pInput a pointer to the base of the input vector, in APU memory

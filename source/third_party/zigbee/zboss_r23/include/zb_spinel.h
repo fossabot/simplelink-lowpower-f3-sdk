@@ -66,5 +66,6 @@ typedef ZB_PACKED_PRE struct zb_spinel_simple_property_s
 /* 15,360 ... 16,383 Private Use */
 #define INTERNAL_CMD_KEEPALIVE 15360
 #define INTERNAL_CMD_KEEPALIVE_ACK 15361
+#define INTERNAL_CMD_TRACE 15362
 
 #endif  /* ZB_SPINEL_H */

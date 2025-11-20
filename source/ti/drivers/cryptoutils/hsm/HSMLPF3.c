@@ -86,6 +86,8 @@
 #include <third_party/hsmddk/include/Kit/DriverFramework/Device_API/incl/device_mgmt.h>
 #include <third_party/hsmddk/include/Integration/Adapter_Generic/incl/adapter_interrupts.h>
 
+#include <ti/drivers/cryptoutils/sharedresources/HSMResourceXXF3.h>
+#include <ti/drivers/cryptoutils/sharedresources/CommonResourceXXF3.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKey.h>
 #include <ti/drivers/dpl/SemaphoreP.h>
 #include <ti/drivers/dpl/HwiP.h>
@@ -174,6 +176,9 @@ typedef struct
 #define BOOT_TOKEN_WORD1 0x03725746
 
 #define SYSTEMINFO_TOKEN_WORD0 0x0F030000
+#define SYSTEMINFO_PATCH_MASK  0x000000FF
+#define SYSTEMINFO_MINOR_MASK  0x0000FF00
+#define SYSTEMINFO_MAJOR_MASK  0x00FF0000
 
 #define CRYPTO_OFFICER_ID 0x4F5A3647
 
@@ -198,6 +203,8 @@ typedef struct
 #define HSM_CRNG_RAW_KEY_ENC 0x7264
 #define HSM_TRNG_RAW_KEY_ENC 0x5244
 
+#define HSM_ECDH_GEN_PUB_KEY_ASSET_ID_UPPDER_VALUE 0xFFFFFFFF00000000
+
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX)
     /* HSM Register names for CC35XX are different compared to CC27XX
      * Below mapping helps to keep the source code same between
@@ -220,8 +227,6 @@ typedef struct
     #define HSMCRYPTO_MBCTL_MB1OUT_EMTY HSM_MBXCTL_OUTEMP1
 #endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX) */
 
-/* Synchronizes access to the HSM */
-static SemaphoreP_Struct HSMLPF3_accessSemaphore;
 /* Used by crypto drivers in blocking mode to wait on a result */
 static SemaphoreP_Struct HSMLPF3_operationSemaphore;
 
@@ -230,6 +235,8 @@ static HSMLPF3_Operation operation;
 
 static bool HSMLPF3_isInitialized   = false;
 static bool HSMLPF3_rtosInitialized = false;
+
+static volatile HSMLPF3_SystemInfo_t HSMLPF3_engineSystemInfo;
 
 static int_fast16_t HSMLPF3_hsmReturnStatus;
 
@@ -249,6 +256,7 @@ static int_fast16_t HSMLPF3_boot(void);
 static void HSMLPF3_initMbox(void);
 static void HSMLPF3_enableClock(void);
 static void HSMLPF3_initAIC(void);
+static int_fast16_t HSMLPF3_getEngineSystemInfo();
 
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
 static int_fast16_t HSMLPF3_submitResetToken(void);
@@ -537,7 +545,9 @@ void HSMLPF3_constructRTOSObjects(void)
         hwiParams.enableInt = false;
         (void)HwiP_construct(&HSMLPF3_hwi, INT_HSM_SEC_IRQ, HSMLPF3_hwiFxn, &hwiParams);
 
-        (void)SemaphoreP_constructBinary(&HSMLPF3_accessSemaphore, 1U);
+        /* Initialize the CommonResource access semaphore, needed due to errata SYS_211. */
+        CommonResourceXXF3_constructRTOSObjects();
+        HSMResourceXXF3_constructRTOSObject();
         (void)SemaphoreP_constructBinary(&HSMLPF3_operationSemaphore, 0U);
 
         HSMLPF3_rtosInitialized = true;
@@ -648,6 +658,64 @@ int_fast16_t HSMLPF3_wakeUp(void)
 }
 
 /*
+ *  ======== HSMLPF3_getEngineSystemInfo ========
+ */
+static int_fast16_t HSMLPF3_getEngineSystemInfo(void)
+{
+    int_fast16_t status    = HSMLPF3_STATUS_ERROR;
+    uint32_t inputToken[2] = {0};
+    uint32_t *outputToken  = (uint32_t *)(HSMCRYPTO_BASE);
+
+    /* Try and obtain access to the crypto module */
+    if (!HSMLPF3_acquireLock(SemaphoreP_NO_WAIT, (uintptr_t)0U))
+    {
+        /* Acquiring the lock failed so we return immediately */
+        return HSMLPF3_STATUS_RESOURCE_UNAVAILABLE;
+    }
+
+    inputToken[0] = SYSTEMINFO_TOKEN_WORD0;
+    inputToken[1] = CRYPTO_OFFICER_ID;
+
+    HSMLPF3_writeToken(inputToken, sizeof(inputToken) / sizeof(uint32_t));
+
+    /* Wait for result in mbx1_out */
+    while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
+
+    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) == 0)
+    {
+        status = HSMLPF3_STATUS_SUCCESS;
+
+        memcpy((void *)&HSMLPF3_engineSystemInfo, &outputToken[1], sizeof(HSMLPF3_SystemInfo_t));
+    }
+
+    /* Mark mbx1_out as empty */
+    HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
+
+    /* Release the access semaphore */
+    HSMLPF3_releaseLock();
+
+    return status;
+}
+
+/*
+ *  ======== HSMLPF3_isStandaloneDMASupportEnabled ========
+ */
+bool HSMLPF3_isStandaloneDMASupportEnabled(void)
+{
+    bool retval = false;
+
+    /* HSM FW versions beyond 3.1.0 have DMA operations decoupled from ECC operations. */
+    if ((HSMLPF3_isInitialized) && (((HSMLPF3_engineSystemInfo.customFwVersion.major == 3) &&
+                                     (HSMLPF3_engineSystemInfo.customFwVersion.minor == 1)) ||
+                                    (HSMLPF3_engineSystemInfo.customFwVersion.major >= 4)))
+    {
+        retval = true;
+    }
+
+    return retval;
+}
+
+/*
  *  ======== HSMLPF3_init ========
  */
 int_fast16_t HSMLPF3_init(void)
@@ -663,6 +731,8 @@ int_fast16_t HSMLPF3_init(void)
 
         key = HwiP_disable();
 
+        memset((void *)&HSMLPF3_engineSystemInfo, 0, sizeof(HSMLPF3_engineSystemInfo));
+
         if (HSMLPF3_boot() != HSMLPF3_STATUS_SUCCESS)
         {
             HSMLPF3_hsmReturnStatus = HSMLPF3_STATUS_ERROR;
@@ -673,6 +743,13 @@ int_fast16_t HSMLPF3_init(void)
         {
             HwiP_restore(key);
 
+            /* Register power notification function */
+            Power_registerNotify(&postNotify, PowerLPF3_ENTERING_STANDBY, HSMLPF3_postNotifyFxn, (uintptr_t)0U);
+
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
+            Power_setDependency(PowerLPF3_PERIPH_HSM);
+#endif
+
             if (HSMSAL_Init() != HSMSAL_SUCCESS)
             {
                 /* HSMSAL_Init() can fail if HSM interrupt engine is unresponsive. */
@@ -680,12 +757,12 @@ int_fast16_t HSMLPF3_init(void)
             }
             else
             {
-                HSMLPF3_isInitialized = true;
+                HSMLPF3_hsmReturnStatus = HSMLPF3_getEngineSystemInfo();
 
-                /* Register power notification function */
-                Power_registerNotify(&postNotify, PowerLPF3_ENTERING_STANDBY, HSMLPF3_postNotifyFxn, (uintptr_t)0U);
-
-                HSMLPF3_hsmReturnStatus = HSMLPF3_STATUS_SUCCESS;
+                if (HSMLPF3_hsmReturnStatus == HSMLPF3_STATUS_SUCCESS)
+                {
+                    HSMLPF3_isInitialized = true;
+                }
             }
         }
 
@@ -696,13 +773,6 @@ int_fast16_t HSMLPF3_init(void)
 #endif
     }
 
-#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
-    if (HSMLPF3_isInitialized)
-    {
-        Power_setDependency(PowerLPF3_PERIPH_HSM);
-    }
-#endif
-
     return HSMLPF3_hsmReturnStatus;
 }
 
@@ -712,15 +782,33 @@ int_fast16_t HSMLPF3_init(void)
 int_fast16_t HSMLPF3_provisionHUK(void)
 {
     int_fast16_t status = HSMLPF3_STATUS_ERROR;
+
+    if (!HSMLPF3_isInitialized)
+    {
+        return status;
+    }
+
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
     uint32_t token[3];
 
-    /* Try and obtain access to the crypto module */
-    if (!HSMLPF3_acquireLock(SemaphoreP_NO_WAIT, (uintptr_t)0U))
+    /* #HSMLPF3_init() retrieves the HSM engine info.
+     * - If the .co field in the returned data is high, it means a previous run of the application called this API.
+     * - If the .co filed is low, it means this is the first time this API is called.
+     */
+    if (HSMLPF3_engineSystemInfo.co)
     {
-        /* Acquiring the lock failed so we return immediately */
-        return HSMLPF3_STATUS_RESOURCE_UNAVAILABLE;
+        /* A previous call to #HSMLPF3_provisionHUK() API already provisioned the HUK. */
+        return HSMLPF3_STATUS_SUCCESS;
     }
+
+    /* Try and obtain access to the crypto module */
+    HSMLPF3_acquireLock(SemaphoreP_WAIT_FOREVER, (uintptr_t)0U);
+
+    /* Acquire HSM semaphore to prevent AHB bus master transactions. There is no
+     * protection against I2S bus master so I2S cannot be used at the same
+     * time as CAN.
+     */
+    CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
 
     /* Set the token for HUK provisioning */
     token[0] = HUK_PROVISION_TOKEN_WORD0;
@@ -766,6 +854,8 @@ int_fast16_t HSMLPF3_provisionHUK(void)
     /* Disable the OTP interrupt event */
     HWREG(HSM_BASE + HSM_O_CTL) &= ~HSM_CTL_OTPEVTEN_EN;
 
+    CommonResourceXXF3_releaseLock();
+
     /* Release the access semaphore */
     HSMLPF3_releaseLock();
 
@@ -791,12 +881,12 @@ int_fast16_t HSMLPF3_provisionHUK(void)
 bool HSMLPF3_acquireLock(uint32_t timeout, uintptr_t driverHandle)
 {
     bool status = false;
-    SemaphoreP_Status resourceAcquired;
+    bool isResourceAcquired;
 
     /* Try and obtain access to the crypto module */
-    resourceAcquired = SemaphoreP_pend(&HSMLPF3_accessSemaphore, timeout);
+    isResourceAcquired = HSMResourceXXF3_acquireLock(timeout);
 
-    if (resourceAcquired == SemaphoreP_OK)
+    if (isResourceAcquired)
     {
         operation.driverHandle = driverHandle;
 
@@ -823,7 +913,7 @@ void HSMLPF3_releaseLock(void)
 {
     operation.driverHandle = 0U;
 
-    SemaphoreP_post(&HSMLPF3_accessSemaphore);
+    HSMResourceXXF3_releaseLock();
 
     Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
 }
@@ -1017,6 +1107,9 @@ int_fast16_t HSMLPF3_cancelOperation(void)
         }
 
         HSMLPF3_operationInProgress = false;
+
+        /* Release the CommonResource semaphore. */
+        CommonResourceXXF3_releaseLock();
 
         /* The post-processing function typically releases the lock and power constraint,
          * but the cancel operation is now responsible for it.
@@ -1223,18 +1316,27 @@ void HSMLPF3_constructSHA2PhysicalToken(SHA2LPF3HSM_Object *object)
 }
 
 /*
- *  ======== HSMLPF3_constructECDSASignPhysicalToken ========
+ *  ======== HSMLPF3_constructECDSAPhysicalToken ========
  */
-void HSMLPF3_constructECDSASignPhysicalToken(ECDSALPF3HSM_Object *object)
+void HSMLPF3_constructECDSAPhysicalToken(ECDSALPF3HSM_Object *object)
 {
-    const uint8_t nWord               = HSM_ASYM_DATA_SIZE_B2W(object->curveLength);
-    Eip130TokenDmaAddress_t signature = (uintptr_t)object->signature;
-    uint32_t signSize                 = (HSM_SIGNATURE_VCOUNT * (HSM_ASYM_DATA_SIZE_VWB(object->curveLength)));
-    uint8_t command                   = VEXTOKEN_PKAS_ECDSA_SIGN;
+    const uint8_t nWord            = HSM_ASYM_DATA_SIZE_B2W(object->curveLength);
+    Eip130TokenDmaAddress_t output = 0U;
+    uint32_t signSize              = (HSM_SIGNATURE_VCOUNT * (HSM_ASYM_DATA_SIZE_VWB(object->curveLength)));
+    uint8_t command                = VEXTOKEN_PKAS_ECDSA_SIGN;
 
     if (object->operationType == ECDSA_OPERATION_TYPE_VERIFY)
     {
         command = VEXTOKEN_PKAS_ECDSA_VERIFY;
+    }
+
+    if (HSMLPF3_isStandaloneDMASupportEnabled())
+    {
+        output = HSM_ECDH_GEN_PUB_KEY_ASSET_ID_UPPDER_VALUE | ((Eip130TokenDmaAddress_t)object->publicObjAssetID);
+    }
+    else
+    {
+        output = (uintptr_t)&object->signature[0];
     }
 
     Eip130Token_Command_Pk_Asset_Command(&operation.commandToken,
@@ -1247,7 +1349,7 @@ void HSMLPF3_constructECDSASignPhysicalToken(ECDSALPF3HSM_Object *object)
                                          0,
                                          0,
                                          0,
-                                         signature,
+                                         output,
                                          signSize);
 
     Eip130Token_Command_Pk_Asset_SetExplicitDigest(&operation.commandToken,
@@ -1261,7 +1363,7 @@ void HSMLPF3_constructECDSASignPhysicalToken(ECDSALPF3HSM_Object *object)
 void HSMLPF3_constructECDHGenPubPhysicalToken(ECDHLPF3HSM_Object *object)
 {
     const uint8_t nWord            = HSM_ASYM_DATA_SIZE_B2W(object->curveLength);
-    Eip130TokenDmaAddress_t output = (uintptr_t)object->output;
+    Eip130TokenDmaAddress_t output = 0U;
     uint8_t outputSize             = HSM_ASYM_DATA_SIZE_VWB(object->curveLength);
     uint8_t command                = VEXTOKEN_PKAS_ECDH_ECDSA_GEN_PUBKEY;
 
@@ -1272,6 +1374,15 @@ void HSMLPF3_constructECDHGenPubPhysicalToken(ECDHLPF3HSM_Object *object)
     else
     {
         outputSize = HSM_SIGNATURE_VCOUNT * outputSize;
+    }
+
+    if (HSMLPF3_isStandaloneDMASupportEnabled())
+    {
+        output = HSM_ECDH_GEN_PUB_KEY_ASSET_ID_UPPDER_VALUE | ((Eip130TokenDmaAddress_t)object->publicDataAssetID);
+    }
+    else
+    {
+        output = (uintptr_t)&object->output[0];
     }
 
     Eip130Token_Command_Pk_Asset_Command(&operation.commandToken,

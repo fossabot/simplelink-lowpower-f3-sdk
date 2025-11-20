@@ -1008,12 +1008,12 @@ extern void ICall_init(void);
  *
  * If ICALL_FEATURE_SEPARATE_IMGINFO compile flag is not defined,
  * the following macros must be defined in the ICallAddrs.h file:
- * @ref ICALL_STACK0_ADDR, @ref ICALL_ADDR_MAPS, @ref ICALL_TASK_PRIORITIES
+ * @ref ICALL_ADDR_MAPS
  * and @ref ICALL_TASK_STACK_SIZES.
  *
  * If ICALL_FEATURE_SEPARATE_IMGINFO compile flag is defined,
  * the following constants have to be linked into an image that include ICall
- * module: ICall_imgEntries, ICall_imgTaskPriorities,
+ * module: ICall_imgEntries,
  * ICall_imgTaskStackSizes and ICall_numImages.
  */
 extern void ICall_createRemoteTasks(void);

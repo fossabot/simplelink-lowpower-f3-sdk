@@ -229,18 +229,6 @@ void zb_macsplit_transport_flush_trace(void);
 
 #if defined ZB_MACSPLIT_HOST
 zb_ret_t zb_macsplit_transport_secure_frame(zb_bufid_t param);
-void zb_macsplit_host_set_skip_startup_signal(zb_bufid_t param);
-/**
- * @brief Tries to send ZB_MACSPLIT_DEVICE_BOOT and ZB_ZDO_SIGNAL_SKIP_STARTUP signals
- *          if ZBOSS DOESN'T start automatically.
- *        Send these signals only after initialization completed on both host and SoC.
- *        Need it to exclude race between these signals.
- *        Now, ZB_MACSPLIT_DEVICE_BOOT always should be sent first.
- *
- *        If ZBOSS starts automatically, sends ZB_MACSPLIT_DEVICE_BOOT unconditionally.
- * @param param unused
- */
-void zb_macsplit_host_try_send_dev_boot_sig_and_skip_startup_sig(zb_bufid_t param);
 #endif /* ZB_MACSPLIT_HOST */
 
 #ifdef ZB_TRACE_LEVEL

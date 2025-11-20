@@ -279,6 +279,11 @@ void bdb_force_link(void);
 
 zb_uint8_t bdb_get_scan_duration(void);
 
+#ifdef ZB_BDB_PREINST_NWK_JOINING
+zb_ret_t zb_bdb_preinst_nwk_on_factory_new(zb_uint8_t param);
+void zb_bdb_preinst_nwk_on_join_confirm(void);
+#endif /* ZB_BDB_PREINST_NWK_JOINING */
+
 #endif /* ZB_BDB_MODE && !BDB_OLD */
 
 

@@ -309,7 +309,9 @@ typedef enum BLEAppUtil_L2CAPSignalEventMaskFlags_e
     BLEAPPUTIL_L2CAP_OUT_OF_CREDIT_EVT         = (uint32_t)BV(2), //!< @ref L2CAP_OUT_OF_CREDIT_EVT
     BLEAPPUTIL_L2CAP_PEER_CREDIT_THRESHOLD_EVT = (uint32_t)BV(3), //!< @ref L2CAP_PEER_CREDIT_THRESHOLD_EVT
     BLEAPPUTIL_L2CAP_SEND_SDU_DONE_EVT         = (uint32_t)BV(4), //!< @ref L2CAP_SEND_SDU_DONE_EVT
-    BLEAPPUTIL_L2CAP_NUM_CTRL_DATA_PKT_EVT     = (uint32_t)BV(5)  //!< @ref L2CAP_NUM_CTRL_DATA_PKT_EVT
+    BLEAPPUTIL_L2CAP_NUM_CTRL_DATA_PKT_EVT     = (uint32_t)BV(5), //!< @ref L2CAP_NUM_CTRL_DATA_PKT_EVT
+    BLEAPPUTIL_L2CAP_PEER_CREDIT_RECEIVED_EVT  = (uint32_t)BV(6)  //!< @ref L2CAP_PEER_CREDIT_RECEIVED_EVT
+
 } BLEAppUtil_L2CAPSignalEventMaskFlags_e;
 
 /// HCI event mask
@@ -373,6 +375,7 @@ typedef enum
   APP_SPECIFIER_GATT          = 0x09,
   APP_SPECIFIER_CA_SERVER     = 0x0A,
   APP_SPECIFIER_RREQ          = 0x0B,
+  APP_SPECIFIER_RRSP          = 0x0C,
 } BLEAppUtil_AppSpecifier_e;
 
 /// @brief Enumeration for External Application Control Capabilities
@@ -390,6 +393,7 @@ typedef enum
   APP_CAP_GATT                 = 0x00020000,
   APP_CAP_CA_SERVER            = 0x00040000,
   APP_CAP_RREQ                 = 0x00080000,
+  APP_CAP_RRSP                 = 0x00100000,
 } BLEAppUtil_AppCapabilities_e;
 
 /** @} End BLEAppUtil_Enumerators_Typedefs */
@@ -995,7 +999,7 @@ GAP_Addr_Modes_t BLEAppUtil_getDevAddrMode(void);
 /**
  * @brief   Set Phy Preference on the current connection. Apply the same value
  *          for RX and TX. For more information, see the LE 2M PHY section in the User's Guide:
- *          http://software-dl.ti.com/lprf/ble5stack-latest/
+ *          All the documentation and collateral applicable can be found on TI Developer Zone - https://dev.ti.com/
  *
  * @param   phyParams - Phy Preference on the current connection.
  *

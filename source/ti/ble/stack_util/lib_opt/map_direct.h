@@ -52,6 +52,7 @@
 #include "ti/ble/controller/ll/ll_ae.h"
 #include "ti/ble/controller/ll/ll_power_control.h"
 #include "ti/ble/controller/ll/ll_rssi_monitor.h"
+#include "ti/ble/stack_util/osal/osal.h"
 #include "ti/ble/stack_util/osal/osal_bufmgr.h"
 #ifndef CONTROLLER_ONLY
 #include "ti/ble/host/handover/l2cap_handover.h"
@@ -256,6 +257,7 @@
 #define MAP_llEqSynchWord                                            llEqSynchWord
 #define MAP_llEqualBytes                                             llEqualBytes
 #define MAP_llEventDelta                                             llEventDelta
+#define MAP_llEventCmp                                               llEventCmp
 #define MAP_llEventInRange                                           llEventInRange
 #define MAP_llFindNextSecCmd                                         llFindNextSecCmd
 #define MAP_llFindNextSecTask                                        llFindNextSecTask
@@ -288,9 +290,7 @@
 #define MAP_llOneBitSynchWordDiffer                                  llOneBitSynchWordDiffer
 #define MAP_llPendingUpdateParam                                     llPendingUpdateParam
 #define MAP_llProcessChanMap                                         llProcessChanMap
-#define MAP_llProcessCentralControlProcedures                        llProcessCentralControlProcedures
 #define MAP_llProcessScanRxFIFO                                      llProcessScanRxFIFO
-#define MAP_llProcessPeripheralControlProcedures                     llProcessPeripheralControlProcedures
 #define MAP_llRealignConn                                            llRealignConn
 #define MAP_llRegisterConnEvtCallback                                llRegisterConnEvtCallback
 #define MAP_llReleaseConnId                                          llReleaseConnId
