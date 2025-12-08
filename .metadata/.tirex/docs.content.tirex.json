@@ -2,7 +2,7 @@
     {
         "name": "Release Notes",
         "resourceType": "file",
-        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_14_00_39.html",
+        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_14_00_41.html",
         "devices": [
             "CC2340R5"
         ],

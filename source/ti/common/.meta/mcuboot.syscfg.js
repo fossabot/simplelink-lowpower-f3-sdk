@@ -424,6 +424,15 @@ function changeMode(inst, ui)
     }
     else
     {
+        ui.externalFlash.hidden = false;
+        if(mcubootSettings["enableEncryptedImage"]["enabled"])
+        {
+            ui.enableEncryptedImage.hidden = false;
+        }
+        else
+        {
+            ui.enableEncryptedImage.hidden = true;
+        }
         ui.imageCompression.hidden = true;
     }
 
@@ -441,13 +450,13 @@ function changeTzEnable(inst, ui)
 {
     // change mode to overwrite
     inst.mode = 'overwrite';
-    ui.mode.readOnly = !ui.mode.readOnly;
+    ui.mode.readOnly = true;
     ui.externalFlash.hidden = false;
 
     //change anti rollback protection settings
     inst.antiRollbackProtection = false;
-    ui.antiRollbackProtection.readOnly = !ui.antiRollbackProtection.readOnly;
-    ui.antiRollbackProtection.hidden = !ui.antiRollbackProtection.hidden;
+    ui.antiRollbackProtection.readOnly = true;
+    ui.antiRollbackProtection.hidden = true;
 
     // set hidden properties for second image slots
     ui.primaryBase2.hidden = !ui.primaryBase2.hidden;
@@ -472,7 +481,7 @@ function changeTzEnable(inst, ui)
     /* If encrypted images are enabled then update the instance and ui.*/
     if(mcubootSettings["enableEncryptedImage"]["enabled"])
     {
-        ui.enableEncryptedImage.hidden = !ui.enableEncryptedImage.hidden;
+        ui.enableEncryptedImage.hidden = false;
         inst.enableEncryptedImage = false;
     }
 
@@ -511,7 +520,7 @@ function changeTzEnable(inst, ui)
         inst.secondaryBase2 = mcubootSettings["image2"]["secondaryBase"];
         inst.secondarySize2 = mcubootSettings["image2"]["secondarySize"];
     }
-    
+
 }
 
 function validate(inst, validation) {
@@ -521,6 +530,12 @@ function validate(inst, validation) {
     {
         logWarning(validation, inst, "enableEncryptedImage",
                  "Default Bootloader size may need to be increased if Encrypted Images are enabled ");
+    }
+
+    if(inst.enableEncryptedImage === true && inst.imageCompression === true)
+    {
+        logError(validation, inst, "imageCompression",
+                 "Image compression can not be enabled if encrypted image updates are enabled.");
     }
 
     // if instance of external flash is true, flash base must be 0x800
@@ -642,7 +657,7 @@ function validate(inst, validation) {
         logError(validation, inst, "secondarySize1",
                  "Primary image and secondary image overlap each other.");
     }
-    
+
     else if(inst.primaryBase1 >= inst.secondaryBase1 && inst.secondaryBase1 + inst.secondarySize1 > inst.primaryBase1 && !inst.externalFlash)
     {
         logError(validation, inst, "primaryBase1",
@@ -682,7 +697,7 @@ function validate(inst, validation) {
                     "MCUboot layout exceeds the flash boundaries. Make sure all image sizes and boundaries are less than 0x" + mcubootSettings["alignment"]["flashBoundary"].toString(16));
         }
     }
-    
+
     //check if all base addresses are within flash boundary (for all conditions except tz_enabled)
     if(inst.bootloaderBaseAddress > mcubootSettings["alignment"]["flashBoundary"])
     {
@@ -783,7 +798,7 @@ function validate(inst, validation) {
             logError(validation, inst, "secondarySize2",
                     "MCUboot layout exceeds the flash boundaries. Make sure all image sizes are less than 0x" + mcubootSettings["alignment"]["flashBoundary"].toString(16));
         }
-        
+
         if(inst.externalFlash === true)
         {
             if(inst.secondarySize2 % externalFlashSectorSize !== 0)
@@ -827,7 +842,7 @@ function getLinkerDefs()
     let mcuboot = system.modules["/ti/common/mcuboot"];
     let flashSize = mcuboot.$static.bootloaderSize;
 
-    /* reduce mcuboot flash size if anitrollback is enabled for non CC13X2X7_CC26X2X7 */ 
+    /* reduce mcuboot flash size if anitrollback is enabled for non CC13X2X7_CC26X2X7 */
     if(deviceGroup !== "DeviceGroup_CC13X2X7_CC26X2X7" && mcuboot.$static.antiRollbackProtection)
     {
         flashSize -= mcubootSettings["alignment"]["sectorSize"];
