@@ -23,7 +23,7 @@ This is version 9.14.01.16 of the SimpleLink Low Power F3 SDK.
 
 - MCUBoot Upgrade with Encrypted Image for CC23xx and CC27xx
 
-Refer to the [Document Overview](docs/Documentation_Overview.html) for
+Refer to the [Document Overview][sdk docs] for
 the individual release notes and details for starting development with
 each SDK component.
 ## About this Repository
