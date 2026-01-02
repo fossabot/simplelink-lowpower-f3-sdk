@@ -70,6 +70,9 @@
 // Mask to get the 6 LSB of the segment index
 #define RRSP_6_LSB_MASK                    0x3F
 
+// Invalid mode ID (i.e not On-Demand / Real-Time)
+#define RAS_INVALID_MODE_ID    0
+
 /*********************************************************************
 * MACROS
 */
@@ -94,17 +97,21 @@ typedef struct {
  * LOCAL FUNCTIONS
  */
 
+uint8_t rrspGetCurrentMode(uint16_t connHandle);
+uint8_t rrspSetParameter(uint16_t connHandle, uint8_t param, void *pValue, uint16_t len);
 void rrspSaveRegistrationStatus(RAS_cccUpdate_t *rasCCCUpdate);
 uint8_t rrspSendErrorResponse(uint16_t connHandle, uint8_t responseCode, uint8_t reason);
 uint8_t rrspSendSegmentsIndi(uint16_t connHandle, uint16_t rangingCounter);
 uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter);
 uint16_t rrspCalcSegmentOffset(uint8_t segmentIndex, uint16_t connMtu);
+void rrspDataSentHandler(uint16_t connHandle, uint16_t rangingCounter);
 void rrspHandleAckRangingData(uint16_t connHandle, uint16_t rangingCounter);
+void rrspSendData(uint16_t connHandle, uint16_t rangingCounter);
 void rrspHandleGetRangingData(uint16_t connHandle, uint16_t rangingCounter);
 void rrspConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
 void rrspL2CapEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
 void rrspGattEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
-uint8_t sendOverWritten(uint16_t connHandle, uint16_t rangingCounter);
+uint8_t rrspSendOverWritten(uint16_t connHandle, uint16_t rangingCounter);
 uint8_t rangingSubeventParser(RRSP_csSubEventResults_t* subeventResult, uint8_t *pParsedData);
 uint8_t rangingSubeventContParser(RRSP_csSubEventResultsContinue_t* subeventResultCont, uint8_t *pParsedData);
 uint8_t RangingDataParser(uint8_t *pData, uint16_t Datalen, uint8_t numSteps, uint8_t *pParsedData);
@@ -165,7 +172,7 @@ BLEAppUtil_EventHandler_t gRAPGATTHandler =
  *          the service characteristics
  *
  * @param   appCallbacks - pointer to application callback
- * @param   features - Ranging feature value
+ * @param   features - Ranging features value
  *
  * @return  SUCCESS or stack call status
  */
@@ -210,13 +217,13 @@ uint8_t RRSP_start(RRSP_cb_t *appCallbacks, uint32_t features)
 
                         // Register to service callback function
                         status = RAS_registerProfileCBs( &rrsp_serverCB );
-                        if ( status != SUCCESS )
+                        if ( status == SUCCESS )
                         {
                             // Registers the application callback function
                             gRAPControlBlock.ranging_appCB = appCallbacks;
 
                             // Set Ranging Feature value in the service table
-                            status = RAS_setParameter(LINKDB_CONNHANDLE_INVALID, RAS_FEAT_ID, &features, RAS_FEAT_LEN );
+                            status = rrspSetParameter(LINKDB_CONNHANDLE_INVALID, RAS_FEAT_ID, &features, RAS_FEAT_LEN );
                         }
                     }
                 }
@@ -269,8 +276,8 @@ uint8_t RRSP_ProcedureStarted(uint16_t connHandle, uint16_t rangingCounter, uint
   // If procedureID is not identical, the received procedeID is an overwritten procedure
   if ((procedureID.connHandle != connHandle) || (procedureID.rangingCounter != rangingCounter))
   {
-      // send overwritten message to the peer
-      sendOverWritten(procedureID.connHandle, procedureID.rangingCounter);
+      // send overwritten message to the peer (On-Demand only)
+      rrspSendOverWritten(procedureID.connHandle, procedureID.rangingCounter);
   }
 
   return status;
@@ -285,14 +292,29 @@ uint8_t RRSP_ProcedureStarted(uint16_t connHandle, uint16_t rangingCounter, uint
  * @param   connHandle - Connection handle of the device that completed the procedure.
  * @param   rangingCounter - The ranging counter for the procedure.
  *
- * @return  None
+ * @return  SUCCESS
+ * @return  FAILURE when the client is not registered for On-Demand or Real-Time mode.
  */
 uint8_t RRSP_ProcedureDone(uint16_t connHandle, uint16_t rangingCounter)
 {
   uint8_t status = USUCCESS;
+  uint8_t mode = rrspGetCurrentMode(connHandle);
 
-  // Send data ready message to the client peer
-  RAS_setParameter(connHandle, RAS_READY_ID, &rangingCounter, RAS_DATA_READY_LEN);
+  if ( mode == RAS_ON_DEMAND_ID)
+  {
+      // Send data ready message to the client peer
+      rrspSetParameter(connHandle, RAS_READY_ID, &rangingCounter, RAS_DATA_READY_LEN);
+  }
+  else if (mode == RAS_REAL_TIME_ID)
+  {
+      // Send data over Real-Time characteristic
+      rrspSendData(connHandle, rangingCounter);
+  }
+  else
+  {
+      status = FAILURE;
+  }
+
 
   return status;
 }
@@ -481,82 +503,199 @@ void rrspCPReqCB(char *pValue)
     RAS_CPCB_t *CPReq;
     RangingDBServer_procedureId_t procedureID;
     uint8_t status = SUCCESS;
-    // Verify input parameters
-    if ( pValue != NULL )
+    // Verify input parameters and current mode
+    if (pValue != NULL)
     {
         // Cast the pointer to the correct type
         CPReq = (RAS_CPCB_t *)pValue;
-        // Set procedure ID
-        procedureID.connHandle = CPReq->connHandle;
-        procedureID.rangingCounter = CPReq->CPMsg.param1;
 
-
-        if (gRAPControlBlock.rrspSegmentationProcess.busy == TRUE)
+        // Verify current mode
+        if (rrspGetCurrentMode(CPReq->connHandle) == RAS_ON_DEMAND_ID)
         {
-            // Server is busy, send response
-            status = rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_SERVER_BUSY);
-            if (status != SUCCESS)
+            // Cast the pointer to the correct type
+            CPReq = (RAS_CPCB_t *)pValue;
+            // Set procedure ID
+            procedureID.connHandle = CPReq->connHandle;
+            procedureID.rangingCounter = CPReq->CPMsg.param1;
+
+            if (gRAPControlBlock.rrspSegmentationProcess.busy == TRUE)
             {
-                // Mark server sould send "server busy" error response
-                gRAPControlBlock.rrspSegmentationProcess.waitForBusy = TRUE;
+                // Server is busy, send response
+                status = rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_SERVER_BUSY);
+                if (status != SUCCESS)
+                {
+                    // Mark server sould send "server busy" error response
+                    gRAPControlBlock.rrspSegmentationProcess.waitForBusy = TRUE;
+                }
             }
-        }
-        else
-        {
-            // Find out the request opCode
-            switch ( CPReq->CPMsg.opCode )
+            else
             {
-                /******************************************************/
-                /******** Request to send stored recodes **************/
-                /******************************************************/
-                case RAS_CP_OPCODE_GET_RANGING_DATA:
+                // Find out the request opCode
+                switch ( CPReq->CPMsg.opCode )
                 {
-                    if ( CPReq->msgLength != RAS_CP_GET_DATA_CMD_LEN )
+                    /******************************************************/
+                    /******** Request to send stored recodes **************/
+                    /******************************************************/
+                    case RAS_CP_OPCODE_GET_RANGING_DATA:
                     {
-                        // Invalid length of the request, send response
-                        rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_INVALID_PARAM);
+                        if ( CPReq->msgLength != RAS_CP_GET_DATA_CMD_LEN )
+                        {
+                            // Invalid length of the request, send response
+                            rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_INVALID_PARAM);
+                        }
+                        else if (RangingDBServer_isProcedureExist(procedureID) == FALSE)
+                        {
+                            // Procedure ID does not exist in the database, send response
+                            rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_NO_RECORDS_FOUND);
+                        }
+                        else
+                        {
+                            // Handle the request to get ranging data
+                            rrspHandleGetRangingData(procedureID.connHandle, procedureID.rangingCounter);
+                        }
+                        break;
                     }
-                    else if (RangingDBServer_isProcedureExist(procedureID) == FALSE)
+                    case RAS_CP_OPCODE_ACK_RANGING_DATA:
                     {
-                        // Procedure ID does not exist in the database, send response
-                        rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_NO_RECORDS_FOUND);
+                        if ( CPReq->msgLength != RAS_CP_ACK_DATA_CMD_LEN )
+                        {
+                            // Invalid length of the request, send response
+                            rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_INVALID_PARAM);
+                        }
+                        else if (RangingDBServer_isProcedureExist(procedureID) == FALSE)
+                        {
+                            // Procedure ID does not exist in the database, send response
+                            rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_NO_RECORDS_FOUND);
+                        }
+                        else
+                        {
+                            // Handle the acknowledgment of ranging data
+                            rrspHandleAckRangingData(procedureID.connHandle, procedureID.rangingCounter);
+                        }
+                        break;
                     }
-                    else
+                    default:
                     {
-                        // Handle the request to get ranging data
-                        rrspHandleGetRangingData(procedureID.connHandle, procedureID.rangingCounter);
+                        // Unsupported opcode, send response
+                        rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_OPCODE_NOT_SUPPORTED);
+                        break;
                     }
-                    break;
-                }
-                case RAS_CP_OPCODE_ACK_RANGING_DATA:
-                {
-                    if ( CPReq->msgLength != RAS_CP_ACK_DATA_CMD_LEN )
-                    {
-                        // Invalid length of the request, send response
-                        rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_INVALID_PARAM);
-                    }
-                    else if (RangingDBServer_isProcedureExist(procedureID) == FALSE)
-                    {
-                        // Procedure ID does not exist in the database, send response
-                        rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_NO_RECORDS_FOUND);
-                    }
-                    else
-                    {
-                        // Handle the acknowledgment of ranging data
-                        rrspHandleAckRangingData(procedureID.connHandle, procedureID.rangingCounter);
-                    }
-                    break;
-                }
-                default:
-                {
-                    // Unsupported opcode, send response
-                    rrspSendErrorResponse(procedureID.connHandle, RAS_CP_OPCODE_RSP_CODE, RAS_CP_RSP_CODE_VAL_OPCODE_NOT_SUPPORTED);
-                    break;
                 }
             }
         }
     }
 
+}
+
+/*********************************************************************
+ * @fn      rrspGetCurrentMode
+ *
+ * @brief Retrieves the current ranging mode for a given connection handle.
+ *
+ * This function returns the current mode of the ranging profile associated
+ * with the specified connection handle.
+ * If the connection handle is invalid or not registered, it returns
+ * @ref RAS_INVALID_MODE_ID.
+ *
+ * @param connHandle Connection handle.
+ *
+ * @return The current ranging mode @ref RAS_ON_DEMAND_ID or @ref RAS_REAL_TIME_ID.
+ * @return @ref RAS_INVALID_MODE_ID if the client is no registered to any mode
+ */
+uint8_t rrspGetCurrentMode(uint16_t connHandle)
+{
+    RRSP_RegistrationStatus_e mode;
+
+    if ( connHandle >= MAX_NUM_BLE_CONNS )
+    {
+        return RAS_INVALID_MODE_ID;
+    }
+
+    mode = RRSP_RegistrationStatus(connHandle);
+
+    if ( (mode == RRSP_ON_DEMAND_NOTI) || (mode == RRSP_ON_DEMAND_IND) )
+    {
+        return RAS_ON_DEMAND_ID;
+    }
+    else if ( (mode == RRSP_REAL_TIME_NOTI) || (mode == RRSP_REAL_TIME_IND) )
+    {
+        return RAS_REAL_TIME_ID;
+    }
+    else
+    {
+        return RAS_INVALID_MODE_ID;
+    }
+}
+
+/*********************************************************************
+ * @fn      rrspSetParameter
+ *
+ * @brief Sets a parameter for the ranging profile for a specific connection.
+ *
+ * This function allows the application to set a parameter value for
+ * the ranging profile associated with a connection handle.
+ * Wraps around the RAS_setParameter function for specific parameters.
+ *
+ * When setting Control Point, Data Ready, or Overwritten parameters, it
+ * checks if the current mode is On-Demand before proceeding,
+ * although if the mode is Real-Time it won't take any action but
+ * will consider it as a success.
+ *
+ * When the current mode is not On-Demand or Real-Time, it returns INVALIDPARAMETER.
+ *
+ * @param connHandle Connection handle.
+ * @param param      The parameter ID to set, @ref RAS_FEAT_ID to @ref RAS_OVERWRITTEN_ID
+ * @param pValue     Pointer to the value to set for the parameter.
+ * @param len        Length of the value pointed to by pValue.
+ *
+ * @return Status of the operation (e.g., success or error code).
+ */
+uint8_t rrspSetParameter(uint16_t connHandle, uint8_t param, void *pValue, uint16_t len)
+{
+    uint8_t status = SUCCESS;
+    uint8_t mode;
+
+    switch ( param )
+    {
+        case RAS_FEAT_ID:
+        case RAS_REAL_TIME_ID:
+        case RAS_ON_DEMAND_ID:
+        {
+            status = RAS_setParameter(connHandle, param, pValue, len);
+            break;
+        }
+        case RAS_CONTROL_POINT_ID:
+        case RAS_READY_ID:
+        case RAS_OVERWRITTEN_ID:
+        {
+            mode = rrspGetCurrentMode(connHandle);
+
+            // Accept only for On-Demand mode
+            if (mode == RAS_ON_DEMAND_ID)
+            {
+                status = RAS_setParameter(connHandle, param, pValue, len);
+            }
+            else if (mode == RAS_REAL_TIME_ID)
+            {
+                // For Real-Time mode, don't do anything but still consider as a success
+                status = SUCCESS;
+            }
+            else
+            {
+                status = INVALIDPARAMETER;
+            }
+
+            break;
+        }
+
+        default:
+        {
+            status = INVALIDPARAMETER;
+            break;
+        }
+    }
+
+    return status;
 }
 
 /**********************************************************************
@@ -570,7 +709,6 @@ void rrspCPReqCB(char *pValue)
  */
 void rrspSaveRegistrationStatus(RAS_cccUpdate_t *rasCCCUpdate)
 {
-
   // Check if the CCC update is valid
   if( (rasCCCUpdate != NULL) && (rasCCCUpdate->connHandle < MAX_NUM_BLE_CONNS) )
   {
@@ -631,29 +769,22 @@ uint8_t rrspSendErrorResponse(uint16_t connHandle, uint8_t responseCode, uint8_t
     rsp[1] = reason;
 
     // send response
-    return RAS_setParameter(connHandle, RAS_CONTROL_POINT_ID, rsp, RAS_CP_RSP_CODE_LEN );
+    return rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, rsp, RAS_CP_RSP_CODE_LEN );
 }
 
 /*********************************************************************
- * @fn      rrspHandleAckRangingData
+ * @fn      rrspDataSentHandler
  *
- * @brief   Handles the acknowledgment of ranging data.
+ * @brief   Handles the completion of data sending.
  *
  * @param   connHandle - Connection handle of the device.
  * @param   rangingCounter - Counter for the ranging procedure.
  *
  * @return  None
  */
-void rrspHandleAckRangingData(uint16_t connHandle, uint16_t rangingCounter)
+void rrspDataSentHandler(uint16_t connHandle, uint16_t rangingCounter)
 {
-    RAS_cpMsg_t CPMsgRsp = {0};
     RangingDBServer_procedureId_t procedureID;
-    // Prepare the response for the Ranging Data ack
-    CPMsgRsp.opCode = RAS_CP_OPCODE_RSP_CODE;
-    CPMsgRsp.param1 = RAS_CP_RSP_CODE_VAL_SUCCESS;
-
-    // Send the response
-    RAS_setParameter(connHandle, RAS_CONTROL_POINT_ID, &CPMsgRsp, RAS_CP_RSP_CODE_LEN);
 
     procedureID.connHandle = connHandle;
     procedureID.rangingCounter = rangingCounter;
@@ -674,16 +805,40 @@ void rrspHandleAckRangingData(uint16_t connHandle, uint16_t rangingCounter)
 }
 
 /*********************************************************************
- * @fn      rrspHandleGetRangingData
+ * @fn      rrspHandleAckRangingData
  *
- * @brief   Handles the process of retrieving and sending ranging data.
+ * @brief   Handles the acknowledgment of ranging data.
  *
  * @param   connHandle - Connection handle of the device.
  * @param   rangingCounter - Counter for the ranging procedure.
  *
  * @return  None
  */
-void rrspHandleGetRangingData(uint16_t connHandle, uint16_t rangingCounter)
+void rrspHandleAckRangingData(uint16_t connHandle, uint16_t rangingCounter)
+{
+    RAS_cpMsg_t CPMsgRsp = {0};
+    // Prepare the response for the Ranging Data ack
+    CPMsgRsp.opCode = RAS_CP_OPCODE_RSP_CODE;
+    CPMsgRsp.param1 = RAS_CP_RSP_CODE_VAL_SUCCESS;
+
+    // Send the response, On-Demand only
+    rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, &CPMsgRsp, RAS_CP_RSP_CODE_LEN);
+
+    // Handle the completion of data sending process
+    rrspDataSentHandler(connHandle, rangingCounter);
+}
+
+/*********************************************************************
+ * @fn      rrspSendData
+ *
+ * @brief   Sends data over On-Demand or Real-Time characteristic.
+ *
+ * @param   connHandle - Connection handle of the device.
+ * @param   rangingCounter - Counter for the ranging procedure.
+ *
+ * @return  None
+ */
+void rrspSendData(uint16_t connHandle, uint16_t rangingCounter)
 {
     // Mark the segmentation process as busy
     gRAPControlBlock.rrspSegmentationProcess.busy = TRUE;
@@ -720,6 +875,22 @@ void rrspHandleGetRangingData(uint16_t connHandle, uint16_t rangingCounter)
 }
 
 /*********************************************************************
+ * @fn      rrspHandleGetRangingData
+ *
+ * @brief   Handles the process of retrieving and sending ranging data.
+ *
+ * @param   connHandle - Connection handle of the device.
+ * @param   rangingCounter - Counter for the ranging procedure.
+ *
+ * @return  None
+ */
+void rrspHandleGetRangingData(uint16_t connHandle, uint16_t rangingCounter)
+{
+    // Send the ranging data
+    rrspSendData(connHandle, rangingCounter);
+}
+
+/*********************************************************************
  * @fn      rrspSendSegmentsIndi
  *
  * @brief   This function sends segments for indication mode.
@@ -741,6 +912,7 @@ uint8_t rrspSendSegmentsIndi(uint16_t connHandle, uint16_t rangingCounter)
     uint8_t endOfData;
     linkDBInfo_t connInfo = {0};
     RangingDBServer_procedureId_t procedureID;
+    uint8_t mode;
 
     if( gRAPControlBlock.rrspSegmentationProcess.segmentCounter == 0)
     {
@@ -764,6 +936,15 @@ uint8_t rrspSendSegmentsIndi(uint16_t connHandle, uint16_t rangingCounter)
 
         // Set the ranging counter in the segmentation process
         segment.segmentationHeader.segmentIndex = (gRAPControlBlock.rrspSegmentationProcess.segmentCounter & RRSP_6_LSB_MASK);
+
+        // Get the mode that the client is registered to
+        mode = rrspGetCurrentMode(connHandle);
+
+        if (mode != RAS_REAL_TIME_ID &&
+            mode != RAS_ON_DEMAND_ID)
+        {
+            return UFAILURE;
+        }
 
         // Calculate the offset for the segment
         offset = rrspCalcSegmentOffset(gRAPControlBlock.rrspSegmentationProcess.segmentCounter, connInfo.MTU);
@@ -796,7 +977,7 @@ uint8_t rrspSendSegmentsIndi(uint16_t connHandle, uint16_t rangingCounter)
             gRAPControlBlock.rrspSegmentationProcess.segmentCounter++;
 
             // Send the segment via server
-            status = RAS_setParameter(connHandle, RAS_ON_DEMAND_ID, &segment, len + RRSP_SEGMENT_HDR_SIZE);
+            status = rrspSetParameter(connHandle, mode, &segment, len + RRSP_SEGMENT_HDR_SIZE);
         }
         else
         {
@@ -831,6 +1012,7 @@ uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter)
     uint16_t len = 0;
     uint8_t* pData = NULL;
     RAS_cpMsg_t CPRsp = {0};
+    uint8_t mode;
 
     // Get connection information
     status = linkDB_GetInfo(connHandle, &connInfo);
@@ -851,6 +1033,15 @@ uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter)
 
     // Save the connHandle for later use in L2CAP event handler
     gRAPControlBlock.rrspSegmentationProcess.currentConnHandle = connHandle;
+
+    // Get the mode that the client is registered to
+    mode = rrspGetCurrentMode(connHandle);
+
+    if (mode != RAS_REAL_TIME_ID &&
+        mode != RAS_ON_DEMAND_ID)
+    {
+        return UFAILURE;
+    }
 
     // Send segments until all data is sent or blePending action is returned.
     // If blePending is returned, the process will be continued in the callback function. @ref rrspL2CapEventHandler
@@ -901,7 +1092,7 @@ uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter)
         }
 
         // Send the segment via server
-        status = RAS_setParameter(connHandle, RAS_ON_DEMAND_ID, &segment, len + RRSP_SEGMENT_HDR_SIZE);
+        status = rrspSetParameter(connHandle, mode, &segment, len + RRSP_SEGMENT_HDR_SIZE);
 
         if(status == blePending)
         {
@@ -919,7 +1110,7 @@ uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter)
     // Send complete data response to client
     CPRsp.opCode = RAS_CP_OPCODE_COMPLETE_DATA_RSP;
     CPRsp.param1 = rangingCounter;
-    status = RAS_setParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
+    status = rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
 
     if(status != blePending)
     {
@@ -952,18 +1143,19 @@ uint16_t rrspCalcSegmentOffset(uint8_t segmentIndex, uint16_t connMtu)
 }
 
 /*********************************************************************
-  * @fn      sendOverWritten
+  * @fn      rrspSendOverWritten
   *
   * @brief   This function sends an overwritten message to the peer device.
+  *          If the current mode is Real-Time, it does nothing and returns SUCCESS.
   *
   * @param   connHandle - Connection handle of the device.
   * @param   rangingCounter - Counter for the ranging procedure.
   *
   * @return  uint8_t - Status of the operation (SUCCESS or error code).
   */
-uint8_t sendOverWritten(uint16_t connHandle, uint16_t rangingCounter)
+uint8_t rrspSendOverWritten(uint16_t connHandle, uint16_t rangingCounter)
 {
-    uint8_t status = RAS_setParameter(connHandle, RAS_OVERWRITTEN_ID, &rangingCounter, RAS_OVERWRITTEN_LEN );
+    uint8_t status = rrspSetParameter(connHandle, RAS_OVERWRITTEN_ID, &rangingCounter, RAS_OVERWRITTEN_LEN );
     return status;
 }
 
@@ -1162,10 +1354,16 @@ void rrspL2CapEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
                 }
                 else // if(gRAPControlBlock.rrspSegmentationProcess.lastSegment == TRUE)
                 {
-                    // Send complete data response to client
+                    // Send complete data response to client, On-Demand only
                     CPRsp.opCode = RAS_CP_OPCODE_COMPLETE_DATA_RSP;
                     CPRsp.param1 = rangingCounter;
-                    RAS_setParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
+                    rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
+
+                    // If the current mode is Real-Time, call the data sent handler and finish
+                    if (rrspGetCurrentMode(connHandle) == RAS_REAL_TIME_ID)
+                    {
+                        rrspDataSentHandler(connHandle, rangingCounter);
+                    }
 
                     // Unregister the application callback function for Flow Control
                     L2CAP_RegisterFlowCtrlTask(INVALID_TASK_ID);
@@ -1225,11 +1423,17 @@ void rrspGattEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
                             // The ranging counter for the request
                             CPRsp.param1 = gRAPControlBlock.rrspSegmentationProcess.rangingCounter;
 
-                            // Send the response
-                            RAS_setParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
+                            // Send the response, On-Demand only
+                            rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
 
                             // Set profile as not busy
                             gRAPControlBlock.rrspSegmentationProcess.busy = FALSE;
+
+                            // If the current mode is Real-Time, call the data sent handler and finish
+                            if (rrspGetCurrentMode(connHandle) == RAS_REAL_TIME_ID)
+                            {
+                                rrspDataSentHandler(connHandle, gRAPControlBlock.rrspSegmentationProcess.rangingCounter);
+                            }
                         }
                         else
                         {

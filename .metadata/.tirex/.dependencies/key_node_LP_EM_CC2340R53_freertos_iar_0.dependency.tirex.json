@@ -27,7 +27,6 @@
             "+../../app/inc/app_l2cap_coc_api.h -> app_l2cap_coc_api.h",
             "+../../app/inc/app_main.h -> app_main.h",
             "+../../app/inc/app_pairing_api.h -> app_pairing_api.h",
-            "+../../app/inc/app_peripheral_api.h -> app_peripheral_api.h",
             "+../../app/inc/app_ranging_server_api.h -> app_ranging_server_api.h",
             "+../../../../../../../source/ti/ble/app_util/framework/src/bleapputil_init.c -> bleapputil_init.c",
             "+../../../../../../../source/ti/ble/app_util/framework/src/bleapputil_process.c -> bleapputil_process.c",

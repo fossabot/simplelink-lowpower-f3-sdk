@@ -159,7 +159,14 @@ def search_peer_name(peer_name, adv_data):
             return False
         field_type = adv_data[i + 1]
         if field_type == 0x09:  # Complete Local Name
-            name = bytes(adv_data[i + 2 : i + 1 + length]).decode("utf-8")
+            # There could be devices that have invalid advertising data that cannot be decoded to UTF-8
+            # While rare, it has been encountered, so this will protect against it
+            try:
+                name = bytes(adv_data[i + 2 : i + 1 + length]).decode("utf-8")
+            except UnicodeDecodeError:
+                # If the Complete Local Name cannot be decoded as Unicode, then something is wrong and return None
+                # Our devices should always have valid unicode in the local name
+                return None
             return name == peer_name
         i += length + 1
 

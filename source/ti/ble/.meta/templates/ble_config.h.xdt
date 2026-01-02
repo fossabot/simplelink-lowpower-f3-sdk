@@ -26,6 +26,7 @@ let bias;
 % if(ble.bondManager == true) {
 #include "ti/ble/host/gapbondmgr/gapbondmgr.h"
 %}
+
 % if (ble){
 
 // The GAP profile role
@@ -72,6 +73,14 @@ extern uint8_t pRandomAddress[B_ADDR_LEN];
 // Maximum size in bytes of the BLE HCI PDU. Valid range: 27 to 255
 // The maximum ATT_MTU is MAX_PDU_SIZE - 4.
 #define MAX_PDU_SIZE                  		    `ble.maxPDUSize`
+
+% if (ble.hideBroadcasterGroup == false)
+% {
+#define BLE_CONFIG_NUM_ADV_SETS    `ble.numOfAdvSets`
+extern void BleConfig_initAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus);
+extern void BleConfig_startAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus, uint8_t size);
+extern void BleConfig_stopAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus, uint8_t size);
+% }
 
 % if (ble.deviceRole != "BROADCASTER_CFG" && ble.deviceRole != "OBSERVER_CFG" && ble.deviceRole != "BROADCASTER_CFG+OBSERVER_CFG" && ble.bondManager == true){
 /*********************************************************************
@@ -247,6 +256,14 @@ extern void setBondManagerParameters();
 %}
 %
 % if (ble.hideBroadcasterGroup == false){
+
+typedef struct {
+    uint8_t *advData;
+    uint8_t advDataLen;
+    uint8_t *scanRspData;
+    uint8_t scanRspDataLen;
+    GapAdv_params_t *advParams;
+} AdvSetInfo_t;
 
 %
 % for(let i = 1; i <= ble.numOfAdvSets; i++)

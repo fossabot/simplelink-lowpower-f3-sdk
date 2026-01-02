@@ -2,7 +2,7 @@
     {
         "name": "Release Notes",
         "resourceType": "file",
-        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_14_00_41.html",
+        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_14_01_16.html",
         "devices": [
             "CC2340R5"
         ],
@@ -386,7 +386,7 @@
     {
         "name": "Core SDK Release Notes",
         "resourceType": "file",
-        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_14_00_20.html",
+        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_14_01_03.html",
         "devices": [
             "CC2340R5"
         ],
@@ -428,28 +428,6 @@
         ]
     },
     {
-        "name": "radioconfig8 Release Notes",
-        "resourceType": "file",
-        "location": "../../docs/radioconfig8/radioconfig8_release_notes.html",
-        "devices": [
-            "CC2340R5"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "mainCategories": [
-            [
-                "Documents"
-            ]
-        ],
-        "subCategories": [
-            "radioconfig8"
-        ],
-        "resourceClass": [
-            "document"
-        ]
-    },
-    {
         "name": "Zigbee Release Notes",
         "resourceType": "file",
         "location": "../../docs/zigbee/release_notes_zigbee_1_00_00.html",
@@ -474,7 +452,7 @@
     {
         "name": "TI BLE Stack Release Notes",
         "resourceType": "file",
-        "location": "../../docs/ble5stack/release_notes_ble_9_14_00.html",
+        "location": "../../docs/ble5stack/release_notes_ble_9_14_01.html",
         "devices": [
             "CC2340R5"
         ],
@@ -518,7 +496,7 @@
     {
         "name": "SimpleLink Common Components Module (SCCM) Release Notes",
         "resourceType": "file",
-        "location": "../../docs/sccm/release_notes_sccm_9_14_00.html",
+        "location": "../../docs/sccm/release_notes_sccm_9_14_01.html",
         "devices": [
             "CC2340R5"
         ],

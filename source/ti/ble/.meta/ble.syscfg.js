@@ -683,8 +683,14 @@ function onChannelSoundingChange(inst, ui) {
     // The ranging server external control mode should be hidden
     ui.rangingServerExtCtrlMode.hidden = true;
 
+    // The ranging server real time feature should be hidden
+    ui.rangingServerRealTimeFeature.hidden = true;
+
     // The ranging client external control mode should be hidden
     ui.rangingClientExtCtrlMode.hidden = true;
+
+    // The ranging client mode should be hidden
+    ui.rangingClientMode.hidden = true;
 
     // The antenna max values should always be hidden
     ui.antennasMuxValues.hidden = true;

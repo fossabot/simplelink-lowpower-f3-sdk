@@ -4,7 +4,7 @@
  *
  *  Description:    Defines and prototypes for the UART peripheral.
  *
- *  Copyright (c) 2022-2024 Texas Instruments Incorporated
+ *  Copyright (c) 2022-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -71,17 +71,20 @@ extern "C" {
 // as the intFlags parameter, and returned from UARTIntStatus.
 //
 //*****************************************************************************
-#define UART_INT_EOT       (UART_IMSC_EOT_M)       //!< End Of Transmission Interrupt Mask
-#define UART_INT_OE        (UART_IMSC_OE_M)        //!< Overrun Error Interrupt Mask
-#define UART_INT_BE        (UART_IMSC_BE_M)        //!< Break Error Interrupt Mask
-#define UART_INT_PE        (UART_IMSC_PE_M)        //!< Parity Error Interrupt Mask
-#define UART_INT_FE        (UART_IMSC_FE_M)        //!< Framing Error Interrupt Mask
-#define UART_INT_RT        (UART_IMSC_RT_M)        //!< Receive Timeout Interrupt Mask
-#define UART_INT_RX        (UART_IMSC_RX_M)        //!< Receive Interrupt Mask
-#define UART_INT_TX        (UART_IMSC_TX_M)        //!< Transmit Interrupt Mask
-#define UART_INT_CTS       (UART_IMSC_CTSM_M)      //!< CTS Modem Interrupt Mask
-#define UART_INT_TXDMADONE (UART_IMSC_TXDMADONE_M) //!< Tx DMA done interrupt mask
-#define UART_INT_RXDMADONE (UART_IMSC_RXDMADONE_M) //!< Rx DMA done interrupt mask
+#define UART_INT_EOT        (UART_IMSC_EOT_M)        //!< End Of Transmission Interrupt Mask
+#define UART_INT_OE         (UART_IMSC_OE_M)         //!< Overrun Error Interrupt Mask
+#define UART_INT_BE         (UART_IMSC_BE_M)         //!< Break Error Interrupt Mask
+#define UART_INT_PE         (UART_IMSC_PE_M)         //!< Parity Error Interrupt Mask
+#define UART_INT_FE         (UART_IMSC_FE_M)         //!< Framing Error Interrupt Mask
+#define UART_INT_RT         (UART_IMSC_RT_M)         //!< Receive Timeout Interrupt Mask
+#define UART_INT_RX         (UART_IMSC_RX_M)         //!< Receive Interrupt Mask
+#define UART_INT_TX         (UART_IMSC_TX_M)         //!< Transmit Interrupt Mask
+#define UART_INT_CTS        (UART_IMSC_CTSM_M)       //!< CTS Modem Interrupt Mask
+#define UART_INT_TXDMADONE  (UART_IMSC_TXDMADONE_M)  //!< Tx DMA done interrupt mask
+#define UART_INT_RXDMADONE  (UART_IMSC_RXDMADONE_M)  //!< Rx DMA done interrupt mask
+#define UART_INT_LINBRK     (UART_IMSC_LINBRK_M)     //!< LIN Break Field Detected Interrupt Mask
+#define UART_INT_LINBRKTOE  (UART_IMSC_LINBRKTOE_M)  //!< LIN Break Field Timeout Error Interrupt Mask
+#define UART_INT_LINSYNCTOE (UART_IMSC_LINSYNCTOE_M) //!< LIN Sync Timeout Error Interrupt Mask
 
 //*****************************************************************************
 //
@@ -130,6 +133,16 @@ extern "C" {
 #define UART_DMA_ERR_RXSTOP 0x00000004 //!< Stop DMA receive if UART error
 #define UART_DMA_TX         0x00000002 //!< Enable DMA for transmit
 #define UART_DMA_RX         0x00000001 //!< Enable DMA for receive
+
+//*****************************************************************************
+//
+// Values that can be passed to UARTSetLINDelimiterLength().
+//
+//*****************************************************************************
+#define UART_LIN_DELIM_LEN1BIT UART_LCRH_DELIM_LEN_1 //!< 1 bit delimiter length
+#define UART_LIN_DELIM_LEN2BIT UART_LCRH_DELIM_LEN_2 //!< 2 bit delimiter length
+#define UART_LIN_DELIM_LEN3BIT UART_LCRH_DELIM_LEN_3 //!< 3 bit delimiter length
+#define UART_LIN_DELIM_LEN4BIT UART_LCRH_DELIM_LEN_4 //!< 4 bit delimiter length
 
 //*****************************************************************************
 //
@@ -421,6 +434,9 @@ __STATIC_INLINE bool UARTBusy(uint32_t base)
 //! - \ref UART_INT_CTS         : CTS interrupt.
 //! - \ref UART_INT_TXDMADONE   : TX DMA Done interrupt.
 //! - \ref UART_INT_RXDMADONE   : RX DMA Done interrupt.
+//! - \ref UART_INT_LINBRK      : LIN Break Field Detected interrupt.
+//! - \ref UART_INT_LINBRKTOE   : LIN Break Field Timeout Error interrupt.
+//! - \ref UART_INT_LINSYNCTOE  : LIN Sync Timeout Error interrupt.
 //!
 //! \return None
 //
@@ -452,6 +468,9 @@ __STATIC_INLINE void UARTEnableInt(uint32_t base, uint32_t intFlags)
 //! - \ref UART_INT_CTS         : CTS interrupt.
 //! - \ref UART_INT_TXDMADONE   : TX DMA Done interrupt.
 //! - \ref UART_INT_RXDMADONE   : RX DMA Done interrupt.
+//! - \ref UART_INT_LINBRK      : LIN Break Field Detected interrupt.
+//! - \ref UART_INT_LINBRKTOE   : LIN Break Field Timeout Error interrupt.
+//! - \ref UART_INT_LINSYNCTOE  : LIN Sync Timeout Error interrupt.
 //!
 //! \return None
 //
@@ -487,6 +506,9 @@ __STATIC_INLINE void UARTDisableInt(uint32_t base, uint32_t intFlags)
 //! - \ref UART_INT_CTS         : CTS interrupt.
 //! - \ref UART_INT_TXDMADONE   : TX DMA Done interrupt.
 //! - \ref UART_INT_RXDMADONE   : RX DMA Done interrupt.
+//! - \ref UART_INT_LINBRK      : LIN Break Field Detected interrupt.
+//! - \ref UART_INT_LINBRKTOE   : LIN Break Field Timeout Error interrupt.
+//! - \ref UART_INT_LINSYNCTOE  : LIN Sync Timeout Error interrupt.
 //
 //*****************************************************************************
 __STATIC_INLINE uint32_t UARTIntStatus(uint32_t base, bool masked)
@@ -540,6 +562,9 @@ __STATIC_INLINE uint32_t UARTIntStatus(uint32_t base, bool masked)
 //! - \ref UART_INT_CTS         : CTS interrupt.
 //! - \ref UART_INT_TXDMADONE   : TX DMA Done interrupt.
 //! - \ref UART_INT_RXDMADONE   : RX DMA Done interrupt.
+//! - \ref UART_INT_LINBRK      : LIN Break Field Detected interrupt.
+//! - \ref UART_INT_LINBRKTOE   : LIN Break Field Timeout Error interrupt.
+//! - \ref UART_INT_LINSYNCTOE  : LIN Sync Timeout Error interrupt.
 //!
 //! \return None
 //
@@ -710,6 +735,138 @@ __STATIC_INLINE void UARTDisableRTS(uint32_t base)
     HWREG(base + UART_O_CTL) &= ~(UART_CTL_RTSEN);
 }
 
+//*****************************************************************************
+//
+//! \brief Enables LIN mode for UART.
+//!
+//! This function enables LIN mode communication for the specified UART.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTEnableLIN(uint32_t base)
+{
+    // Set the LINEN bit in the UART CTL register.
+    HWREG(base + UART_O_CTL) |= UART_CTL_LINEN;
+}
+
+//*****************************************************************************
+//
+//! \brief Disables LIN mode for UART.
+//!
+//! This function disables LIN mode communication for the specified UART.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTDisableLIN(uint32_t base)
+{
+    // Clear the LINEN bit in the UART CTL register.
+    HWREG(base + UART_O_CTL) &= ~(UART_CTL_LINEN);
+}
+
+//*****************************************************************************
+//
+//! \brief Enables dormant mode for UART in LIN mode.
+//!
+//! When dormant mode is enabled, break and synch data will not be loaded to RX
+//! FIFO. RX FIFO will be updated with actual data (PID) only after successful
+//! reception of break/synch fields.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \sa \ref UARTEnableLIN()
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTEnableLINDormant(uint32_t base)
+{
+    // Set the DORMEN bit in the UART CTL register.
+    HWREG(base + UART_O_CTL) |= UART_CTL_DORMEN;
+}
+
+//*****************************************************************************
+//
+//! \brief Disables dormant mode for UART in LIN mode.
+//!
+//! When dormant mode is enabled, break and synch data will not be loaded to RX
+//! FIFO. RX FIFO will be updated with actual data (PID) only after successful
+//! reception of break/synch fields.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \sa \ref UARTEnableLIN()
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTDisableLINDormant(uint32_t base)
+{
+    // Clear the DORMEN bit in the UART CTL register.
+    HWREG(base + UART_O_CTL) &= ~(UART_CTL_DORMEN);
+}
+
+//*****************************************************************************
+//
+//! \brief Sets the delimiter length for UART in LIN mode.
+//!
+//! This function sets the delimiter length for the specified UART in LIN mode.
+//!
+//! \param base is the base address of the UART port.
+//! \param length is the delimiter length to set, must be one of:
+//!  - UART_LIN_DELIM_LEN1BIT : 1 bit delimiter length
+//!  - UART_LIN_DELIM_LEN2BIT : 2 bit delimiter length
+//!  - UART_LIN_DELIM_LEN3BIT : 3 bit delimiter length
+//!  - UART_LIN_DELIM_LEN4BIT : 4 bit delimiter length
+//!
+//!
+//! \sa \ref UARTEnableLIN()
+//!
+//! \return None
+//
+//*****************************************************************************
+extern void UARTSetLINDelimiterLength(uint32_t base, uint32_t length);
+
+//*****************************************************************************
+//
+//! \brief Enables sending Break/Sync field for UART in LIN mode.
+//!
+//! This function enables sending Break/Sync field for the specified UART in LIN mode.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \sa \ref UARTEnableLIN()
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTEnableLINBreakSync(uint32_t base)
+{
+    HWREG(base + UART_O_LCRH) |= UART_LCRH_TXBRKSYNC;
+}
+
+//*****************************************************************************
+//
+//! \brief Disables sending Break/Sync field for UART in LIN mode.
+//!
+//! This function disables sending Break/Sync field for the specified UART in LIN mode.
+//!
+//! \param base is the base address of the UART port.
+//!
+//! \sa \ref UARTEnableLIN()
+//!
+//! \return None
+//
+//*****************************************************************************
+__STATIC_INLINE void UARTDisableLINBreakSync(uint32_t base)
+{
+    HWREG(base + UART_O_LCRH) &= ~(UART_LCRH_TXBRKSYNC);
+}
 //*****************************************************************************
 //
 // Mark the end of the C bindings section for C++ compilers.

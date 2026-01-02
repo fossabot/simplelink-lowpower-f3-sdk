@@ -109,6 +109,7 @@ typedef struct drbgParams_t
                               // mod 2^8
     uint16_t lastGenConnEventCount; // The last connection event counter on which we were able
                                     // to generate steps
+    uint8_t firstProcAfterSec:1;       /* Flag to indicate if this is the first procedure after security */
 } drbgParams_t;
 
 /*******************************************************************************

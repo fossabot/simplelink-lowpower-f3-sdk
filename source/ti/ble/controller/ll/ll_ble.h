@@ -97,17 +97,17 @@
 /*******************************************************************************
  * CONSTANTS
  */
-#define RCL_329                                                               // This is the requirement ticket number that was open to the RCL
-                                                                              // to provide an API to update a peer device RPA address
-                                                                              // when LL_INIT_AL_POLICY_USE_PEER_ADDR filter policy is used
+
 #define RCL_BUFFER_MAX_HEADER_PAD_BYTES 2                                     // padding of 2 bytes will be located before the packet header
 #define RCL_BUFFER_MAX_PAD_BYTES        (RCL_BUFFER_MAX_HEADER_PAD_BYTES + 1) // 1 is already part of the RCL buffer struct
 #define RCL_BUFFER_RX_HEADER_ENTRY_SIZE 6                                     // length + pad num + 3 pad bytes
 #define RCL_HEADER_BYTE                 1                                     // Header byte location in the RCL packet
 #define RCL_NUM_ADV_RX                  3                                     // The RX size for the advertiser should be multiplied based on the maximum number of adv indications
-#ifdef RCL_329
-#define RCL_PEER_ADDR_INDEX             0                                     // This is used when initiator uses filter policy is LL_INIT_AL_POLICY_USE_PEER_ADDR
-#endif
+
+// RCL Filter List defines for initiator command when using LL_INIT_AL_POLICY_USE_PEER_ADDR
+#define RCL_PEER_ADDR_RPA_INDEX         0                                     // Initiator filter list index for RPA address
+#define RCL_PEER_ADDR_ID_INDEX          1                                     // Initiator filter list index for ID address
+#define RCL_INITIATOR_FILTER_LIST_SIZE  2                                     // Initiator filter list size for LL_INIT_AL_POLICY_USE_PEER_ADDR policy
 
 // Advertisement Data Type
 #define BLE_ADV_DATA_TYPE              0
@@ -207,6 +207,7 @@
 #define RAT_TICKS_IN_166US             664       // Frequency synthesizer delay for RX window
 #define RAT_TICKS_IN_180US             720       // AUX_CONNECT_REQ in 2M
 #define RAT_TICKS_IN_200US             800       // LL Topology margin
+#define RAT_TICKS_IN_220US             880       // Processing time of setup command
 #define RAT_TICKS_IN_700US             2800      // LL_TEST_MODE JIRA-2756
 #define RAT_TICKS_IN_256US             1024      // Radio Overhead + FS Calibration
 #define RAT_TICKS_IN_280US             1120      // Radio Overhead + FS Calibration

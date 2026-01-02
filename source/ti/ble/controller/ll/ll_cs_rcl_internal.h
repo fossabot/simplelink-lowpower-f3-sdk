@@ -288,17 +288,132 @@ bool llCsProcessResultsIsModeZeroValid(uint16 connId, const RCL_CmdBleCs_Subeven
  *
  * @return      CS_PROCEDURE_DONE if procedure is complete, CS_PROCEDURE_ACTIVE otherwise
  */
+uint8_t llCsRetrieveProcedureCompletionStatus(uint16 connId, uint8 configId, RCL_MultiBuffer* pBuffer);
 
+/*******************************************************************************
+ * @fn          llCsSetupRclRelativeOffset
+ *
+ * @brief       Calculate the relative offset for RCL command timing
+ *
+ * @details     Determines the appropriate time offset from the connection anchor point
+ *              for scheduling CS procedures based on current configuration.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Calculated relative offset in microseconds
+ */
 uint32_t llCsSetupRclRelativeOffset(uint16 connId, uint8_t configId);
 
+/*******************************************************************************
+ * @fn          llCsSetupRclAnchorPoint
+ *
+ * @brief       Set up the anchor point for RCL timing
+ *
+ * @details     Calculates and prepares the base anchor point timing for CS procedures,
+ *              including necessary adjustments based on PHY and other connection parameters.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Anchor point timestamp in microseconds
+ */
 uint32_t llCsSetupRclAnchorPoint(uint16 connId, uint8_t configId);
 
-uint8_t llCsRetrieveProcedureCompletionStatus (uint16 connId, uint8 configId, RCL_MultiBuffer* pBuffer);
-
+/*******************************************************************************
+ * @fn          llCsSetupRclTimerDrift
+ *
+ * @brief       Calculate timer drift compensation for CS procedures
+ *
+ * @details     Determines the expected timer drift based on connection parameters
+ *              and sleep clock accuracy to ensure proper synchronization during CS.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       configId - configuration Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Calculated timer drift in microseconds
+ */
 uint32_t llCsSetupRclTimerDrift(uint16 connId, uint8_t configId);
 
-uint16_t llCsSetupRclRxWidening(uint32_t timerDrift);
+/*******************************************************************************
+ * @fn          llCsSetupRclRxWidening
+ *
+ * @brief       Calculate receive window widening for CS operations
+ *
+ * @details     Computes the appropriate receive window widening based on timer drift
+ *              to compensate for clock inaccuracies between devices.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       timerDrift - calculated timer drift in microseconds
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Receive window widening value in microseconds
+ */
+uint16_t llCsSetupRclRxWidening(uint16 connId, uint32_t timerDrift);
 
-bool llCsSetupRclAllowDelay();
+/*******************************************************************************
+ * @fn          llCsSetupRclAllowDelay
+ *
+ * @brief       Determine if delayed CS procedure execution is allowed
+ *
+ * @details     Checks system conditions to determine if a CS procedure can be
+ *              safely delayed without compromising synchronization.
+ *
+ * input parameters
+ *
+ * @param       None.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      TRUE if delay is allowed, FALSE otherwise
+ */
+bool llCsSetupRclAllowDelay(void);
+
+/*******************************************************************************
+ * @fn          llCsGetScaFactor
+ *
+ * @brief       Get the Sleep Clock Accuracy factor for CS timing calculations
+ *
+ * @details     Retrieves the SCA factor associated with the specified connection.
+ *              This factor is used to adjust timing calculations to compensate
+ *              for clock drift between devices.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      SCA factor value used in timing calculations
+ */
+uint16_t llCsGetScaFactor(uint16 connId);
 
 #endif //LL_CS_RCL_INTERNAL_H
+

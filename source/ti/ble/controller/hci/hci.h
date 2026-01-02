@@ -1134,6 +1134,16 @@ typedef struct
   uint16 maxRxTime;               //!< maximum receive time
 } hciEvt_BLEDataLengthChange_t;
 
+/// @brief LE Channel Map Update Event
+typedef struct
+{
+  event_hdr_t  hdr;                                 //!< osal event header
+  uint8  BLEEventCode;                              //!< BLE Event Code
+  uint16 connHandle;                                //!< connection handle
+  uint8 nextDataChan;                                //!< the next channel we will be using
+  uint16 newChannelMap[LL_NUM_BYTES_FOR_CHAN_MAP];  //!< new channel map
+} hciEvt_BLEChannelMapUpdate_t;
+
 /// @brief LE Read P256 Public Key Complete Event
 typedef struct
 {

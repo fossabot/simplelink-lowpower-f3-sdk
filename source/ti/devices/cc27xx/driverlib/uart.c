@@ -3,7 +3,7 @@
  *
  *  Description:    Driver for the UART peripheral.
  *
- *  Copyright (c) 2022 Texas Instruments Incorporated
+ *  Copyright (c) 2022-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -104,4 +104,20 @@ void UARTPutChar(uint32_t base, uint8_t data)
 
     // Send the char.
     HWREG(base + UART_O_DR) = data;
+}
+
+//*****************************************************************************
+//
+// Sets the delimiter length of LIN Frame for UART in LIN mode
+//
+//*****************************************************************************
+void UARTSetLINDelimiterLength(uint32_t base, uint32_t length)
+{
+    // Check the arguments.
+    ASSERT((length == UART_LIN_DELIM_LEN1BIT) || (length == UART_LIN_DELIM_LEN2BIT) ||
+           (length == UART_LIN_DELIM_LEN3BIT) || (length == UART_LIN_DELIM_LEN4BIT));
+
+    // Set the delimiter length by clearing the DELIM bits and then setting them
+    // to the specified value.
+    HWREG(base + UART_O_LCRH) = ((HWREG(base + UART_O_LCRH) & ~(UART_LCRH_DELIM_M)) | length);
 }

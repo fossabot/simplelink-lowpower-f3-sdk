@@ -482,7 +482,147 @@ uint8_t `ble["advSet"+i]["advData"+i].name`[0];
 uint8_t `ble["advSet"+i]["scanRes"+i].name`[0];
 % }
 % }
+
 %}
 % }
-% }
+
+/*********************************************************************
+ * @fn      BleConfig_initAdvSets
+ *
+ * @brief   Initializes all advertising sets configured by SysConfig.
+ *          This function initializes each set using BLEAppUtil_initAdvSet.
+ *          The advHandles array will be populated with handles for each
+ *          advertising set upon successful initialization.
+ *
+ * @param [out] advHandles - Array to store handles for each advertising set.
+ *                           Assumed of size @ref BLE_CONFIG_NUM_ADV_SETS.
+ * @param [out] advHandlesStatus - Array to store handles statuses for each 
+ *                                 advertising set.
+ *
+ * @return  None
+ */
+void BleConfig_initAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus)
+{
+    bStatus_t status = SUCCESS;
+
+    if (advHandles == NULL)
+    {
+      status = FAILURE;
+      
+      /* assign FAILURE to the first handle status */
+      if(advHandlesStatus != NULL)
+      {
+        *advHandlesStatus = status;
+      }
+    }
+    else
+    {
+        AdvSetInfo_t advSetsInfo[BLE_CONFIG_NUM_ADV_SETS] = {
+% for(let i = 1; i <= ble.numOfAdvSets; i++)
+%{
+            {
+              .advData = `ble["advSet"+i]["advData"+i].name`,
+              .advDataLen = sizeof(`ble["advSet"+i]["advData"+i].name`),
+              .scanRspData = `ble["advSet"+i]["scanRes"+i].name`,
+              .scanRspDataLen = sizeof(`ble["advSet"+i]["scanRes"+i].name`),
+              .advParams = &`ble["advSet"+i]["advParam"+i].name`
+            },
+%}
+        };
+
+        for (uint8_t i = 0; i < BLE_CONFIG_NUM_ADV_SETS; i++)
+        {
+            BLEAppUtil_AdvInit_t advSetInitParamsSet;
+            advSetInitParamsSet.advDataLen      = advSetsInfo[i].advDataLen;
+            advSetInitParamsSet.advData         = advSetsInfo[i].advDataLen == 0 ? NULL : advSetsInfo[i].advData;
+            advSetInitParamsSet.scanRespDataLen = advSetsInfo[i].scanRspDataLen;
+            advSetInitParamsSet.scanRespData    = advSetsInfo[i].scanRspDataLen == 0 ? NULL : advSetsInfo[i].scanRspData;
+            advSetInitParamsSet.advParam        = advSetsInfo[i].advParams;
+
+            status = BLEAppUtil_initAdvSet(&advHandles[i], &advSetInitParamsSet);
+
+            if(advHandlesStatus != NULL)
+            {
+              advHandlesStatus[i] = status;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+ * @fn      BleConfig_startAdvSets
+ *
+ * @brief   Starts all advertising sets using the provided handles.
+ *          This function iterates through the array of advertising set handles
+ *          and starts each advertising set with default start parameters,
+ *          using @ref BLEAppUtil_advStart function.
+ *          It also stores the status returned for each handle in a given array.
+ *
+ * @param advHandles - Pointer to array of advertising set handles.
+ * @param [out] advHandlesStatus - Pointer to an array to store the status
+ *                    returned from BLEAppUtil_advStart, for each given handle.
+ *                    If initialized to NULL, this pointer won't be used.
+ * @param size - Number of advertising set handles in both arrays.
+ *
+ * @return  None
+ */
+void BleConfig_startAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus, uint8_t size)
+{
+    bStatus_t status;
+
+    BLEAppUtil_AdvStart_t advSetStartParams =
+    {
+        .enableOptions         = GAP_ADV_ENABLE_OPTIONS_USE_MAX,
+        .durationOrMaxEvents   = 0
+    };
+
+    if (advHandles != NULL)
+    {
+      for (uint8_t i = 0; i < size; i++)
+      {
+          status = BLEAppUtil_advStart(advHandles[i], &advSetStartParams);
+
+          if (advHandlesStatus != NULL)
+          {
+              advHandlesStatus[i] = status;
+          }
+      }
+    }
+}
+
+/*********************************************************************
+ * @fn      BleConfig_stopAdvSets
+ *
+ * @brief   Stops all advertising sets using the provided handles.
+ *          This function iterates through the array of advertising set handles
+ *          and stops each advertising set using @ref BLEAppUtil_advStop function.
+ *          It also stores the status returned for each handle in a given array.
+ *
+ * @param advHandles - Pointer to array of advertising set handles.
+ * @param [out] advHandlesStatus - Pointer to an array to store the status
+ *                    returned from BLEAppUtil_advStop, for each given handle.
+ *                    If initialized to NULL, this pointer won't be used.
+ * @param size - Number of advertising set handles in both arrays.
+ *
+ * @return  None
+ */
+void BleConfig_stopAdvSets(uint8_t* advHandles, uint8_t* advHandlesStatus, uint8_t size)
+{
+    bStatus_t status;
+
+    if (advHandles != NULL)
+    {
+      for (uint8_t i = 0; i < size; i++)
+      {
+          status = BLEAppUtil_advStop(advHandles[i]);
+
+          if (advHandlesStatus != NULL)
+          {
+              advHandlesStatus[i] = status;
+          }
+      }
+    }
+}
+
+% } // ble.hideBroadcasterGroup
 %}

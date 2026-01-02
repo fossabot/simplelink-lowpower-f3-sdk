@@ -104,6 +104,9 @@ extern "C"
 #define RAS_CP_RSP_CODE_LEN                        2U // Length of the Response Code
 #define RAS_STEP_HDR_LEN                           1U // @ref Ranging_subEventResultsStep_t header length
 
+// Error to be sent when a client tries to register for both On-Demand and Real-Time
+#define RAS_ERR_CCC_IMPROPERLY_CONFIGURED          0xFD
+
 /************************************
  *** RAS Features Characteristic ****
  ************************************/
@@ -175,7 +178,7 @@ PACKED_ALIGNED_TYPEDEF_STRUCT
 typedef struct
 {
     uint8_t stepMode; // Step mode
-    uint8_t stepData; // Step data
+    uint8_t stepData[]; // Step data
 } Ranging_subEventResultsStep_t;
 
 // Subevent header structure

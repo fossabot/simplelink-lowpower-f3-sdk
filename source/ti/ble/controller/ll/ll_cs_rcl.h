@@ -114,6 +114,8 @@
 #define CS_START_TIME_CORRECTION               RAT_TICKS_IN_70US
 /// @endcond // NODOC
 
+#define CS_START_TIME_MAX_RX_WINDOW_WIDENING   0xFFFF
+
 /*******************************************************************************
  * MACROS
  */
@@ -468,6 +470,27 @@ csStatus_e llCsAllocCsTask( void );
 void llCsFreeCsTask( void );
 
 /*******************************************************************************
+ * @fn          llCsTaskSetup
+ *
+ * @brief       Setup function for the CS Task.
+ *              This function will set the ProcedureDoneStatus to Active state.
+ *              In case the CS task would not be scheduled for any reason,
+ *              the absence of Active ProcedureDoneStatus state would trigger
+ *              the CS cleanup process.
+ *
+ * input parameters
+ *
+ * @param       llTask - The task this setup function is called for
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsTaskSetup( taskInfo_t *llTask );
+
+/*******************************************************************************
  * @fn          llCsInitStepAndResultBuffers
  *
  * @brief       This function initalizes the step buffers
@@ -492,7 +515,7 @@ void llCsInitStepAndResultBuffers(void);
  *
  * input parameters
  *
- *              None
+ * @param       connId - connection Id
  *
  * output parameters
  *
@@ -500,6 +523,24 @@ void llCsInitStepAndResultBuffers(void);
  *
  * @return      None
  */
-void llCsProcedureErrorSendSubEventResults(void);
+void llCsProcedureErrorSendSubEventResults(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsRclIsStepBufferEmpty
+ *
+ * @brief       Returns fullness indication of the RCL command.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      TRUE in case there are no buffers scheduled in current RCL command
+ *              FALSE in case there are steps to be transmitted.
+ */
+bool llCsRclIsStepBufferEmpty(void);
 
 #endif

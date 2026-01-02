@@ -101,7 +101,7 @@ extern "C"
  */
 // timeElapsedInUs is in uS
 // scaFactor is in PPM
-#define LL_TIMER_DRIFT_CALC(timeElapsedInUs, scaFactor)   (((((uint32_t) timeElapsedInUs) * scaFactor) / RAT_TICKS_IN_100US) + 1)
+#define LL_TIMER_DRIFT_CALC(timeElapsedInUs, scaFactor)   (((((uint32_t) CONVERT_1US_TO_0_625MS(timeElapsedInUs)) * scaFactor) / RAT_TICKS_IN_100US) + 1)
 
 /*******************************************************************************
  * CONSTANTS

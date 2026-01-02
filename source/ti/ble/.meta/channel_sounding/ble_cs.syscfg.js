@@ -111,7 +111,15 @@ const config = {
             name: "rangingServer",
             displayName: "Ranging Server (RRSP)",
             default: false,
-            hidden: true
+            hidden: true,
+            onChange: onRRSPChange
+        },
+        {
+            name: "rangingServerRealTimeFeature",
+            displayName: "Ranging Server Real Time",
+            default: false,
+            hidden: true,
+            description: "Enable Ranging Server Real Time feature",
         },
         {
             name: "rangingServerExtCtrlMode",
@@ -123,7 +131,20 @@ const config = {
             name: "rangingClient",
             displayName: "Ranging Client (RREQ)",
             default: false,
-            hidden: true
+            hidden: true,
+            onChange: onRREQChange,
+        },
+        {
+            name: "rangingClientMode",
+            displayName: "Ranging Client Data Exchange Mode",
+            default: 1,
+            hidden: true,
+            options: [
+                { name: 1, displayName: "On-Demand" },
+                { name: 2, displayName: "Real-Time" }
+            ],
+            description: "Specifies the mode to be used for ranging data exchange with the Ranging Server",
+            longDescription: Docs.rangingClientModeLongDescription
         },
         {
             name: "rangingClientExtCtrlMode",
@@ -162,6 +183,35 @@ function onCsMeasureDistanceChange(inst, ui)
 
     // Show the CS Measure Distance Results Mode option only when the Measure Distance is enabled
     ui.csMeasureResultsMode.hidden = inst.csMeasureDistance === false;
+}
+
+/*
+ *  ======== onRREQChange ========
+ * Handles the change of Ranging Client (RREQ) checkbox
+ * @param inst  - Module instance containing the config that changed
+ * @param ui    - The User Interface object
+ */
+function onRREQChange(inst, ui)
+{
+    // Set the Ranging Client Mode to 'On-Demand' by default
+    inst.rangingClientMode = 1;
+
+    // Show the Ranging Client Mode option only when the Ranging Client is enabled
+    ui.rangingClientMode.hidden = inst.rangingClient === false;
+}
+/*
+ *  ======== onRRSPChange ========
+ * Handles the change of Ranging Server (RRSP) checkbox
+ * @param inst  - Module instance containing the config that changed
+ * @param ui    - The User Interface object
+ */
+function onRRSPChange(inst, ui)
+{
+    // Set the Ranging Server Real Time feature to 'false' by default
+    inst.rangingServerRealTimeFeature = false;
+
+    // Show the Ranging Server Real Time option only when the Ranging Server is enabled
+    ui.rangingServerRealTimeFeature.hidden = inst.rangingServer === false;
 }
 
 /*
@@ -248,6 +298,12 @@ function getOpts(mod)
                 // This define is used to enable the external control mode of the ranging client and server
                 result.push("-DRANGING_SERVER_EXTCTRL_APP");
             }
+
+            // Add the real time feature if enabled
+            if(inst.rangingServerRealTimeFeature == true)
+            {
+                result.push(`-DRANGING_SERVER_REAL_TIME`);
+            }
         }
 
         if(inst.rangingClient)
@@ -261,6 +317,8 @@ function getOpts(mod)
                 // This define is used to enable the external control mode of the ranging client and server
                 result.push("-DRANGING_CLIENT_EXTCTRL_APP");
             }
+
+            result.push(`-DRANGING_CLIENT_MODE=${inst.rangingClientMode}`);
         }
     }
 

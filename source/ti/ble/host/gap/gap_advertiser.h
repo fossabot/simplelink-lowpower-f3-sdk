@@ -841,6 +841,7 @@ extern bStatus_t GapAdv_setEventMask(uint8 handle, GapAdv_eventMaskFlags_t mask)
  * @return @ref bleIncorrectMode : incorrect profile role
  * @return @ref bleInvalidRange : paramID out of range
  * @return @ref bleGAPNotFound : advertising set does not exist
+ * @return @ref bleNotReady: advertise set is currently enabled
  * @return @ref SUCCESS
  */
 extern bStatus_t GapAdv_setParam(uint8 handle, GapAdv_ParamId_t paramID,

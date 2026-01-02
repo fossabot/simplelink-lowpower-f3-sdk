@@ -948,10 +948,9 @@ static OADProfile_Status_e oadSendNextBlockReq(uint32 blkNum, uint8 stat)
 static OADProfile_Status_e oadSendswVersionRsp()
 {
     OADProfile_Status_e status = OAD_PROFILE_SUCCESS;
-    uint8 *pCmdRsp = ICall_malloc(sizeof(swVersionPld_t));
-
-    swVersionPld_t *rsp = (swVersionPld_t *)pCmdRsp;
+    swVersionPld_t rsp;
     struct image_version * img_ver = (struct image_version *)SwUpdate_GetSWVersion(APP_HDR_ADDR);
+
     // Populate the software version field
     uint8 swVerCombined[MCUBOOT_SW_VER_LEN] = {img_ver->iv_major,
                                                img_ver->iv_minor,
@@ -960,17 +959,14 @@ static OADProfile_Status_e oadSendswVersionRsp()
                                                HI_UINT16(img_ver->iv_build_num),
                                                LO_UINT16(img_ver->iv_build_num),
                                               };
+
     // Pack up the payload
-    rsp->cmdID = OAD_REQ_GET_SW_VER;
+    rsp.cmdID = OAD_REQ_GET_SW_VER;
     // Copy combined version string into the response payload
-    memcpy(rsp->swVer, swVerCombined, MCUBOOT_SW_VER_LEN);
-    //swVersionPld_t rsp = {OAD_REQ_GET_SW_VER,swVerCombined};
-    if(pCmdRsp != NULL)
-    {
-        // Send out the populated command structure
-        status = (OADProfile_Status_e)OADService_setParameter(OAD_SRV_CTRL_CMD,sizeof(swVersionPld_t),(void *)rsp);
-        ICall_free(pCmdRsp);
-    }
+    memcpy(rsp.swVer, swVerCombined, MCUBOOT_SW_VER_LEN);
+
+    // Send out the populated command structure
+    status = (OADProfile_Status_e)OADService_setParameter(OAD_SRV_CTRL_CMD,sizeof(swVersionPld_t),(void *)&rsp);
 
     return (status);
 }

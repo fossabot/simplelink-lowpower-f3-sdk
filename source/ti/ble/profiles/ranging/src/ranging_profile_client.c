@@ -54,7 +54,6 @@ Target Device: cc23xx
 #include "ti/ble/app_util/framework/bleapputil_api.h"
 #include "ti/ble/app_util/framework/bleapputil_timers.h"
 #include "ti/ble/profiles/ranging/ranging_profile_client.h"
-#include "ti/ble/profiles/ranging/ranging_db_client.h"
 #include "app_gatt_api.h"
 
 //*****************************************************************************
@@ -62,40 +61,72 @@ Target Device: cc23xx
 //*****************************************************************************
 
 // The index of characteristic properties handle
-#define RREQ_APP_CHAR_PRO_HANDLE_INDEX               0x02
+#define RREQ_APP_CHAR_PRO_HANDLE_INDEX              0x02
 // The index of characteristic value handle
-#define RREQ_APP_CHAR_VALUE_HANDLE_INDEX             0x03
+#define RREQ_APP_CHAR_VALUE_HANDLE_INDEX            0x03
 // The index of characteristic UUID handle
-#define RREQ_APP_CHAR_UUID_HANDLE_INDEX              0x05
+#define RREQ_APP_CHAR_UUID_HANDLE_INDEX             0x05
+
+// Profile number of characteristics
+#define RREQ_NUM_CHARS                              6U
+
+// Maps characteristic UUID to its array index
+#define RREQ_UUID_TO_CHAR_INDEX(uuid)               ((uint8_t) ((uuid) - RAS_FEATURE_UUID))
+
+// Maps characteristic UUID to its subscription bit
+// Warning: Do not use for @ref RAS_FEATURE_UUID
+#define RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(uuid)    ((uint8_t) (BV(RREQ_UUID_TO_CHAR_INDEX(uuid) - 1)))
+
+#define RREQ_FEATURE_CHAR_INDEX                     0U
+#define RREQ_REAL_TIME_CHAR_INDEX                   1U
+#define RREQ_ON_DEMAND_CHAR_INDEX                   2U
+#define RREQ_CONTROL_POINT_CHAR_INDEX               3U
+#define RREQ_DATA_READY_CHAR_INDEX                  4U
+#define RREQ_DATA_OVERWRITTEN_CHAR_INDEX            5U
 
 // 16-bit high and low index in the 16-bit custom UUID
-#define RREQ_APP_LOW_UUID_INDEX                      0x00
-#define RREQ_APP_HIGH_UUID_INDEX                     0x01
+#define RREQ_APP_LOW_UUID_INDEX                     0x00
+#define RREQ_APP_HIGH_UUID_INDEX                    0x01
 
 // CCCD handle offset
-#define RREQ_APP_CCCD_OFFSET                         0x01
+#define RREQ_APP_CCCD_OFFSET                        0x01
 // CCCD value length
-#define RREQ_APP_CCCD_VALUE_LEN                      0x02
+#define RREQ_APP_CCCD_VALUE_LEN                     0x02
 
 // The maximum number of connections for the RAS client
-#define RREQ_MAX_CONN                                MAX_NUM_BLE_CONNS
+#define RREQ_MAX_CONN                               MAX_NUM_BLE_CONNS
+
+#define RREQ_INVALID_CS_PROCEDURE_COUNTER           0xFFFFFFFF
 
 // Notification and Indication properties bit mask
-#define RAS_NOTIFICATION_PRO_MASK                    0x10
-#define RAS_INDICATION_PRO_MASK                      0x20
+#define RAS_NOTIFICATION_PRO_MASK                   0x10
+#define RAS_INDICATION_PRO_MASK                     0x20
 
 // segmentation bit masks
-#define RAS_FIRST_SEGMENT_BIT_MASK                   0x01
-#define RAS_LAST_SEGMENT_BIT_MASK                    0x02
+#define RAS_FIRST_SEGMENT_BIT_MASK                  0x01
+#define RAS_LAST_SEGMENT_BIT_MASK                   0x02
 
 // Last 6 bits (LSB) of uint8_t
-#define RAS_LAST_6_BITS_LSB(x)                       ((x & 0xFc) >> 2)
+#define RAS_LAST_6_BITS_LSB(x)                      ((x & 0xFc) >> 2)
 // First 2 bits (LSB) of uint8_t
-#define RAS_FIRST_2_BITS_LSB(x)                      (x & 0x03)
+#define RAS_FIRST_2_BITS_LSB(x)                     (x & 0x03)
 
 /*********************************************************************
  * TYPEDEFS
  */
+
+// RREQ Procedure States
+typedef enum
+{
+    RREQ_STATE_IDLE = 0x00,                 // Idle state
+    RREQ_STATE_INIT,                        // Waiting for RAS Enable process to end. This state is relevant for initiating RAS discovery and full registration
+    RREQ_STATE_DISCOVER_PRIM_SERVICE,       // waiting for primary service discovery response
+    RREQ_STATE_READ_CHAR_FEATURE,           // waiting for reading feature characteristic response
+    RREQ_STATE_WAIT_FOR_FIRST_SEGMENT,      // Waiting for the first segment, relevant for Real-Time mode only
+    RREQ_STATE_WAIT_FOR_NEXT_SEGMENT,       // Waiting for the next segment or the complete data
+    RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP,  // Waiting for the control point response
+    RREQ_STATE_WAIT_FOR_ABORT               // Waiting for the abort response
+} RREQProcedureStates_e;
 
 // RREQ Subscription types
 typedef enum
@@ -107,26 +138,39 @@ typedef enum
     RREQ_OVERWRITTEN_BIT    = (uint32_t)BV(4)   // Data overwritten event subscription
 }RREQ_SubscribeBitMap_e;
 
+// RREQ characteristics structure
+typedef struct
+{
+    uint16_t charHandle;
+    uint16_t charProperties;
+} RREQ_CharInfo_t ;
+
+// RREQ Procedure Attribute structure
+typedef struct
+{
+    uint8_t procedureState;   // Current state of the RREQ procedure
+    uint16_t rangingCounter;  // Counter for the ranging procedure
+} RREQProcedureAttr_t;
+
+// RREQ Segments Manager structure
+typedef struct
+{
+    uint8_t  lastSegmentFlag;   // Flag to indicate if the last segment is received.
+} RREQSegmentsMGR_t;
+
 typedef struct
 {
     uint16_t startHandle;                           // Start handle of the service
     uint16_t endHandle;                             // End handle of the service
-    uint16_t featureCharHandle;                     // Feature characteristic handle
     uint16_t featureCharValue;                      // Feature characteristic value
-    uint16_t featureCharProperties;                 // Feature characteristic properties
-    uint16_t realTimeRangingDataCharHandle;         // Real time ranging data characteristic handle
-    uint16_t realTimeRangingDataCharProperties;     // Real time ranging data characteristic properties
-    uint16_t onDemandRangingDataCharHandle;         // On demand ranging data characteristic handle
-    uint16_t onDemandRangingDataCharProperties;     // On demand ranging data characteristic properties
-    uint16_t controlPointCharHandle;                // Control point characteristic handle
-    uint16_t controlPointCharProperties;            // Control point characteristic properties
-    uint16_t rangingDataReadyCharHandle;            // Ranging data ready characteristic handle
-    uint16_t rangingDataReadyCharProperties;        // Ranging data ready characteristic properties
-    uint16_t rangingDataOverwrittenCharHandle;      // Ranging data overwritten characteristic handle
-    uint16_t rangingDataOverwrittenCharProperties;  // Ranging data overwritten characteristic properties
+    uint32_t currentProcedureCounter;               // CS procedure counter of the currently running procedure.
+    RREQ_CharInfo_t charInfo[RREQ_NUM_CHARS];       // Characteristics information array, ordered according to UUID
     uint8_t  subscribeBitMap;                       // Subscribtion bit map
+    RREQProcedureAttr_t procedureAttr;              // Procedure attributes
+    RREQEnableModeType_e preferredMode;             // Preferred mode to be enabled if possible
     RREQEnableModeType_e enableMode;                // Enable mode
     RREQSegmentsMGR_t    segmentMgr;                // Segments manager
+    BLEAppUtil_timerHandle timeoutHandle;           // Timer handle for the RREQ timeout
 } RREQ_ConnInfo_t;
 
 typedef struct
@@ -134,8 +178,6 @@ typedef struct
     RREQ_ConnInfo_t connInfo[RREQ_MAX_CONN];  // Connection information
     const RREQConfig_t* config;               // Configuration for the RREQ
     const RREQCallbacks_t* callbacks;         // Application callbacks
-    RREQProcedureAttr_t procedureAttr;        // Procedure attributes
-    BLEAppUtil_timerHandle timeoutHandle;     // Timer handle for the RREQ timeout
 } RREQ_ControlBlock_t;
 
 /*********************************************************************
@@ -154,29 +196,40 @@ RREQ_ControlBlock_t gRREQControlBlock = {0};
 //*****************************************************************************
 //!LOCAL FUNCTIONS
 //*****************************************************************************
+static void rreq_procedureStarted(uint16_t connHandle, uint16_t procedureCounter);
 static bStatus_t rreq_discoverAllChars(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle);
 static RREQConfigSubType_e rreq_getCharProperties(RREQConfigSubType_e mode, uint8_t properties);
 static bStatus_t rreq_discoverPrimServ(uint16_t connHandle);
 static void rreq_handleFindByTypeValueRsp(gattMsgEvent_t *gattMsg);
 static void rreq_handleReadByTypeRsp(gattMsgEvent_t *gattMsg);
 static void rreq_handleValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
+static void rreq_handleOnDemandValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
+static void rreq_handleRealTimeValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
 static void rreq_handleWriteRsp(gattMsgEvent_t *gattMsg);
-static uint8_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, uint16_t rangingCounter, uint8_t len);
-static bStatus_t rreq_registerCharacteristics(uint16_t connHandle);
+static void rreq_handleReadRsp(gattMsgEvent_t *gattMsg);
+static bStatus_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, uint16_t rangingCounter, uint8_t len);
+static bool rreq_checkRegistration(RREQConfigSubType_e subNeeded, uint8_t subscribeBitMap, RREQ_SubscribeBitMap_e subscribeBit);
+static bStatus_t rreq_registerConfigChars(uint16_t connHandle);
+static bStatus_t rreq_registerOnDemandConfigChars(uint16_t connHandle);
+static bStatus_t rreq_registerRealTimeConfigChars(uint16_t connHandle);
+static bStatus_t rreq_configureCharRegistration(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e mode);
+static bStatus_t rreq_registerCharacteristic(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e mode);
+static bStatus_t rreq_unregisterCharacteristic(uint16_t connHandle, uint16_t charUUID);
 static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_e mode, uint16_t attHandle);
 static void rreq_discoverAllCharDescriptors(uint16_t connHandle);
 static void rreq_clearData(uint16_t connHandle);
-static void rreq_readCharacteristicValue(uint16_t connHandle, uint16_t handle);
+static void clearSegmentMgr(uint16_t connHandle);
+static void rreq_readFeaturesCharValue(uint16_t connHandle);
 static void rreq_handleControlPointRsp(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
-static void rreq_handleSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
+static void rreq_handleOnDemandSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
+static void rreq_handleRealTimeSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
 static void rreq_parseSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti);
 static void rreq_handleRspCode(uint16_t connHandle, uint8_t rspValue);
-static void rreq_procedureDone(void);
-static uint8_t rreq_CheckDataComplete(uint16_t connHandle);
+static void rreq_procedureDone(uint16_t connHandle);
 
 // Timer functions
-static void rreq_startTimer( uint32_t timeout );
-static void rreq_stopTimer( void );
+static void rreq_startTimer( uint32_t timeout, uint16_t connHandle );
+static void rreq_stopTimer( uint16_t connHandle );
 static void rreq_timerCB(BLEAppUtil_timerHandle timerHandle, BLEAppUtil_timerTermReason_e reason, void *pData);
 
 //*****************************************************************************
@@ -212,31 +265,18 @@ BLEAppUtil_EventHandler_t RREQGATTHandler =
  * PUBLIC FUNCTIONS
  */
 
- /*********************************************************************
- * @fn      RREQ_Start
- *
- * @brief   Initializes the ranging requester by saving the provided
- *          configuration and callbacks.
- *
- * input parameters
- *
- * @param   pCallbacks - Pointer to the callback structure.
- * @param   pConfig - Pointer to the configuration structure.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS - if the initialization was successful.
- *          INVALIDPARAMETER - if the input parameters are invalid.
- *
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
  */
 uint8_t RREQ_Start(const RREQCallbacks_t *pCallbacks , const RREQConfig_t *pConfig)
 {
     uint8_t status = SUCCESS;
 
-    // Check input parameters
-    if ( pCallbacks == NULL || pConfig == NULL )
+    // Check input parameters and check if this function already called once
+    if ( pCallbacks == NULL ||
+         pConfig == NULL ||
+         gRREQControlBlock.config != NULL ||
+         gRREQControlBlock.callbacks != NULL)
     {
         return INVALIDPARAMETER;
     }
@@ -245,13 +285,11 @@ uint8_t RREQ_Start(const RREQCallbacks_t *pCallbacks , const RREQConfig_t *pConf
     gRREQControlBlock.config = pConfig;
     gRREQControlBlock.callbacks = pCallbacks;
 
-    // Reset Procedure Attr
-    gRREQControlBlock.procedureAttr.connHandle = LINKDB_CONNHANDLE_INVALID;
-    gRREQControlBlock.procedureAttr.rangingCounter = 0xFFFF;
-    gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-
-    // Reset the timer handle
-    gRREQControlBlock.timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
+    // Clear all connections data
+    for (uint16_t connHandle = 0; connHandle < RREQ_MAX_CONN; connHandle++)
+    {
+        rreq_clearData(connHandle);
+    }
 
     // Register the GATT event handler
     status = BLEAppUtil_registerEventHandler( &RREQGATTHandler );
@@ -266,53 +304,55 @@ uint8_t RREQ_Start(const RREQCallbacks_t *pCallbacks , const RREQConfig_t *pConf
 }
 
 
-/*********************************************************************
- * @fn      RREQ_Enable
- *
- * @brief   Enables the RREQ process.
- *          This function start the RREQ process by discovering the RAS (Ranging Service)
- *          service on the specified connection handle
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- * @param   enableMode - Mode to enable.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  return SUCCESS or an error status indicating the failure reason.
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
  */
 uint8_t RREQ_Enable(uint16_t connHandle, RREQEnableModeType_e enableMode)
 {
     uint8_t status = SUCCESS;
 
     // Check if the connection handle is valid and the enable mode is supported
-    if (connHandle >= RREQ_MAX_CONN || enableMode == RREQ_REAL_TIME)
+    if (connHandle >= RREQ_MAX_CONN ||
+        (enableMode != RREQ_MODE_ON_DEMAND && enableMode != RREQ_MODE_REAL_TIME))
     {
         status = INVALIDPARAMETER;
     }
     else
     {
         // Check if the RREQ is already enabled for this connection handle
-        if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_IDLE)
+        if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_NONE)
         {
+            // Set the preferred mode as given by the caller
+            gRREQControlBlock.connInfo[connHandle].preferredMode = enableMode;
+
+            // Set the current state to Init
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_INIT;
+
             // Check if need to discover the RAS service
             if(gRREQControlBlock.connInfo[connHandle].endHandle == 0)
             {
-                // Discover the RAS service
-                status = rreq_discoverPrimServ(connHandle);
+                // Open ranging client DB per connection handle
+                status = RangingDBClient_procedureOpen(connHandle);
+
                 if(status == SUCCESS)
                 {
-                    // Set the enable mode
-                    gRREQControlBlock.connInfo[connHandle].enableMode = enableMode;
+                    // Discover the RAS service
+                    status = rreq_discoverPrimServ(connHandle);
+                }
+
+                if (status != SUCCESS)
+                {
+                    // Abort and clear data
+                    rreq_clearData(connHandle);
+
+                    // Clear the DB in case it was opened
+                    RangingDBClient_procedureClose(connHandle);
                 }
             }
             else
             {
                 // register to the server characteristics
-                status = rreq_registerCharacteristics(connHandle);
+                status = rreq_registerConfigChars(connHandle);
             }
         }
         else
@@ -320,33 +360,12 @@ uint8_t RREQ_Enable(uint16_t connHandle, RREQEnableModeType_e enableMode)
             // Already enabled
             status = INVALIDPARAMETER;
         }
-
-        // Open ranging client DB per connection handle
-        if(status == SUCCESS)
-        {
-            status = RangingDBClient_procedureOpen(connHandle);
-        }
     }
     return status;
 }
 
-/*********************************************************************
- * @fn      RREQ_Disable
- *
- * @brief   Disable the RREQ process.
- *          This function start the RREQ process by discovering the RAS (Ranging Service)
- *          service on the specified connection handle
- *
- * input parameters
- *
- * @param   connHandle - The connection handle for the RAS service.
- *
- * output parameters
- *
- * @param   None
- *
- * @return SUCCESS - if the RREQ process was successfully disabled.
- *         INVALIDPARAMETER - if the connection handle is invalid.
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
  */
 uint8_t RREQ_Disable(uint16_t connHandle)
 {
@@ -356,29 +375,19 @@ uint8_t RREQ_Disable(uint16_t connHandle)
     if (connHandle < RREQ_MAX_CONN)
     {
         // Unregister all peer notifications/indications
-        if ((gRREQControlBlock.config->subConfig.controlPointSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_CONTROL_POINT_BIT) != 0))
+        for (uint16_t charUUID = RAS_REAL_TIME_UUID; charUUID <= RAS_DATA_OVERWRITTEN_UUID; charUUID++)
         {
-            rreq_enableNotification(connHandle, RREQ_DISABLE_NOTIFY_INDICATE, gRREQControlBlock.connInfo[connHandle].controlPointCharHandle);
-        }
-        if ((gRREQControlBlock.config->subConfig.dataReadySubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_DATA_READY_BIT) != 0))
-        {
-            rreq_enableNotification(connHandle, RREQ_DISABLE_NOTIFY_INDICATE, gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharHandle);
-        }
-        if ((gRREQControlBlock.config->subConfig.overwrittenSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_OVERWRITTEN_BIT) != 0))
-        {
-            rreq_enableNotification(connHandle, RREQ_DISABLE_NOTIFY_INDICATE, gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharHandle);
-        }
-        if ((gRREQControlBlock.config->subConfig.onDemandSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_ON_DEMAND_BIT) != 0))
-        {
-            rreq_enableNotification(connHandle, RREQ_DISABLE_NOTIFY_INDICATE, gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharHandle);
+            rreq_configureCharRegistration(connHandle, charUUID, RREQ_DISABLE_NOTIFY_INDICATE);
         }
 
         // Clear all connHandle saved data
         rreq_clearData(connHandle);
+
+        // Stop the timer in case it's running
+        rreq_stopTimer(connHandle);
+
+        // Close the ranging client DB
+        RangingDBClient_procedureClose(connHandle);
 
         status = SUCCESS;
     }
@@ -386,54 +395,87 @@ uint8_t RREQ_Disable(uint16_t connHandle)
     return status;
 }
 
-/*********************************************************************
- * @fn      RREQ_GetRangingData
- *
- * @brief   Starts the process of reading data for a ranging request.
- *          This function initiates the data reading process for a specified connection
- *          handle and ranging count.
- *
- * input parameters
- *
- * @param   connHandle  - Connection handle.
- * @param   RangingCount - CS procedure counter.
- *
- * output parameters
- *
- * @param   None
- *
- * @return return SUCCESS or an error status indicating the failure reason.
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
+ */
+uint8_t RREQ_ConfigureCharRegistration(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e subType)
+{
+    uint8_t status = SUCCESS;
+
+    // Check connection handle
+    // Make sure that a discovery of the service has been completed
+    if (connHandle >= RREQ_MAX_CONN ||
+        subType > RREQ_INDICATE ||
+        gRREQControlBlock.connInfo[connHandle].endHandle == 0)
+    {
+        status = INVALIDPARAMETER;
+    }
+
+    if (status == SUCCESS)
+    {
+        switch(charUUID)
+        {
+            case RAS_REAL_TIME_UUID:
+            case RAS_ON_DEMAND_UUID:
+            case RAS_CONTROL_POINT_UUID:
+            case RAS_DATA_READY_UUID:
+            case RAS_DATA_OVERWRITTEN_UUID:
+            {
+                status = rreq_configureCharRegistration(
+                    connHandle,
+                    charUUID,
+                    subType
+                );
+
+                break;
+            }
+
+            case RAS_FEATURE_UUID:
+            default:
+            {
+                status = INVALIDPARAMETER;
+                break;
+            }
+        }
+    }
+
+    return status;
+}
+
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
  */
 uint8_t RREQ_GetRangingData(uint16_t connHandle, uint16_t rangingCount)
 {
     uint8_t status = SUCCESS;
 
-    // Check if the procedure state is idle
-    if (gRREQControlBlock.procedureAttr.procedureState == RREQ_STATE_IDLE)
+    // Check if the connection handle is valid, the configuration is not NULL
+    // and that the enabled mode is On-Demand
+    if ((connHandle >= RREQ_MAX_CONN) || (gRREQControlBlock.config == NULL) ||
+        (gRREQControlBlock.connInfo[connHandle].enableMode != RREQ_MODE_ON_DEMAND))
     {
-        // Check if the connection handle is valid
-        // and if the configuration is not NULL
-        if ((connHandle >= RREQ_MAX_CONN) || (gRREQControlBlock.config == NULL))
-        {
-            return INVALIDPARAMETER;
-        }
+        return INVALIDPARAMETER;
+    }
 
+    // Check if the procedure state is idle
+    if (gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_IDLE)
+    {
         // Send write command to control point characteristic handle
         status = rreq_sendControlPointWriteCmd(connHandle, RAS_CP_OPCODE_GET_RANGING_DATA, rangingCount, RAS_CP_GET_DATA_CMD_LEN);
 
         // Init the procedure Attr
         if(status == SUCCESS)
         {
-            gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_FIRST_SEGMENT;
-            gRREQControlBlock.procedureAttr.connHandle = connHandle;
-            gRREQControlBlock.procedureAttr.rangingCounter = rangingCount;
-            // Start the timer for timeout
-            rreq_startTimer(gRREQControlBlock.config->timeOutDataReady);
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_NEXT_SEGMENT;
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter = rangingCount;
+
+            // Start the timer for receiving first segment
+            rreq_startTimer(gRREQControlBlock.config->timeoutConfig.timeOutFirstSegment, connHandle);
         }
         else
         {
             // Reset the procedure state if the command failed
-            gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
         }
     }
     else
@@ -445,52 +487,75 @@ uint8_t RREQ_GetRangingData(uint16_t connHandle, uint16_t rangingCount)
     return status;
 }
 
-/*********************************************************************
- * @fn      RREQ_Abort
- *
- * @brief   Aborts the ongoing ranging request.
- *          This function is responsible for aborting the ongoing ranging request
- *          for a specified connection handle.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- *
- * output parameters
- *
- * @param   None
- *
- * @return return SUCCESS or an error status indicating the failure reason.
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
  */
 uint8_t RREQ_Abort(uint16_t connHandle)
 {
-    uint8_t status = bleDisallowed;
+    uint8_t status = SUCCESS;
 
-    // Check if the procedure is in progress
-    if (gRREQControlBlock.procedureAttr.procedureState != RREQ_STATE_IDLE &&
-        gRREQControlBlock.procedureAttr.connHandle == connHandle)
+    // Check if the connection handle is valid
+    if (connHandle >= RREQ_MAX_CONN)
     {
-        // Check if the connection handle is valid
-        if (connHandle >= RREQ_MAX_CONN)
-        {
-            return INVALIDPARAMETER;
-        }
+        status = INVALIDPARAMETER;
+    }
 
-        // Check if the abort operation is allowed
-        if (gRREQControlBlock.connInfo[gRREQControlBlock.procedureAttr.connHandle].featureCharValue & RAS_FEATURES_ABORT_OPERATION )
+    if (status == SUCCESS)
+    {
+        // Ensure:
+        // 1. Abort operation is allowed
+        // 2. Enabled mode is On-Demand
+        // 3. Procedure is in progress
+        if ((gRREQControlBlock.connInfo[connHandle].featureCharValue & RAS_FEATURES_ABORT_OPERATION) &&
+            gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_ON_DEMAND &&
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_NEXT_SEGMENT)
         {
             // Send Abort command to the server
-            status = rreq_sendControlPointWriteCmd(gRREQControlBlock.procedureAttr.connHandle, RAS_CP_OPCODE_ABORT_OPERATION,
-                                          gRREQControlBlock.procedureAttr.rangingCounter, RAS_CP_ABORT_CMD_LEN);
+            status = rreq_sendControlPointWriteCmd(connHandle, RAS_CP_OPCODE_ABORT_OPERATION,
+                                                   gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter,
+                                                   RAS_CP_ABORT_CMD_LEN);
             if( status == SUCCESS)
             {
                 // Reset the procedure state to wait for abort response
-                gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_ABORT;
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_ABORT;
             }
+        }
+        else
+        {
+            status = bleDisallowed;
         }
     }
 
     return status;
+}
+
+/*******************************************************************************
+ * Public function defined in ranging_profile_client.h.
+ */
+uint8_t RREQ_ProcedureStarted(uint16_t connHandle, uint16_t procedureCounter)
+{
+    // Ensure the connection handle is valid
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return INVALIDPARAMETER;
+    }
+
+    // Ensure Real-Time mode is enabled and that no other procedure is in progress
+    if (gRREQControlBlock.connInfo[connHandle].enableMode != RREQ_MODE_REAL_TIME ||
+        gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState != RREQ_STATE_IDLE)
+    {
+        return bleIncorrectMode;
+    }
+
+    // Ensure that the procedure counter is different than the last notified one
+    if (gRREQControlBlock.connInfo[connHandle].currentProcedureCounter == procedureCounter)
+    {
+        return bleAlreadyInRequestedMode;
+    }
+
+    rreq_procedureStarted(connHandle, procedureCounter);
+
+    return SUCCESS;
 }
 
  /*********************************************************************
@@ -528,12 +593,14 @@ static void RREQ_GATTEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
     {
         case BLEAPPUTIL_ATT_FIND_BY_TYPE_VALUE_RSP:
         {
+            // Handle the find by type value response
             rreq_handleFindByTypeValueRsp( gattMsg );
             break;
         }
 
         case BLEAPPUTIL_ATT_READ_BY_TYPE_RSP:
         {
+            // Handle the read by type response
             rreq_handleReadByTypeRsp( gattMsg );
             break;
         }
@@ -563,6 +630,7 @@ static void RREQ_GATTEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 
         case BLEAPPUTIL_ATT_WRITE_RSP:
         {
+            // Handle the write response
             rreq_handleWriteRsp( gattMsg );
             break;
         }
@@ -575,16 +643,8 @@ static void RREQ_GATTEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 
         case BLEAPPUTIL_ATT_READ_RSP:
         {
-            // Save RAS feature characteristic value
-            memcpy(&gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharValue, gattMsg->msg.readRsp.pValue, sizeof(uint32_t));
-
-            // Register to RAS server characteristics
-            if(gattMsg->hdr.status == SUCCESS)
-            {
-                // TODO: check if its the correct handle
-                // Register to the server characteristics
-                rreq_registerCharacteristics(gattMsg->connHandle);
-            }
+            // Handle the read response
+            rreq_handleReadRsp( gattMsg );
             break;
         }
 
@@ -594,13 +654,50 @@ static void RREQ_GATTEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
             if( gattMsg->hdr.status == bleProcedureComplete )
             {
                 // read from "read feature" characteristic
-                rreq_readCharacteristicValue(gattMsg->connHandle, gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharHandle);
+                rreq_readFeaturesCharValue(gattMsg->connHandle);
             }
         }
 
         default:
             break;
     }
+}
+
+/*********************************************************************
+ * @fn      rreq_procedureStarted
+ *
+ * @brief   Internal function to notify the RREQ profile that a
+ *          Channel Sounding procedure has started. Relevant for Real-Time
+ *          mode only.
+ *          The function will change the RREQ state accordingly for
+ *          the specified connection handle.
+ *
+ * input parameters
+ *
+ * @param   connHandle - Connection handle.
+ * @param   procedureCounter - CS procedure counter that has been started.
+ *
+ * @note    Assumes that the procedureCounter parameter is different
+ *          than the last notified one.
+ *
+ * @return  none
+ */
+static void rreq_procedureStarted(uint16_t connHandle, uint16_t procedureCounter)
+{
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return;
+    }
+
+    // Keep track of the CS procedure counter for this connection
+    gRREQControlBlock.connInfo[connHandle].currentProcedureCounter = procedureCounter;
+
+    // Set the state to wait for the first segment and update the ranging counter
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_FIRST_SEGMENT;
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter = procedureCounter;
+
+    // Start the timer for timeout
+    rreq_startTimer(gRREQControlBlock.config->timeoutConfig.timeOutFirstSegment, connHandle);
 }
 
 /*********************************************************************
@@ -621,26 +718,28 @@ static void RREQ_GATTEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 static bStatus_t rreq_discoverAllChars(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle)
 {
-    bStatus_t status;
+    bStatus_t status = INVALIDPARAMETER;
 
     // Discovery simple service
-    status = GATT_DiscAllChars(connHandle, startHandle, endHandle, BLEAppUtil_getSelfEntity());
+    if (connHandle < RREQ_MAX_CONN)
+    {
+        status = GATT_DiscAllChars(connHandle, startHandle, endHandle, BLEAppUtil_getSelfEntity());
+    }
 
     return status;
 }
 
 /*********************************************************************
- * @fn      rreq_readCharacteristicValue
+ * @fn      rreq_readFeaturesCharValue
  *
- * @brief   Reads the value of a specified characteristic from a remote device.
- *          This function initiates a read request for the value of a characteristic
+ * @brief   Reads the value of a ras feature characteristic from a remote device.
+ *          This function initiates a read request for the value of a feature char
  *          identified by its handle on a remote device. The result of the read operation
  *          will be provided asynchronously through event ATT_READ_RSP.
  *
  * input parameters
  *
  * @param   connHandle  - Connection handle.
- * @param   handle - Handle of the characteristic to read.
  *
  * output parameters
  *
@@ -648,21 +747,27 @@ static bStatus_t rreq_discoverAllChars(uint16_t connHandle, uint16_t startHandle
  *
  * @return Status code indicating the success or failure of the operation.
  */
-static void rreq_readCharacteristicValue(uint16_t connHandle, uint16_t handle)
+static void rreq_readFeaturesCharValue(uint16_t connHandle)
 {
     attReadReq_t req;
-    req.handle = handle;
 
-    // Read the characteristic value
-    GATT_ReadCharValue(connHandle, &req, BLEAppUtil_getSelfEntity());
+    // Check if the connection handle is valid and the procedure state is INIT
+    if ( (connHandle < RREQ_MAX_CONN) && (gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_INIT))
+    {
+        // Update the procedure state to indicate that we are reading the characteristic feature
+        gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_READ_CHAR_FEATURE;
+
+        // Read the characteristic value
+        req.handle = gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_FEATURE_CHAR_INDEX].charHandle;
+        GATT_ReadCharValue(connHandle, &req, BLEAppUtil_getSelfEntity());
+    }
 }
 
 /*********************************************************************
  * @fn      rreq_handleWriteRsp
  *
- * @brief   The purpose of this function is to handle
- *          BLEAPPUTIL_ATT_WRITE_RSP events
- *          that rise from the GATT.
+ * @brief   The purpose of this function is to handle @ref BLEAPPUTIL_ATT_WRITE_RSP
+ *          events that rise from the GATT.
  *
  * input parameters
  *
@@ -676,81 +781,461 @@ static void rreq_readCharacteristicValue(uint16_t connHandle, uint16_t handle)
  */
 static void rreq_handleWriteRsp(gattMsgEvent_t *gattMsg)
 {
-    if(gattMsg->hdr.status == SUCCESS)
+    if(gattMsg != NULL &&
+       gattMsg->hdr.status == SUCCESS &&
+       gattMsg->connHandle < RREQ_MAX_CONN)
     {
-        // register to the server characteristics
-        rreq_registerCharacteristics(gattMsg->connHandle);
+        // If currently on Init state, keep reading characteristics
+        if (gRREQControlBlock.connInfo[gattMsg->connHandle].procedureAttr.procedureState == RREQ_STATE_INIT)
+        {
+            // register to the server characteristics
+            rreq_registerConfigChars(gattMsg->connHandle);
+        }
     }
 }
 
 /*********************************************************************
- * @fn      rreq_registerCharacteristics
+ * @fn      rreq_handleReadRsp
  *
- * @brief Registers characteristics for the RREQ.
+ * @brief   The purpose of this function is to handle @ref BLEAPPUTIL_ATT_READ_RSP
+ *          events that rise from the GATT.
+ *          Relevant when in INIT state.
+ *
+ * input parameters
+ *
+ * @param   gattMsg - pointer to the GATT message event structure
+ *
+ * output parameters
+ *
+ * @param   None
+ *
+ * @return  none
+ */
+static void rreq_handleReadRsp(gattMsgEvent_t *gattMsg)
+{
+    // Register to RAS server characteristics
+    if(gattMsg != NULL &&
+       gattMsg->hdr.status == SUCCESS &&
+       gattMsg->connHandle < RREQ_MAX_CONN &&
+       gRREQControlBlock.connInfo[gattMsg->connHandle].procedureAttr.procedureState == RREQ_STATE_READ_CHAR_FEATURE)
+    {
+        // Set state back to INIT
+        gRREQControlBlock.connInfo[gattMsg->connHandle].procedureAttr.procedureState = RREQ_STATE_INIT;
+
+        if (gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharValue == 0)
+        {
+            // Save RAS feature characteristic value
+            memcpy(&gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharValue, gattMsg->msg.readRsp.pValue, sizeof(uint32_t));
+        }
+
+        // Set the mode depends on the application preference and the server features
+        if ((gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharValue & RAS_FEATURES_REAL_TIME) &&
+            gRREQControlBlock.connInfo[gattMsg->connHandle].preferredMode == RREQ_MODE_REAL_TIME)
+        {
+            gRREQControlBlock.connInfo[gattMsg->connHandle].enableMode = RREQ_MODE_REAL_TIME;
+        }
+        else
+        {
+            // Whether the application preferred to use On-Demand, or the server doesn't
+            // support Real-Time - use On-Demand
+            gRREQControlBlock.connInfo[gattMsg->connHandle].enableMode = RREQ_MODE_ON_DEMAND;
+        }
+
+        // Register to the server characteristics
+        rreq_registerConfigChars(gattMsg->connHandle);
+    }
+}
+
+/**
+ * @brief Checks if a specific registration (notification or indication) is enabled.
+ *
+ * This function determines whether a required subscription (notification or indication)
+ * is registered/enabled based on the provided subscription bitmap and the specific bit
+ * representing the subscription type.
+ *
+ * @param subNeeded         The required subscription type (notification, indication, or disable).
+ * @param subscribeBitMap   The current bitmap representing enabled subscriptions.
+ * @param subscribeBit      The bitmask corresponding to the subscription type to check.
+ *
+ * @return true  If the required subscription is registered or not needed.
+ * @return false If the required subscription is needed but not registered.
+ */
+static bool rreq_checkRegistration(RREQConfigSubType_e subNeeded, uint8_t subscribeBitMap, RREQ_SubscribeBitMap_e subscribeBit)
+{
+    bool registered = true;
+
+    if (subNeeded != RREQ_DISABLE_NOTIFY_INDICATE &&
+        (subscribeBitMap & subscribeBit) == 0)
+    {
+        registered = false;
+    }
+
+    return registered;
+}
+
+/*********************************************************************
+ * @fn      rreq_registerConfigChars
+ *
+ * @brief Registers characteristics for the RREQ,
+ * using the config set by @ref RREQ_Start API.
+ * This function is responsible for registering the characteristics
+ * that the RREQ will use to communicate with the server.
+ * It ensures that the necessary characteristics
+ * are properly initialized and made available for use.
+ * The characteristic that will be registered depends on the mode
+ * that has been chosen - @ref RREQ_MODE_ON_DEMAND or @ref RREQ_MODE_REAL_TIME
+ *
+ * @param connHandle The connection handle for the RREQ.
+ *
+ * @return INVALIDPARAMETER - if the connection handle is invalid
+ * @return bleIncorrectMode - if the client is not registered to
+ *                            either On-Demand or Real-Time characteristics.
+ * @return SUCCESS - otherwise.
+ */
+static bStatus_t rreq_registerConfigChars(uint16_t connHandle)
+{
+    bStatus_t status = SUCCESS;
+
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        status = INVALIDPARAMETER;
+    }
+
+    if (status == SUCCESS)
+    {
+        if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_ON_DEMAND)
+        {
+            status = rreq_registerOnDemandConfigChars(connHandle);
+        }
+        else if(gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_REAL_TIME)
+        {
+            status = rreq_registerRealTimeConfigChars(connHandle);
+        }
+        else
+        {
+            status = bleIncorrectMode;
+        }
+    }
+
+    return status;
+}
+
+/*********************************************************************
+ * @fn      rreq_registerOnDemandConfigChars
+ *
+ * @brief Registers On-Demand characteristics for the RREQ,
+ * using the config set by @ref RREQ_Start API.
  * This function is responsible for registering the characteristics
  * that the RREQ will use to communicate with the server.
  * It ensures that the necessary characteristics
  * are properly initialized and made available for use.
  *
  * @param connHandle The connection handle for the RREQ.
- * @return None.
+ *
+ * @return INVALIDPARAMETER - if the connection handle is invalid or
+ *                            the global configuration is NULL.
+ * @return SUCCESS - otherwise.
  */
-static bStatus_t rreq_registerCharacteristics(uint16_t connHandle)
+static bStatus_t rreq_registerOnDemandConfigChars(uint16_t connHandle)
 {
     bStatus_t status = SUCCESS;
-    // The supported subscription types
-    RREQConfigSubType_e supSubType;
 
-    // Check if the connection handle is valid
-    // and if the configuration is not NULL
-    if ((connHandle >= RREQ_MAX_CONN) || (gRREQControlBlock.config == NULL))
+    // Check parameters and configuration
+    if (connHandle >= RREQ_MAX_CONN ||
+        gRREQControlBlock.config == NULL)
     {
-        return bleInvalidRange;
+        status = INVALIDPARAMETER;
     }
 
-    // Register to the "control point" characteristic handle
-    if( (gRREQControlBlock.config->subConfig.controlPointSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-        ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_CONTROL_POINT_BIT) == 0))
+    if (status == SUCCESS)
     {
-        // Get the characteristic properties mode
-        supSubType = rreq_getCharProperties(gRREQControlBlock.config->subConfig.controlPointSubType, gRREQControlBlock.connInfo[connHandle].controlPointCharProperties);
-        // Enable notifications/indications for the characteristic
-        rreq_enableNotification(connHandle, supSubType, gRREQControlBlock.connInfo[connHandle].controlPointCharHandle);
-        gRREQControlBlock.connInfo[connHandle].subscribeBitMap |= RREQ_CONTROL_POINT_BIT;
+        // Register to the "control point" characteristic handle
+        if (gRREQControlBlock.config->onDemandSubConfig.controlPointSubType != RREQ_DISABLE_NOTIFY_INDICATE &&
+            (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_CONTROL_POINT_BIT) == 0)
+        {
+            status = rreq_configureCharRegistration(
+                        connHandle,
+                        RAS_CONTROL_POINT_UUID,
+                        gRREQControlBlock.config->onDemandSubConfig.controlPointSubType
+            );
+        }
+
+        // Register to the "data ready" characteristic handle
+        else if (gRREQControlBlock.config->onDemandSubConfig.dataReadySubType != RREQ_DISABLE_NOTIFY_INDICATE &&
+                 (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_DATA_READY_BIT) == 0)
+        {
+            status = rreq_configureCharRegistration(
+                        connHandle,
+                        RAS_DATA_READY_UUID,
+                        gRREQControlBlock.config->onDemandSubConfig.dataReadySubType
+            );
+        }
+
+        // Register to the "data overwritten" characteristic handle
+        else if (gRREQControlBlock.config->onDemandSubConfig.overwrittenSubType != RREQ_DISABLE_NOTIFY_INDICATE &&
+                 (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_OVERWRITTEN_BIT) == 0)
+        {
+            status = rreq_configureCharRegistration(
+                        connHandle,
+                        RAS_DATA_OVERWRITTEN_UUID,
+                        gRREQControlBlock.config->onDemandSubConfig.overwrittenSubType
+            );
+        }
+
+        // Register to the "on-demand" characteristic handle
+        else if (gRREQControlBlock.config->onDemandSubConfig.onDemandSubType != RREQ_DISABLE_NOTIFY_INDICATE &&
+                 (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_ON_DEMAND_BIT) == 0)
+        {
+            status = rreq_configureCharRegistration(
+                        connHandle,
+                        RAS_ON_DEMAND_UUID,
+                        gRREQControlBlock.config->onDemandSubConfig.onDemandSubType
+            );
+        }
+
+        if(rreq_checkRegistration(gRREQControlBlock.config->onDemandSubConfig.controlPointSubType, gRREQControlBlock.connInfo[connHandle].subscribeBitMap, RREQ_CONTROL_POINT_BIT) &&
+        rreq_checkRegistration(gRREQControlBlock.config->onDemandSubConfig.dataReadySubType, gRREQControlBlock.connInfo[connHandle].subscribeBitMap, RREQ_DATA_READY_BIT) &&
+        rreq_checkRegistration(gRREQControlBlock.config->onDemandSubConfig.overwrittenSubType, gRREQControlBlock.connInfo[connHandle].subscribeBitMap, RREQ_OVERWRITTEN_BIT) &&
+        rreq_checkRegistration(gRREQControlBlock.config->onDemandSubConfig.onDemandSubType, gRREQControlBlock.connInfo[connHandle].subscribeBitMap, RREQ_ON_DEMAND_BIT))
+        {
+            // Done reading all relevant characteristics, set state to Idle
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+        }
     }
 
-    // Register to the "data ready" characteristic handle
-    else if((gRREQControlBlock.config->subConfig.dataReadySubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_DATA_READY_BIT) == 0))
+    return status;
+}
+
+/*********************************************************************
+ * @fn      rreq_registerRealTimeConfigChars
+ *
+ * @brief Registers Real-Time characteristics for the RREQ,
+ * using the config set by @ref RREQ_Start API.
+ * This function is responsible for registering the characteristics
+ * that the RREQ will use to communicate with the server.
+ * It ensures that the necessary characteristics
+ * are properly initialized and made available for use.
+ *
+ * @param connHandle The connection handle for the RREQ.
+ *
+ * @return INVALIDPARAMETER - if the connection handle is invalid or
+ *                            the global configuration is NULL.
+ * @return SUCCESS - otherwise.
+ */
+static bStatus_t rreq_registerRealTimeConfigChars(uint16_t connHandle)
+{
+    bStatus_t status = SUCCESS;
+
+    // Check parameters and configuration
+    if (connHandle >= RREQ_MAX_CONN ||
+        gRREQControlBlock.config == NULL)
     {
-        // Get the characteristic properties mode
-        supSubType = rreq_getCharProperties(gRREQControlBlock.config->subConfig.dataReadySubType, gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharProperties);
-        // Enable notifications/indications for the characteristic
-        rreq_enableNotification(connHandle, supSubType, gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharHandle);
-        gRREQControlBlock.connInfo[connHandle].subscribeBitMap |= RREQ_DATA_READY_BIT;
+        status = INVALIDPARAMETER;
     }
 
-    // Register to the "data overwritten" characteristic handle
-    else if((gRREQControlBlock.config->subConfig.overwrittenSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-            ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_OVERWRITTEN_BIT) == 0))
+    if (status == SUCCESS)
     {
-        // Get the characteristic properties mode
-        supSubType = rreq_getCharProperties(gRREQControlBlock.config->subConfig.overwrittenSubType, gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharProperties);
-        // Enable notifications/indications for the characteristic
-        rreq_enableNotification(connHandle, supSubType, gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharHandle);
-        gRREQControlBlock.connInfo[connHandle].subscribeBitMap |= RREQ_OVERWRITTEN_BIT;
+        // Register to the "Real-Time" characteristic handle
+        if(gRREQControlBlock.config->realTimeSubConfig.realTimeSubType != RREQ_DISABLE_NOTIFY_INDICATE &&
+           (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_REAL_TIME_BIT) == 0)
+        {
+            status = rreq_configureCharRegistration(
+                        connHandle,
+                        RAS_REAL_TIME_UUID,
+                        gRREQControlBlock.config->realTimeSubConfig.realTimeSubType
+            );
+        }
+
+        if(rreq_checkRegistration(gRREQControlBlock.config->realTimeSubConfig.realTimeSubType, gRREQControlBlock.connInfo[connHandle].subscribeBitMap, RREQ_REAL_TIME_BIT))
+        {
+            // Done reading all relevant characteristics, set state to Idle
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+        }
     }
 
-    // Register to the "on-demand" characteristic handle
-    else if ((gRREQControlBlock.config->subConfig.onDemandSubType != RREQ_DISABLE_NOTIFY_INDICATE) &&
-             ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_ON_DEMAND_BIT) == 0))
+    return status;
+}
+
+/*********************************************************************
+ * @fn      rreq_configureCharRegistration
+ *
+ * @brief Configures the registration for a characteristic in the Ranging Profile Client.
+ *
+ * This function registers or unregisters for notifications or indications on a specific
+ * characteristic identified by its UUID for a given connection handle.
+ *
+ * @param connHandle   The connection handle identifying the BLE connection.
+ * @param charUUID     The UUID of the characteristic to configure.
+ * @param subType      The type of configuration to apply (see RREQConfigSubType_e).
+ *
+ * @return SUCCESS          - if the configuration was successful.
+ * @return INVALIDPARAMETER - if the connection handle is invalid, the characteristic
+ *                            UUID is not supported, or if trying to register to both
+ *                            Real-Time and On-Demand characteristics.
+ *
+ * @note Does not accept RAS_FEATURE_UUID for configuration.
+ */
+static bStatus_t rreq_configureCharRegistration(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e mode)
+{
+    bStatus_t status = INVALIDPARAMETER;
+
+    if (connHandle >= RREQ_MAX_CONN)
     {
-        // Get the characteristic properties mode
-        supSubType = rreq_getCharProperties(gRREQControlBlock.config->subConfig.onDemandSubType, gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharProperties);
-        // Enable notifications/indications for the characteristic
-        rreq_enableNotification(connHandle, supSubType, gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharHandle);
-        gRREQControlBlock.connInfo[connHandle].subscribeBitMap |= RREQ_ON_DEMAND_BIT;
+        return status;
     }
+
+    switch(mode)
+    {
+        case RREQ_DISABLE_NOTIFY_INDICATE:
+        {
+            status = rreq_unregisterCharacteristic(connHandle, charUUID);
+
+            // Update the enable mode if both On-Demand and Real-Time characteristics are unregistered
+            if (status == SUCCESS &&
+                (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(RAS_ON_DEMAND_UUID)) == 0 &&
+                (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(RAS_REAL_TIME_UUID)) == 0)
+            {
+                // If both On-Demand and Real-Time characteristics are unregistered,
+                // set the enable mode and state to Idle
+                gRREQControlBlock.connInfo[connHandle].enableMode = RREQ_MODE_NONE;
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+            }
+
+            break;
+        }
+        case RREQ_PREFER_NOTIFY:
+        case RREQ_INDICATE:
+        {
+            // Check if trying to register to both Real-Time and On-Demand characteristics
+            if ((charUUID == RAS_REAL_TIME_UUID &&
+                 (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(RAS_ON_DEMAND_UUID)) != 0) ||
+                (charUUID == RAS_ON_DEMAND_UUID &&
+                 (gRREQControlBlock.connInfo[connHandle].subscribeBitMap & RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(RAS_REAL_TIME_UUID)) != 0))
+            {
+                status = INVALIDPARAMETER;
+            }
+            else
+            {
+                status = rreq_registerCharacteristic(connHandle, charUUID, mode);
+            }
+
+            // Set the enable mode if there was a successful mode registration
+            if (status == SUCCESS)
+            {
+                if (charUUID == RAS_REAL_TIME_UUID)
+                {
+                    gRREQControlBlock.connInfo[connHandle].enableMode = RREQ_MODE_REAL_TIME;
+                }
+                else if (charUUID == RAS_ON_DEMAND_UUID)
+                {
+                    gRREQControlBlock.connInfo[connHandle].enableMode = RREQ_MODE_ON_DEMAND;
+                }
+            }
+
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    return status;
+}
+
+/*********************************************************************
+ * @fn      rreq_registerCharacteristic
+ *
+ * @brief Registers a characteristic for the ranging request profile client.
+ *
+ * This function registers a characteristic with the specified UUID on the given connection handle,
+ * configuring it according to the provided mode.
+ *
+ * @param connHandle   The connection handle identifying the BLE connection.
+ * @param charUUID     The UUID of the characteristic to register.
+ * @param mode         The configuration mode (of type RREQConfigSubType_e) for the characteristic.
+ *
+ * @return SUCCESS - if the configuration was successful.
+ *         INVALIDPARAMETER - if the connection handle is invalid or the characteristic
+ *                            UUID is not supported.
+ *
+ * @note Does not accept RAS_FEATURE_UUID for configuration.
+ */
+static bStatus_t rreq_registerCharacteristic(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e mode)
+{
+    bStatus_t status = INVALIDPARAMETER;
+    RREQConfigSubType_e charSubType;
+    uint8_t subscribeBit;
+    RREQ_CharInfo_t charInfo;
+
+    if (connHandle < RREQ_MAX_CONN &&
+        mode <= RREQ_INDICATE &&
+        charUUID >= RAS_REAL_TIME_UUID &&
+        charUUID <= RAS_DATA_OVERWRITTEN_UUID)
+    {
+        subscribeBit = RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(charUUID);
+        charInfo = gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_UUID_TO_CHAR_INDEX(charUUID)];
+
+        if ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & subscribeBit) == 0)
+        {
+            // Get the characteristic properties mode
+            charSubType = rreq_getCharProperties(mode, charInfo.charProperties);
+            // Enable notifications/indications for the characteristic
+            status = rreq_enableNotification(connHandle, charSubType, charInfo.charHandle);
+
+            if (status == SUCCESS)
+            {
+                gRREQControlBlock.connInfo[connHandle].subscribeBitMap |= subscribeBit;
+            }
+        }
+    }
+
+    return status;
+}
+
+/*********************************************************************
+ * @fn      rreq_unregisterCharacteristic
+ *
+ * @brief Unregisters a characteristic for a given connection handle and characteristic UUID.
+ *
+ * This function removes the registration of a characteristic, identified by its UUID,
+ * from the specified BLE connection. After unregistration, notifications or indications
+ * for this characteristic will no longer be received for the given connection.
+ *
+ * @param connHandle The connection handle identifying the BLE connection.
+ * @param charUUID   The UUID of the characteristic to unregister.
+ *
+ * @return bStatus_t Returns status of the operation.
+ *         - SUCCESS if the characteristic was unregistered successfully.
+ *         - Otherwise, an appropriate error code.
+ *
+ * @note Does not accept RAS_FEATURE_UUID for unregistration.
+ */
+static bStatus_t rreq_unregisterCharacteristic(uint16_t connHandle, uint16_t charUUID)
+{
+    bStatus_t status = INVALIDPARAMETER;
+    uint8_t subscribeBit;
+    uint16_t charHandle;
+
+    if (connHandle < RREQ_MAX_CONN &&
+        charUUID >= RAS_REAL_TIME_UUID &&
+        charUUID <= RAS_DATA_OVERWRITTEN_UUID)
+    {
+        subscribeBit = RREQ_UUID_TO_CHAR_SUBSCRIBE_BIT(charUUID);
+        charHandle = gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_UUID_TO_CHAR_INDEX(charUUID)].charHandle;
+
+        if ((gRREQControlBlock.connInfo[connHandle].subscribeBitMap & subscribeBit) != 0)
+        {
+            // Unregister peer notifications/indications
+            status = rreq_enableNotification(connHandle, RREQ_DISABLE_NOTIFY_INDICATE, charHandle);
+
+            if (status == SUCCESS)
+            {
+                gRREQControlBlock.connInfo[connHandle].subscribeBitMap &= (~subscribeBit);
+            }
+        }
+    }
+
 
     return status;
 }
@@ -769,27 +1254,63 @@ static bStatus_t rreq_registerCharacteristics(uint16_t connHandle)
  */
 static void rreq_handleValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
 {
-    // Check if the pointer and connection handle are valid
-    if(handleValueNoti == NULL || connHandle >= RREQ_MAX_CONN)
+    if (connHandle < RREQ_MAX_CONN &&
+        handleValueNoti != NULL)
+    {
+        if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_ON_DEMAND)
+        {
+            rreq_handleOnDemandValueNoti(connHandle, handleValueNoti);
+        }
+        else if(gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_REAL_TIME)
+        {
+            rreq_handleRealTimeValueNoti(connHandle, handleValueNoti);
+        }
+        else
+        {
+            // Don't do anything
+        }
+    }
+}
+
+/*********************************************************************
+ * @fn      rreq_handleOnDemandValueNoti
+ *
+ * @brief Handles on-demand value notification for the ranging profile client.
+ *
+ * This function processes incoming ATT Handle Value Notification messages
+ * related to on-demand values for a specific connection handle. It is typically
+ * invoked when a notification is received from the server, allowing the client
+ * to react to updated ranging data or status.
+ *
+ * @param connHandle        The connection handle identifying the BLE connection.
+ * @param handleValueNoti   Pointer to the ATT Handle Value Notification structure
+ *                          containing the notification data.
+ */
+static void rreq_handleOnDemandValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
+{
+    if (connHandle >= RREQ_MAX_CONN || handleValueNoti == NULL)
     {
         return;
     }
 
     // if get notification from "on-demand" characteristic handle
-    if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharHandle )
+    if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_ON_DEMAND_CHAR_INDEX].charHandle )
     {
-        rreq_handleSegmentReceived(connHandle, handleValueNoti);
+        rreq_handleOnDemandSegmentReceived(connHandle, handleValueNoti);
     }
 
     // if get notification from "control point" characteristic handle
-    else if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].controlPointCharHandle )
+    else if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_CONTROL_POINT_CHAR_INDEX].charHandle )
     {
         rreq_handleControlPointRsp(connHandle, handleValueNoti);
     }
 
     // if get notification from "data ready" characteristic handle
-    else if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharHandle )
+    else if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_DATA_READY_CHAR_INDEX].charHandle )
     {
+        // Get back to Idle
+        gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+
         // check the notification length
         if(handleValueNoti->len >= 2)
         {
@@ -808,14 +1329,41 @@ static void rreq_handleValueNoti(uint16_t connHandle, attHandleValueNoti_t *hand
     // if get notification from "data overwritten" characteristic handle
     else if((gRREQControlBlock.callbacks != NULL) &&
             (gRREQControlBlock.callbacks->pStatusCallback != NULL) &&
-            (handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharHandle))
+            (handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_DATA_OVERWRITTEN_CHAR_INDEX].charHandle))
     {
         // send OverWritten status to App
         uint16_t rangingCounter = BUILD_UINT16(handleValueNoti->pValue[0], handleValueNoti->pValue[1]);
         gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_DATA_OVERWRITTEN, RANGING_COUNTER_LEN, (uint8_t*)&rangingCounter);
     }
 }
-uint8_t count = 0;
+
+/*********************************************************************
+ * @fn      rreq_handleRealTimeValueNoti
+ *
+ * @brief Handles real-time value notification for the ranging profile client.
+ *
+ * This function processes incoming ATT Handle Value Notification messages
+ * related to real-time values from the server. It is typically called when
+ * a notification is received on the corresponding characteristic.
+ *
+ * @param connHandle        Connection handle identifying the BLE connection.
+ * @param handleValueNoti   Pointer to the ATT Handle Value Notification structure
+ *                          containing the notification data.
+ */
+static void rreq_handleRealTimeValueNoti(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
+{
+    if (connHandle >= RREQ_MAX_CONN || handleValueNoti == NULL)
+    {
+        return;
+    }
+
+    // if get notification from "Real-Time" characteristic handle
+    if(handleValueNoti->handle == gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_REAL_TIME_CHAR_INDEX].charHandle )
+    {
+        rreq_handleRealTimeSegmentReceived(connHandle, handleValueNoti);
+    }
+}
+
 /*********************************************************************
  * @fn    rreq_handleControlPointRsp
  *
@@ -828,6 +1376,11 @@ uint8_t count = 0;
  */
 void rreq_handleControlPointRsp(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
 {
+    if (connHandle >= RREQ_MAX_CONN || handleValueNoti == NULL)
+    {
+        return;
+    }
+
     // Check if the notification length is valid
     if(handleValueNoti->len <= RAS_CP_RSP_MAX_LEN)
     {
@@ -843,13 +1396,13 @@ void rreq_handleControlPointRsp(uint16_t connHandle, attHandleValueNoti_t *handl
                 uint16_t CompleteDataRangingCounter = BUILD_UINT16(handleValueNoti->pValue[1], handleValueNoti->pValue[2]);
 
                 // check that the received rangingCounter is the expected one.
-                if (gRREQControlBlock.procedureAttr.rangingCounter == CompleteDataRangingCounter)
+                if (gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter == CompleteDataRangingCounter)
                 {
                     // wait for the response code
-                    gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP;
+                    gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP;
 
                     // Stop the timer
-                    rreq_stopTimer();
+                    rreq_stopTimer(connHandle);
 
                     // Send Ack to the server anyway due to the fact that there is no support in Get Lost Segments
                     rreq_sendControlPointWriteCmd(connHandle, RAS_CP_OPCODE_ACK_RANGING_DATA, CompleteDataRangingCounter,
@@ -884,36 +1437,52 @@ void rreq_handleControlPointRsp(uint16_t connHandle, attHandleValueNoti_t *handl
  * @return None.
  *
  */
-static void rreq_procedureDone(void)
+static void rreq_procedureDone(uint16_t connHandle)
 {
-    uint8_t* data = NULL;
-    uint16_t datalen = 0;
+    bStatus_t status = SUCCESS;
+    RangingDBClient_procedureSegmentsReader_t segmentsReader;
+
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return;
+    }
+
     // Notify APP ( Data Complete )
     if((gRREQControlBlock.callbacks != NULL) && (gRREQControlBlock.callbacks->pDataCompleteEventCallback != NULL))
     {
-        // Check if the data is complete using the bitmask
-        uint8_t status = rreq_CheckDataComplete(gRREQControlBlock.procedureAttr.connHandle);
+        // Check if the we received the last segment
+        if (gRREQControlBlock.connInfo[connHandle].segmentMgr.lastSegmentFlag != TRUE)
+        {
+            status = RREQ_DATA_INVALID;
+        }
 
         if(status == SUCCESS)
         {
             // Get the data from the database
-            data = RangingDBClient_getData(gRREQControlBlock.procedureAttr.connHandle);
-            datalen = gRREQControlBlock.connInfo[gRREQControlBlock.procedureAttr.connHandle].segmentMgr.totalDataLen;
-
+            status = RangingDBClient_getData(connHandle, &segmentsReader);
         }
+
         // Call the data complete callback when the procedure is done in any case, to notify the end of the current procedure.
-        // In case the rreq_CheckDataComplete has returned error status, the range will not be calculated.
-        gRREQControlBlock.callbacks->pDataCompleteEventCallback(gRREQControlBlock.procedureAttr.connHandle,
-                                                gRREQControlBlock.procedureAttr.rangingCounter,
-                                                status,
-                                                datalen,
-                                                data);
+        gRREQControlBlock.callbacks->pDataCompleteEventCallback(connHandle,
+                                                                gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter,
+                                                                status,
+                                                                segmentsReader);
+    }
+    else
+    {
+        // If there is no callback - clear the data from the database
+        RangingDBClient_clearProcedure(connHandle);
     }
 
+    // Reset segment counter
+    clearSegmentMgr(connHandle);
+
+    // Stop any active timer
+    rreq_stopTimer(connHandle);
+
     // Reset Procedure Attributes
-    gRREQControlBlock.procedureAttr.connHandle = LINKDB_CONNHANDLE_INVALID;
-    gRREQControlBlock.procedureAttr.rangingCounter = 0xFFFF;
-    gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter = 0xFFFF;
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
 }
 /*********************************************************************
  * @fn      rreq_handleRspCode
@@ -929,99 +1498,85 @@ static void rreq_procedureDone(void)
  */
 static void rreq_handleRspCode(uint16_t connHandle, uint8_t rspValue)
 {
-    // Check if the callback is set
-    if((gRREQControlBlock.callbacks != NULL) && (gRREQControlBlock.callbacks->pStatusCallback != NULL))
+    // Check parameters and that the callback is set
+    if (connHandle >= RREQ_MAX_CONN ||
+        gRREQControlBlock.callbacks == NULL ||
+        gRREQControlBlock.callbacks->pStatusCallback == NULL)
     {
-        // Handle the response code based on its value
-        switch(rspValue)
-        {
-            case RAS_CP_RSP_CODE_VAL_SUCCESS:
-            {
-                if(gRREQControlBlock.procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_ABORT)
-                {
-                    // Procedure aborted successfully
-                    gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_ABORTED_SUCCESSFULLY, RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
-                    gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-                }
-                else if(gRREQControlBlock.procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP)
-                {
-                    // handle the procedure completion
-                    rreq_procedureDone();
-                }
-                break;
-            }
-            case RAS_CP_RSP_CODE_ABORT_UNSUCCESSFUL:
-            {
-                if(gRREQControlBlock.procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_ABORT)
-                {
-                    // Reset the procedure state to idle
-                    gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-                }
-                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_ABORTED_UNSUCCESSFULLY, RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
+        return;
+    }
 
-                break;
-            }
-            case RAS_CP_RSP_CODE_SERVER_BUSY:
-            {
-                // Procedure not completed
-                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_SERVER_BUSY , RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
-                // Reset the procedure state to idle
-                gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-                // Stop the timer
-                rreq_stopTimer();
-                break;
-            }
-            case RAS_CP_RSP_CODE_NO_RECORDS_FOUND:
-            {
-                // No records found
-                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_NO_RECORDS, RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
-                // Reset the procedure state to idle
-                gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-                // Stop the timer
-                rreq_stopTimer();
-                break;
-            }
-            case RAS_CP_RSP_CODE_PROCEDURE_NOT_COMP:
-            {
-                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_PROCEDURE_NOT_COMPLETED, RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
-                // Reset the procedure state to idle
-                gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE;
-                // Stop the timer
-                rreq_stopTimer();
-                break;
-            }
-        }
-    }
-}
-/*********************************************************************
- * @fn     rreq_CheckDataComplete
- *
- * @brief Checks if the data is complete and valid.
- * This function verifies whether the required data has been fully received
- * and meets the necessary conditions for further processing. It ensures
- * that no critical data is missing or corrupted.
- *
- * @return Returns a boolean value:
- *         - TRUE: If the data is complete and valid.
- *         - FALSE: If the data is incomplete or invalid.
- */
-static uint8_t rreq_CheckDataComplete(uint16_t connHandle)
-{
-    uint8_t status = RREQ_DATA_INVALID;
-    // Check if all segments are received
-    if (gRREQControlBlock.connInfo[connHandle].segmentMgr.lastSegmentFlag == TRUE)
+    // Handle the response code based on its value
+    switch(rspValue)
     {
-        // Create a mask with the required number of bits set to 1
-        uint64_t requiredMask = 1;
-        requiredMask = (requiredMask << (gRREQControlBlock.connInfo[connHandle].segmentMgr.lastSegmentValue + 1)) - 1;
-        // Check if all required bits are set in the bit mask
-        if ((gRREQControlBlock.connInfo[connHandle].segmentMgr.bitMask & requiredMask) == requiredMask)
+        case RAS_CP_RSP_CODE_VAL_SUCCESS:
         {
-            // All required bits are set
-            status = SUCCESS;
+            if(gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_ABORT)
+            {
+                // Procedure aborted successfully
+                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_ABORTED_SUCCESSFULLY, RANGING_COUNTER_LEN,
+                                                                (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+
+                // Stop any active timer for this connection
+                rreq_stopTimer(connHandle);
+            }
+            else if(gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP)
+            {
+                // handle the procedure completion
+                rreq_procedureDone(connHandle);
+            }
+            break;
+        }
+        case RAS_CP_RSP_CODE_ABORT_UNSUCCESSFUL:
+        {
+            if(gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState == RREQ_STATE_WAIT_FOR_ABORT)
+            {
+                // Reset the procedure state to idle
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+            }
+            gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_ABORTED_UNSUCCESSFULLY, RANGING_COUNTER_LEN,
+                                                            (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
+
+            break;
+        }
+        case RAS_CP_RSP_CODE_SERVER_BUSY:
+        {
+            // Procedure not completed
+            gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_SERVER_BUSY , RANGING_COUNTER_LEN,
+                                                            (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
+            // Reset the procedure state to idle
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+            // Stop the timer
+            rreq_stopTimer(connHandle);
+            break;
+        }
+        case RAS_CP_RSP_CODE_NO_RECORDS_FOUND:
+        {
+            // No records found
+            gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_NO_RECORDS, RANGING_COUNTER_LEN,
+                                                            (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
+            // Reset the procedure state to idle
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+            // Stop the timer
+            rreq_stopTimer(connHandle);
+            break;
+        }
+        case RAS_CP_RSP_CODE_PROCEDURE_NOT_COMP:
+        {
+            gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_PROCEDURE_NOT_COMPLETED, RANGING_COUNTER_LEN,
+                                                            (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
+            // Reset the procedure state to idle
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+            // Stop the timer
+            rreq_stopTimer(connHandle);
+            break;
+        }
+        default:
+        {
+            break;
         }
     }
-    return status;
 }
 
 /*********************************************************************
@@ -1036,35 +1591,36 @@ static uint8_t rreq_CheckDataComplete(uint16_t connHandle)
  */
 static void rreq_parseSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
 {
+    if (connHandle >= RREQ_MAX_CONN ||
+        handleValueNoti == NULL)
+    {
+        return;
+    }
+
     // split data to segment (1 byte) and the rest of the data
     uint8_t *pData = handleValueNoti->pValue;
     uint8_t segmentNum = RAS_LAST_6_BITS_LSB(pData[0]); // Extract the last 6 bits (LSB)
     uint8_t segmentFlag = RAS_FIRST_2_BITS_LSB(pData[0]); // Extract the first 2 bits (LSB)
     uint16_t dataLen = handleValueNoti->len - 1; // Exclude the segment byte
-    uint64_t segmentBitMask = 1;// Bit mask for the segment
 
     // Check if the segment is the first one
     if( (segmentFlag & RAS_FIRST_SEGMENT_BIT_MASK) != 0 )
     {
         // Clear the procedure DB
         RangingDBClient_clearProcedure(connHandle);
+
         // Clear the segment manager
         memset(&gRREQControlBlock.connInfo[connHandle].segmentMgr, 0, sizeof(RREQSegmentsMGR_t));
-        gRREQControlBlock.connInfo[connHandle].segmentMgr.segmentSize = dataLen;
     }
 
     // Check if the segment is the last one
     if( (segmentFlag & RAS_LAST_SEGMENT_BIT_MASK) != 0 )
     {
         gRREQControlBlock.connInfo[connHandle].segmentMgr.lastSegmentFlag = TRUE;
-        gRREQControlBlock.connInfo[connHandle].segmentMgr.lastSegmentValue = segmentNum;
-        gRREQControlBlock.connInfo[connHandle].segmentMgr.totalDataLen = ( (gRREQControlBlock.connInfo[connHandle].segmentMgr.segmentSize * segmentNum) + dataLen );
     }
-    // Add segment to the segment manager bit mask
-    gRREQControlBlock.connInfo[connHandle].segmentMgr.bitMask |= (segmentBitMask << segmentNum);
 
     // Add the data to the procedure DB
-    RangingDBClient_addData(connHandle, (gRREQControlBlock.connInfo[connHandle].segmentMgr.segmentSize * segmentNum), dataLen, &pData[1]);
+    RangingDBClient_addData(connHandle, segmentNum, dataLen, &pData[1]);
 }
 
 /*********************************************************************
@@ -1079,21 +1635,25 @@ static void rreq_parseSegmentReceived(uint16_t connHandle, attHandleValueNoti_t 
  * @param rangingCounter The ranging counter value to be included in the command.
  * @param len The length of the command data to be sent.
  *
- * @return return SUCCESS or an error status indicating the failure reason.
+ * @return INVALIDPARAMETER: Connection handle is invalid or command length is out of range.
+ * @return bleMemAllocError: Memory allocation error occurred.
+ * @return A status generated by @ref GATT_WriteNoRsp otherwise
  */
-static uint8_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, uint16_t rangingCounter, uint8_t len)
+static bStatus_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, uint16_t rangingCounter, uint8_t len)
 {
     bStatus_t status = SUCCESS;
     attWriteReq_t req;
     uint8 dataValue[RAS_CP_COMMANDS_MAX_LEN] = {0};
 
     // Check if the connHandle and command length are valid
-    if ((connHandle >= RREQ_MAX_CONN) ||
-        (len < RAS_CP_COMMANDS_MIN_LEN || len > RAS_CP_COMMANDS_MAX_LEN))
+    if (connHandle >= RREQ_MAX_CONN ||
+        len < RAS_CP_COMMANDS_MIN_LEN ||
+        len > RAS_CP_COMMANDS_MAX_LEN)
     {
-        status = bleInvalidRange;
+        status = INVALIDPARAMETER;
     }
-    else
+
+    if (status == SUCCESS)
     {
         // Set the command to be sent
         dataValue[0] = cmd;
@@ -1103,20 +1663,27 @@ static uint8_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, u
         // Allocate buffer for the write request
         req.pValue = GATT_bm_alloc(connHandle, ATT_WRITE_REQ, len, NULL);
 
-        // Send the write request for indications enable/diable
+        // Send the write request for indications enable / disable
         if (req.pValue != NULL)
         {
-            req.handle = gRREQControlBlock.connInfo[connHandle].controlPointCharHandle;
+            req.handle = gRREQControlBlock.connInfo[connHandle].charInfo[RREQ_CONTROL_POINT_CHAR_INDEX].charHandle;
             req.len = len;
             memcpy(req.pValue, dataValue, len);
             req.cmd = TRUE;
             req.sig = FALSE;
+
+            // Send the write request
             status = GATT_WriteNoRsp(connHandle, &req);
+
             // If the write request failed, free the buffer
             if ( status != SUCCESS )
             {
                 GATT_bm_free((gattMsg_t *)&req, ATT_WRITE_REQ);
             }
+        }
+        else
+        {
+            status = bleMemAllocError;
         }
     }
 
@@ -1137,6 +1704,12 @@ static uint8_t rreq_sendControlPointWriteCmd(uint16_t connHandle, uint8_t cmd, u
  */
 static void rreq_handleFindByTypeValueRsp(gattMsgEvent_t *gattMsg)
 {
+    // Check parameters and procedure state
+    if ( (gattMsg == NULL) || (gRREQControlBlock.connInfo[gattMsg->connHandle].procedureAttr.procedureState != RREQ_STATE_DISCOVER_PRIM_SERVICE) )
+    {
+        return;
+    }
+
     if( gattMsg->hdr.status == SUCCESS )
     {
         // Save the start and end handles of the RAS service
@@ -1146,6 +1719,9 @@ static void rreq_handleFindByTypeValueRsp(gattMsgEvent_t *gattMsg)
 
     else if( gattMsg->hdr.status == bleProcedureComplete )
     {
+        // Set state back to INIT
+        gRREQControlBlock.connInfo[gattMsg->connHandle].procedureAttr.procedureState = RREQ_STATE_INIT;
+
         // Find all characteristics within the Car Access service
         rreq_discoverAllChars(gattMsg->connHandle, gRREQControlBlock.connInfo[gattMsg->connHandle].startHandle, gRREQControlBlock.connInfo[gattMsg->connHandle].endHandle);
     }
@@ -1166,6 +1742,11 @@ static void rreq_handleFindByTypeValueRsp(gattMsgEvent_t *gattMsg)
 static void rreq_handleReadByTypeRsp(gattMsgEvent_t *gattMsg)
 {
     attReadByTypeRsp_t att = gattMsg->msg.readByTypeRsp;
+
+    if (gattMsg == NULL)
+    {
+        return;
+    }
 
     if ( ( gattMsg->hdr.status == SUCCESS ) && ( att.numPairs > 0 ) )
     {
@@ -1195,46 +1776,10 @@ static void rreq_handleReadByTypeRsp(gattMsgEvent_t *gattMsg)
             charUUID = BUILD_UINT16(customUUID[RREQ_APP_LOW_UUID_INDEX],
                                     customUUID[RREQ_APP_HIGH_UUID_INDEX]);
 
-            // Check if this is the Feature Characteristic UUID
-            if (charUUID == RAS_FEATURE_UUID)
+            if (charUUID >= RAS_FEATURE_UUID && charUUID <= RAS_DATA_OVERWRITTEN_UUID)
             {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].featureCharProperties = CharPro;
-            }
-
-            // Check if this is the Real-Time Ranging Data Characteristic UUID
-            if (charUUID == RAS_REAL_TIME_UUID)
-            {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].realTimeRangingDataCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].realTimeRangingDataCharProperties = CharPro;
-            }
-
-            // Check if this is the On-Demand Ranging Data Characteristic UUID
-            if (charUUID == RAS_ON_DEMAND_UUID)
-            {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].onDemandRangingDataCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].onDemandRangingDataCharProperties = CharPro;
-            }
-
-            // Check if this is the Control Point Characteristic UUID
-            if (charUUID == RAS_CONTROL_POINT_UUID)
-            {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].controlPointCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].controlPointCharProperties = CharPro;
-            }
-
-            // Check if this is the Ranging Data Ready Characteristic UUID
-            if (charUUID == RAS_DATA_READY_UUID)
-            {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].rangingDataReadyCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].rangingDataReadyCharProperties = CharPro;
-            }
-
-            // Check if this is the Ranging Data Overwritten Characteristic UUID
-            if (charUUID == RAS_DATA_OVERWRITTEN_UUID)
-            {
-                gRREQControlBlock.connInfo[gattMsg->connHandle].rangingDataOverwrittenCharHandle = currAttHandle;
-                gRREQControlBlock.connInfo[gattMsg->connHandle].rangingDataOverwrittenCharProperties = CharPro;
+                gRREQControlBlock.connInfo[gattMsg->connHandle].charInfo[RREQ_UUID_TO_CHAR_INDEX(charUUID)].charHandle = currAttHandle;
+                gRREQControlBlock.connInfo[gattMsg->connHandle].charInfo[RREQ_UUID_TO_CHAR_INDEX(charUUID)].charProperties = CharPro;
             }
         }
     }
@@ -1259,7 +1804,12 @@ static void rreq_handleReadByTypeRsp(gattMsgEvent_t *gattMsg)
  */
 static void rreq_discoverAllCharDescriptors(uint16_t connHandle)
 {
-    bStatus_t status;
+    bStatus_t status = SUCCESS;
+
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return;
+    }
 
     // Discover all characteristic descriptors
     status = GATT_DiscAllCharDescs(connHandle, gRREQControlBlock.connInfo[connHandle].startHandle, gRREQControlBlock.connInfo[connHandle].endHandle, BLEAppUtil_getSelfEntity());
@@ -1278,15 +1828,30 @@ static void rreq_discoverAllCharDescriptors(uint16_t connHandle)
  *
  * @param   connHandle - connection message was received on
  *
- * @return  SUCCESS or stack call status
+ * @return  INVALIDPARAMETER: Connection handle is invalid
+ * @return  Status generated by @ref GATT_DiscPrimaryServiceByUUID
  */
 static bStatus_t rreq_discoverPrimServ(uint16_t connHandle)
 {
-    uint8_t status;
+    bStatus_t status = SUCCESS;
 
-    // Discovery Car Access service
-    GATT_BT_UUID(rasUUID, RANGING_SERVICE_UUID);
-    status = GATT_DiscPrimaryServiceByUUID(connHandle, rasUUID, ATT_BT_UUID_SIZE, BLEAppUtil_getSelfEntity());
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        status = INVALIDPARAMETER;
+    }
+
+    if (status == SUCCESS)
+    {
+        // Discovery Car Access service
+        GATT_BT_UUID(rasUUID, RANGING_SERVICE_UUID);
+        status = GATT_DiscPrimaryServiceByUUID(connHandle, rasUUID, ATT_BT_UUID_SIZE, BLEAppUtil_getSelfEntity());
+    }
+
+    if (status == SUCCESS)
+    {
+        // Set state to discover primary service
+        gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_DISCOVER_PRIM_SERVICE;
+    }
 
     return status;
 }
@@ -1329,10 +1894,9 @@ static RREQConfigSubType_e rreq_getCharProperties(RREQConfigSubType_e mode, uint
  * @param mode The request mode type, specifying how the notification request should be handled.
  * @param attHandle The attribute handle for which notifications are to be enabled.
  *
- * @return A status code of type bStatus_t indicating the success or failure of the operation.
- *         Possible values include:
- *         - SUCCESS: The notification was successfully enabled.
- *         - FAILURE: The operation failed due to an error.
+ * @return INVALIDPARAMETER: The provided connection handle or attribute handle is invalid.
+ * @return bleMemAllocError: Memory allocation error occurred.
+ * @return A status generated by @ref GATT_WriteCharValue otherwise
  */
 static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_e mode, uint16_t attHandle)
 {
@@ -1341,25 +1905,30 @@ static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_
     // Set the default value to disable notification
     uint8_t dataValue[RREQ_APP_CCCD_VALUE_LEN] = {0};
 
-
-    if (mode == RREQ_PREFER_NOTIFY)
+    if (connHandle >= RREQ_MAX_CONN ||
+        attHandle == 0)
     {
-        // Set the value to enable notification
-        dataValue[0] = LO_UINT16(GATT_CLIENT_CFG_NOTIFY);
-    }
-    else if(mode == RREQ_INDICATE)
-    {
-        // Set the value to enable indication
-        dataValue[0] = LO_UINT16(GATT_CLIENT_CFG_INDICATE);
-    }
-    else // mode == RREQ_DISABLE_NOTIFY_INDICATE
-    {
-        // Set the value to disable notification/indication
-        dataValue[0] = 0;
+        status = INVALIDPARAMETER;
     }
 
-    if ( attHandle != 0 )
+    if (status == SUCCESS)
     {
+        if (mode == RREQ_PREFER_NOTIFY)
+        {
+            // Set the value to enable notification
+            dataValue[0] = LO_UINT16(GATT_CLIENT_CFG_NOTIFY);
+        }
+        else if(mode == RREQ_INDICATE)
+        {
+            // Set the value to enable indication
+            dataValue[0] = LO_UINT16(GATT_CLIENT_CFG_INDICATE);
+        }
+        else // mode == RREQ_DISABLE_NOTIFY_INDICATE
+        {
+            // Set the value to disable notification/indication
+            dataValue[0] = 0;
+        }
+
         // Allocate buffer for the write request
         req.pValue = GATT_bm_alloc(connHandle, ATT_WRITE_REQ, RREQ_APP_CCCD_VALUE_LEN, NULL);
 
@@ -1371,7 +1940,9 @@ static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_
             memcpy(req.pValue, dataValue, RREQ_APP_CCCD_VALUE_LEN);
             req.cmd = FALSE;
             req.sig = FALSE;
+
             status = GATT_WriteCharValue(connHandle, &req, BLEAppUtil_getSelfEntity());
+
             // If the write request failed, free the buffer
             if ( status != SUCCESS )
             {
@@ -1382,10 +1953,6 @@ static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_
         {
             status = bleMemAllocError;
         }
-    }
-    else
-    {
-        status = bleIncorrectMode;
     }
 
     return status;
@@ -1403,74 +1970,68 @@ static bStatus_t rreq_enableNotification(uint16_t connHandle, RREQConfigSubType_
  */
 static void rreq_clearData(uint16_t connHandle)
 {
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return;
+    }
+
     // Clear the start/end handles
     gRREQControlBlock.connInfo[connHandle].startHandle = 0;
     gRREQControlBlock.connInfo[connHandle].endHandle = 0;
 
-    // Clear the characteristic handles
-    gRREQControlBlock.connInfo[connHandle].featureCharHandle = 0;
-    gRREQControlBlock.connInfo[connHandle].realTimeRangingDataCharHandle = 0;
-    gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharHandle = 0;
-    gRREQControlBlock.connInfo[connHandle].controlPointCharHandle = 0;
-    gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharHandle = 0;
-    gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharHandle = 0;
+    // Clear the characteristic info
+    memset(gRREQControlBlock.connInfo[connHandle].charInfo, 0, sizeof(gRREQControlBlock.connInfo[connHandle].charInfo));
 
-    // Clear the characteristic properties
-    gRREQControlBlock.connInfo[connHandle].featureCharProperties = 0;
-    gRREQControlBlock.connInfo[connHandle].realTimeRangingDataCharProperties = 0;
-    gRREQControlBlock.connInfo[connHandle].onDemandRangingDataCharProperties = 0;
-    gRREQControlBlock.connInfo[connHandle].controlPointCharProperties = 0;
-    gRREQControlBlock.connInfo[connHandle].rangingDataReadyCharProperties = 0;
-    gRREQControlBlock.connInfo[connHandle].rangingDataOverwrittenCharProperties = 0;
-
-    gRREQControlBlock.connInfo[connHandle].enableMode = RREQ_IDLE;
+    gRREQControlBlock.connInfo[connHandle].preferredMode = RREQ_MODE_ON_DEMAND;
+    gRREQControlBlock.connInfo[connHandle].enableMode = RREQ_MODE_NONE;
     gRREQControlBlock.connInfo[connHandle].subscribeBitMap = 0;
     gRREQControlBlock.connInfo[connHandle].featureCharValue = 0;
+    gRREQControlBlock.connInfo[connHandle].currentProcedureCounter = RREQ_INVALID_CS_PROCEDURE_COUNTER;
+    gRREQControlBlock.connInfo[connHandle].timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
 
-    // Close the ranging client DB
-    RangingDBClient_procedureClose(connHandle);
+    // Clear procedure attribute
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+    gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter = 0xFFFF;
 
     // Clear the segment manager
+    clearSegmentMgr(connHandle);
+}
+
+static void clearSegmentMgr(uint16_t connHandle)
+{
     memset(&gRREQControlBlock.connInfo[connHandle].segmentMgr, 0, sizeof(RREQSegmentsMGR_t));
 }
 
 /*********************************************************************
- * @fn      rreq_handleSegmentReceived
+ * @fn      rreq_handleOnDemandSegmentReceived
  *
- * @brief   Handles the reception of a segment from the RAS server.
- * This function processes the received segment and updates the state
- * of the RREQ accordingly.
+ * @brief   Handles the reception of an on-demand segment notification from the server.
+ * This function processes a received ATT Handle Value Notification containing an on-demand
+ * segment from the server for a specific connection handle. It is typically called when
+ * a notification is received on the characteristic associated with on-demand data segments.
  *
  * @param connHandle The connection handle for the RAS server.
  * @param handleValueNoti Pointer to the handle value notification structure.
  *
  * @return None.
  */
-static void rreq_handleSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
+static void rreq_handleOnDemandSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
 {
-    // Check if the connection handle is valid
-    // and if the configuration is not NULL
-    if ((connHandle >= RREQ_MAX_CONN) || (gRREQControlBlock.config == NULL) || (handleValueNoti == NULL))
+    // Check parameters and configuration
+    if (connHandle >= RREQ_MAX_CONN ||
+        handleValueNoti == NULL ||
+        gRREQControlBlock.config == NULL ||
+        gRREQControlBlock.connInfo[connHandle].enableMode != RREQ_MODE_ON_DEMAND)
     {
         return;
     }
 
-    switch (gRREQControlBlock.procedureAttr.procedureState)
+    switch (gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState)
     {
-        case RREQ_STATE_WAIT_FOR_FIRST_SEGMENT:
-        {
-            gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_NEXT_SEGMENT;
-            // Start the timer for timeout
-            rreq_startTimer(gRREQControlBlock.config->timeOutNextSegment);
-            // Handle the segment received
-            rreq_parseSegmentReceived(connHandle, handleValueNoti);
-            break;
-        }
-
         case RREQ_STATE_WAIT_FOR_NEXT_SEGMENT:
         {
             // Start the timer for timeout
-            rreq_startTimer(gRREQControlBlock.config->timeOutNextSegment);
+            rreq_startTimer(gRREQControlBlock.config->timeoutConfig.timeOutNextSegment, connHandle);
             // Handle the segment received
             rreq_parseSegmentReceived(connHandle, handleValueNoti);
             break;
@@ -1483,24 +2044,138 @@ static void rreq_handleSegmentReceived(uint16_t connHandle, attHandleValueNoti_t
 }
 
 /*********************************************************************
+ * @fn      rreq_handleRealTimeSegmentReceived
+ *
+ * @brief Handles the reception of a real-time segment notification from the server.
+ *
+ * This function processes a received ATT Handle Value Notification containing a real-time
+ * segment from the server for a specific connection handle. It is typically called when
+ * a notification is received on the characteristic associated with real-time data segments.
+ *
+ * @param connHandle         The connection handle identifying the BLE connection.
+ * @param handleValueNoti    Pointer to the ATT Handle Value Notification structure containing
+ *                           the received data segment.
+ */
+static void rreq_handleRealTimeSegmentReceived(uint16_t connHandle, attHandleValueNoti_t *handleValueNoti)
+{
+    bStatus_t status = SUCCESS;
+    uint8_t segmentFlag;
+    bool isLastSegment = FALSE;
+
+    // Check parameters and configuration
+    if (connHandle >= RREQ_MAX_CONN      ||
+        handleValueNoti == NULL          ||
+        handleValueNoti->len == 0        ||
+        gRREQControlBlock.config == NULL ||
+        gRREQControlBlock.connInfo[connHandle].enableMode != RREQ_MODE_REAL_TIME)
+    {
+        return;
+    }
+
+    // Get segment numbers
+    segmentFlag = RAS_FIRST_2_BITS_LSB(handleValueNoti->pValue[0]); // Extract the first 2 bits (LSB)
+
+    switch (gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState)
+    {
+        case RREQ_STATE_WAIT_FOR_FIRST_SEGMENT:
+        {
+            if ( (segmentFlag & RAS_FIRST_SEGMENT_BIT_MASK) != 0)
+            {
+                // Update state and the current ranging counter
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_WAIT_FOR_NEXT_SEGMENT;
+                gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter = gRREQControlBlock.connInfo[connHandle].currentProcedureCounter;
+
+                // Stop the first segment timer
+                rreq_stopTimer(connHandle);
+
+                // If this is the last segment
+                if( (segmentFlag & RAS_LAST_SEGMENT_BIT_MASK) != 0 )
+                {
+                    // Mark as last segment
+                    isLastSegment = TRUE;
+                }
+                else
+                {
+                    // Start the timer for the next segment only when this is not the last segment
+                    rreq_startTimer(gRREQControlBlock.config->timeoutConfig.timeOutNextSegment, connHandle);
+                }
+
+                // Handle the segment received
+                rreq_parseSegmentReceived(connHandle, handleValueNoti);
+            }
+            else
+            {
+                // Lost first segment, consider as failure
+                status = FAILURE;
+                rreq_procedureDone(connHandle);
+            }
+
+            break;
+        }
+        case RREQ_STATE_WAIT_FOR_NEXT_SEGMENT:
+        {
+            // If this is the last segment
+            if( (segmentFlag & RAS_LAST_SEGMENT_BIT_MASK) != 0 )
+            {
+                isLastSegment = TRUE;
+
+                // stop the timer
+                rreq_stopTimer(connHandle);
+            }
+            else
+            {
+                // This is not the first segment - start the timer for the next segment one
+                rreq_startTimer(gRREQControlBlock.config->timeoutConfig.timeOutNextSegment, connHandle);
+            }
+
+            // Handle the segment received
+            rreq_parseSegmentReceived(connHandle, handleValueNoti);
+
+            break;
+        }
+
+        default:
+        {
+            // Unknown state, do nothing
+            status = FAILURE;
+            break;
+        }
+    }
+
+    // If received the last segment - send the data to the application if possible
+    if (status == SUCCESS && isLastSegment == true)
+    {
+        rreq_procedureDone(connHandle);
+    }
+}
+
+/*********************************************************************
  * @fn      rreq_startTimer
  *
  * @brief   Start the timer for the RREQ procedure.
  *
  * @param   timeout - The new timeout value in milliseconds.
+ * @param   connHandle - The connection handle for which the timer is started,
+ *                       passed as a parameter to the timer callback function.
  *
  * @return  None
  */
-static void rreq_startTimer( uint32_t timeout )
+static void rreq_startTimer( uint32_t timeout, uint16_t connHandle )
 {
-    if (gRREQControlBlock.timeoutHandle != BLEAPPUTIL_TIMER_INVALID_HANDLE)
+    if (connHandle >= RREQ_MAX_CONN)
+    {
+        return;
+    }
+
+    if (gRREQControlBlock.connInfo[connHandle].timeoutHandle != BLEAPPUTIL_TIMER_INVALID_HANDLE)
     {
         // Stop the timer if it is already running
-        BLEAppUtil_abortTimer(gRREQControlBlock.timeoutHandle);
+        BLEAppUtil_abortTimer(gRREQControlBlock.connInfo[connHandle].timeoutHandle);
     }
 
     // Start the timer
-    gRREQControlBlock.timeoutHandle = BLEAppUtil_startTimer(rreq_timerCB, timeout, false, NULL);
+    gRREQControlBlock.connInfo[connHandle].timeoutHandle =
+                    BLEAppUtil_startTimer(rreq_timerCB, timeout, false, (void*) ((uint32_t) connHandle));
 }
 
 /*********************************************************************
@@ -1508,23 +2183,22 @@ static void rreq_startTimer( uint32_t timeout )
  *
  * @brief   Stop the timer for the RREQ procedure.
  *
- * @param   timeout - The new timeout value in milliseconds.
+ * @param   connHandle - The connection handle for which the timer is stopped.
  *
  * @return  None
  */
-static void rreq_stopTimer( void )
+static void rreq_stopTimer( uint16_t connHandle )
 {
-    if (gRREQControlBlock.timeoutHandle != BLEAPPUTIL_TIMER_INVALID_HANDLE)
+    if (connHandle >= RREQ_MAX_CONN)
     {
-        int32_t status = SUCCESS;
+        return;
+    }
 
-        // Stop the timer
-        status = BLEAppUtil_abortTimer(gRREQControlBlock.timeoutHandle);
-        if (status == SUCCESS)
-        {
-            // Reset the timer handle
-            gRREQControlBlock.timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
-        }
+    if (gRREQControlBlock.connInfo[connHandle].timeoutHandle != BLEAPPUTIL_TIMER_INVALID_HANDLE)
+    {
+        // Abort the active timer and reset the timer handle
+        BLEAppUtil_abortTimer(gRREQControlBlock.connInfo[connHandle].timeoutHandle);
+        gRREQControlBlock.connInfo[connHandle].timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
     }
 }
 
@@ -1552,24 +2226,51 @@ static void rreq_timerCB(BLEAppUtil_timerHandle timerHandle, BLEAppUtil_timerTer
 {
   if (reason == BLEAPPUTIL_TIMER_TIMEOUT)
   {
-    switch (gRREQControlBlock.procedureAttr.procedureState)
+    uint16_t connHandle = (uint16_t) (((uint32_t) pData) & 0xFFFF);
+
+    switch (gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState)
     {
         case RREQ_STATE_WAIT_FOR_FIRST_SEGMENT:
+        {
+            if((gRREQControlBlock.callbacks != NULL) &&
+               (gRREQControlBlock.callbacks->pStatusCallback != NULL) &&
+               (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_REAL_TIME))
+            {
+                // Unregister Real-Time characteristic
+                rreq_configureCharRegistration(connHandle, RAS_REAL_TIME_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
+
+                // Notify App of timeout event, grab procedure counter from the current counter of this connection handle
+                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_TIMEOUT , RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.connInfo[connHandle].currentProcedureCounter);
+            }
+
+            // Reset the procedure state
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
+
+            break;
+        }
         case RREQ_STATE_WAIT_FOR_NEXT_SEGMENT:
         {
-            if((gRREQControlBlock.callbacks != NULL) && (gRREQControlBlock.callbacks->pStatusCallback != NULL))
+            if((gRREQControlBlock.callbacks != NULL) &&
+               (gRREQControlBlock.callbacks->pStatusCallback != NULL) &&
+               (gRREQControlBlock.connInfo[connHandle].enableMode != RREQ_MODE_NONE))
             {
-                // Check if server supports Abort operation
-                if(gRREQControlBlock.connInfo[gRREQControlBlock.procedureAttr.connHandle].featureCharValue & RAS_FEATURES_ABORT_OPERATION )
+                if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_ON_DEMAND)
                 {
-                    RREQ_Abort(gRREQControlBlock.procedureAttr.connHandle);
+                    RREQ_Abort(connHandle);
+                }
+                else if (gRREQControlBlock.connInfo[connHandle].enableMode == RREQ_MODE_REAL_TIME)
+                {
+                    // Unregister Real-Time characteristic
+                    rreq_configureCharRegistration(connHandle, RAS_REAL_TIME_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
                 }
 
                 // Notify App of timeout event
-                gRREQControlBlock.callbacks->pStatusCallback(gRREQControlBlock.procedureAttr.connHandle, RREQ_TIMEOUT , RANGING_COUNTER_LEN, (uint8_t*)&gRREQControlBlock.procedureAttr.rangingCounter);
-
+                gRREQControlBlock.callbacks->pStatusCallback(connHandle, RREQ_TIMEOUT , RANGING_COUNTER_LEN,
+                                                             (uint8_t*)&gRREQControlBlock.connInfo[connHandle].procedureAttr.rangingCounter);
             }
-            gRREQControlBlock.procedureAttr.procedureState = RREQ_STATE_IDLE; // Reset the procedure state
+
+            // Reset the procedure state
+            gRREQControlBlock.connInfo[connHandle].procedureAttr.procedureState = RREQ_STATE_IDLE;
 
             break;
         }
@@ -1580,7 +2281,7 @@ static void rreq_timerCB(BLEAppUtil_timerHandle timerHandle, BLEAppUtil_timerTer
     }
 
     // Reset the timer handle
-    gRREQControlBlock.timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
+    gRREQControlBlock.connInfo[connHandle].timeoutHandle = BLEAPPUTIL_TIMER_INVALID_HANDLE;
   }
 }
 

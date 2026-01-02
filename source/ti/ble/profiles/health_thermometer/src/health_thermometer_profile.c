@@ -83,6 +83,7 @@ HTP_timeStamp htp_timeStamp = {0};
 static void HTP_measOnCccUpdateCB( char *pValue );
 static void HTP_SendMeasur( HTS_TempMeas_t *measur );
 static bStatus_t HTP_validateTimeStamp(HTP_timeStamp timeStamp);
+static void HTP_EncodeTemperatureToBLEFloat(float temperature, uint8_t dst[4]);
 
 /*********************************************************************
  * SERVER CALLBACKS
@@ -240,7 +241,7 @@ static void HTP_SendMeasur( HTS_TempMeas_t *measur )
 
   // Allocate buffer with the actual size of the HT measurement record
   VOID memcpy( pBuf, &measur->flags, sizeof( measur->flags ));
-  VOID memcpy( pBuf+1, &measur->temp, sizeof( measur->temp ));
+  HTP_EncodeTemperatureToBLEFloat(measur->temp, &pBuf[1]);
 
   // Send time stamp only if the timeStamp flag is set to 1.
   if ( measur->flags & HTS_MEAS_FLAGS_TIME_STAMP )
@@ -280,4 +281,51 @@ bStatus_t HTP_validateTimeStamp(HTP_timeStamp timeStamp)
     return ( INVALIDPARAMETER );
   }
   return status;
+}
+
+/*********************************************************************
+ * @fn      HTP_EncodeTemperatureToBLEFloat
+ *
+ * @brief   Encode temperature float into BLE IEEE-11073 32-bit FLOAT format
+ *          Format: 24-bit signed mantissa (little-endian) + 8-bit signed exponent (base 10)
+ *          Uses exponent = -2  (i.e. value = mantissa * 10^-2)
+ *
+ * @param   temperature - temperature value to encode
+ * @param   dst - destination buffer to hold the encoded value
+ *
+ * @return  none
+ */
+static void HTP_EncodeTemperatureToBLEFloat(float temperature, uint8_t dst[4])
+{
+  if (dst == NULL)
+  {
+    return;
+  }
+  float scaled = temperature * 100.0f;  // two decimals of precision
+
+  /* Manual rounding: round to nearest, away from zero on .5 */
+  if (scaled >= 0.0f)
+  {
+    scaled += 0.5f;
+  }
+  else
+  {
+    scaled -= 0.5f;
+  }
+
+  int32_t mantissa = (int32_t)scaled; // clamp to 24-bit signed range just in case
+  if (mantissa > 0x7FFFFF)
+  {
+    mantissa = 0x7FFFFF;
+  }
+  else if (mantissa < -0x800000)
+  {
+    mantissa = -0x800000;
+  }
+  /* 24-bit two’s complement, little-endian */
+  dst[0] = (uint8_t)(mantissa & 0xFF);
+  dst[1] = (uint8_t)((mantissa >> 8) & 0xFF);
+  dst[2] = (uint8_t)((mantissa >> 16) & 0xFF);
+  /* exponent = -2 (0xFE as two’s complement) */
+  dst[3] = (uint8_t)(-2);
 }

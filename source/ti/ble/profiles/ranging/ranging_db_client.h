@@ -44,17 +44,79 @@
  
  *****************************************************************************/
 
+#ifndef RANGING_DB_CLIENT_H
+#define RANGING_DB_CLIENT_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifdef RANGING_CLIENT
+
  /*********************************************************************
   * INCLUDES
   */
+
+#include "ti/ble/services/ranging/ranging_types.h"
+#include "ti/drivers/utils/List.h"
 
  /*********************************************************************
   * MACROS
   */
 
  /*********************************************************************
+  * DEFINES
+  */
+
+ /*********************************************************************
   * TYPEDEFS
   */
+
+/**
+ * @brief Structure representing a segment element in the Ranging DB Client.
+ *
+ * This structure holds information about a single segment, including its
+ * position in a list, segment number, size, and a pointer to the segment data.
+ */
+typedef struct {
+    List_Elem elem;         // List element for linking in a list structure.
+    uint16_t segmentNum;    // The segment number (identifier for the segment).
+    uint16_t segmentSize;   // The size of the segment data in bytes.
+    uint8_t* segmentData;   // Pointer to segment data structure
+} RangingDBClient_segmentElem_t;
+
+/**
+ * @brief Structure representing a procedure segments reader in the Ranging DB Client.
+ *
+ * This structure holds information about the segmented procedure data, including
+ * a list of segment elements, the number of segments, the size of each segment,
+ * and the size of the last segment.
+ *
+ * It is used for reading and parsing the segmented data of a ranging procedure,
+ * using dedicated functions to retrieve ranging headers and subevents:
+ * @ref RangingDBClient_getRangingHeader and @ref RangingDBClient_getNextSubevent.
+ *
+ * In order to free the resources allocated for this structure, the function
+ * @ref RangingDBClient_freeSegmentsReader should be used.
+ *
+ * @warning The structure maintains internal state (segment index, offset, bytes read)
+ *          to maintain sequential reading of the data.
+ *          Do not modify these fields directly; use the provided API functions instead.
+ */
+typedef struct
+{
+    // Segmented procedure data
+    List_List segmentDataList;    // List of segment elements. Elements are of type @ref RangingDBClient_segmentElem_t
+    uint8_t   numSegments;        // number of segments in the procedure
+    uint16_t  totalSegmentsSize;  // total size of all segments in bytes
+
+    // Parser state
+    RangingDBClient_segmentElem_t* segmentIndex;  // current segment index element
+    uint16_t  offset;                             // current offset in the current segment
+    uint16_t  bytesRead;                          // total bytes read so far
+
+} RangingDBClient_procedureSegmentsReader_t;
 
  /*********************************************************************
   * Profile Callback
@@ -128,6 +190,7 @@ uint8_t RangingDBClient_procedureClose(uint16_t connHandle);
  * input parameters
  *
  * @param   connHandle - Connection handle.
+ * @param   segmentNum - Segment number in the procedure data to add the new data.
  * @param   datalen - Length of the data to be added.
  * @param   pData - Pointer to the data to be added.
  *
@@ -136,14 +199,20 @@ uint8_t RangingDBClient_procedureClose(uint16_t connHandle);
  * @param   None
  *
  * @return  SUCCESS - if the data was successfully added.
+ *          bleMemAllocError - if memory allocation failed.
  *          INVALIDPARAMETER - if the input parameters are invalid.
  */
-uint8_t RangingDBClient_addData(uint16_t connHandle, uint16_t offset ,uint16_t datalen, uint8_t *pData);
+uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData);
 
 /*********************************************************************
  * @fn      RangingDBClient_getData
  *
  * @brief   This function retrieves data from the ranging procedure DB.
+ *          It builds a segments reader structure that can be used to
+ *          parse the procedure data.
+ *          Before building, it validates that all segments have been received
+ *          and that the data is continuous, according to segments numbers.
+ *          If successful, the procedure is cleared from the DB.
  *
  * input parameters
  *
@@ -151,12 +220,14 @@ uint8_t RangingDBClient_addData(uint16_t connHandle, uint16_t offset ,uint16_t d
  *
  * output parameters
  *
- * @param   None
+ * @param   segmentsReader - Pointer to the procedure data reader structure to be built
  *
- * @return  Pointer to the procedure data
- *          NULL - if invalid parameters or no data available.
+ * @return  SUCCESS - if the data was successfully retrieved.
+ *          INVALIDPARAMETER - if the input parameters are invalid, or
+ *                              not all segments have been received.
+ *          bleMemAllocError - if memory allocation failed.
  */
-uint8_t* RangingDBClient_getData(uint16_t connHandle);
+uint8_t RangingDBClient_getData(uint16_t connHandle, RangingDBClient_procedureSegmentsReader_t* segmentsReader);
 
 /*********************************************************************
  * @fn      RangingDBClient_clearProcedure
@@ -176,3 +247,83 @@ uint8_t* RangingDBClient_getData(uint16_t connHandle);
  *         INVALIDPARAMETER - if the connection handle is invalid.
  */
 uint8_t RangingDBClient_clearProcedure(uint16_t connHandle);
+
+/*********************************************************************
+ * @fn      RangingDBClient_getRangingHeader
+ *
+ * @brief   This function retrieves the ranging header from the procedure
+ *          segments reader.
+ *          If successful, the segments reader is updated to point after
+ *          the ranging header.
+ *          If the function fails, the segments reader is not modified.
+ *
+ * input parameters
+ *
+ * @param   segmentsReader - segments reader structure to use. Assumed to be
+ *                           positioned at the start of the subevent header.
+ * @param   rangingHeaderOut - Pointer to store the retrieved ranging header.
+ *
+ * @return  SUCCESS - if the ranging header was successfully read.
+ *          FAILURE - if there was an error during parsing the data or invalid parameters.
+ */
+uint8_t RangingDBClient_getRangingHeader(RangingDBClient_procedureSegmentsReader_t* segmentsReader, Ranging_RangingHeader_t* rangingHeaderOut);
+
+/*********************************************************************
+ * @fn      RangingDBClient_getNextSubevent
+ *
+ * @brief   This function retrieves the next subevent data from the
+ *          procedure segments reader. Should be called after
+ *          @ref RangingDBClient_getRangingHeader
+ *
+ * input parameters
+ *
+ * @param   segmentsReader - segments reader structure to use. Assumed to be
+ *                           positioned at the start of the subevent header.
+ *                           If the function fails, the segmentsReader is not modified.
+ * @param   numAntPath - number of antenna paths used in the ranging procedure.
+ *                       Implied by the ranging header previously read.
+ * @param   role - role of the device in the ranging procedure.
+ *
+ * output parameters
+ *
+ * @param   subeventHeaderOut - Pointer to store the retrieved subevent header.
+ *                              If NULL, the function will return @ref bleMemAllocError
+ * @param   subeventDataOut - Pointer to store the retrieved subevent data.
+ *                            Memory for this pointer is allocated within the
+ *                            function and should be freed by the caller.
+ *                            If NULL, the function will return @ref bleMemAllocError
+ *
+ * @return  SUCCESS - if the subevent header and data was successfully retrieved.
+ *          FAILURE - if there was an error during parsing the data or invalid parameters.
+ *          bleMemAllocError - if memory allocation failed.
+ */
+uint8_t RangingDBClient_getNextSubevent(RangingDBClient_procedureSegmentsReader_t* segmentsReader, uint8_t numAntPath, uint8_t role,
+                                        Ranging_subEventHeader_t* subeventHeaderOut, uint8_t** subeventDataOut);
+
+/*********************************************************************
+ * @fn      RangingDBClient_freeSegmentsReader
+ *
+ * @brief   This function frees the segments data allocated
+ *          within a procedure segments reader structure and
+ *          clears its contents.
+ *
+ * input parameters
+ *
+ * @param   segmentsReader - Pointer to the procedure segments reader structure.
+ *                           If NULL, the function does nothing.
+ *
+ * output parameters
+ *
+ * @param   None
+ *
+ * @return  None
+ */
+void RangingDBClient_freeSegmentsReader(RangingDBClient_procedureSegmentsReader_t* segmentsReader);
+
+#endif // RANGING_CLIENT
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* RANGING_DB_CLIENT_H */

@@ -281,7 +281,7 @@
 
 /* Number of max elements (steps) in a Tx buffer */
 /* ------------------------------------------*/
-#define CS_MAX_NUM_STEPS_IN_TX_BUFF            30U
+#define CS_MAX_NUM_STEPS_IN_TX_BUFF            15U
 
 /* Stable Phase Test */
 #define CS_STABLE_PHASE_TONE_DURATION_US       326
@@ -339,9 +339,7 @@ typedef enum csProcedureCounter_e
 {
     CS_PROC_INFO_SUBEVENT_C,
     CS_PROC_INFO_SUBEVENT_PER_PROC_C,
-    CS_PROC_INFO_EVENT_C,
-    CS_PROC_REPETITIONS_C,
-    CS_PROC_ALL_C
+    CS_PROC_INFO_EVENT_C
 } csProcedureCounter_e;
 
 typedef enum csSubeventType
@@ -519,7 +517,6 @@ typedef struct
     uint8   configId:6;              /* REQ | RSP | IND */
     uint8   rfu:2;                   /* REQ | RSP | IND */
     uint16  connEventCount;          /* REQ | RSP | IND */
-    uint16  repeatConnEvent;         /* NOT used for control procedures */ /* The connection event on which we need to start the repeated procedure */
     uint32  offset;                  /*  X  |  X  | IND */ /* microseconds */
     uint32  offsetMin;               /* REQ | RSP |  X  */ /* microseconds */
     uint32  offsetMax;               /* REQ | RSP |  X  */ /* microseconds */
@@ -583,7 +580,6 @@ typedef struct
     uint16 subeventCounter;                 /* subevent per event counter */
     uint16 subeventPerProcedureCounter;     /* subevent per procedure counter */
     uint16 eventCounter;                    /* event counter */
-    uint16 repetitionsCounter;              /* procedure counter */
 } csProcCnt_t;
 
 typedef struct csDoneInfo
@@ -594,17 +590,24 @@ typedef struct csDoneInfo
 
 typedef struct
 {
-    uint8_t previousProcedureStatus:1;     /* true if a previous procedure was invalid - all subevents in previous procedure were unsynced */
-    uint8_t reserved:7;                     /* Reserved for future use */
+    uint8_t previousProcedureStatus:1;      /* true if a previous procedure was invalid - all subevents in previous procedure were unsynced */
+    uint8_t csReqIntiatedByPeer:1;          /* Marks if the peer initiated CS a request */
+    uint8_t reserved:6;                     /* Reserved for future use */
 } csRepetitionsFlags_t;
 
 typedef struct
 {
-    uint8_t firstProcAfterSec:1;       /* Flag to indicate if this is the first procedure after security */
+    uint16_t                repetitionsCounter;   /* procedure counter */
+    uint16_t                peerTermProcCount;    /* The peer procedure counter received in the terminate indication */
+    uint16_t                connEvent;            /* The connection event on which we need to start the repeated procedure */
+    csDoneInfo_t            procedure;            /* Marks the DoneInfo of the procedure */
+    csRepetitionsFlags_t    flags;
+} csProcRepetitions_t;
+
+typedef struct
+{
     uint8_t validProcedure:1;          /* Marks if a procedure was valid - at least one subevent was good */
-    uint8_t csReqIntiatedByPeer:1;     /* Marks if the peer initiated CS a request */
-    uint8_t channelMapInstantPassed:1; /* Marks if the channel map instant passed during an ongoing procedure */
-    uint8_t reserved:4;                /* Reserved for future use */
+    uint8_t reserved:7;                /* Reserved for future use */
 } csFlags_t;
 
 typedef struct
@@ -621,6 +624,8 @@ typedef struct
 
 typedef struct
 {
+    uint16_t                tSw;                  /* Antenna switching time as determined by both devices capabilities */
+
     /* Antennas indices mapping from physical antenna index to its index as it appears in the RCL Command.
      * Each 2 bits represents the final index of a specific antenna.
      * Example: MSB: [0, 2, 3, 1] :LSB
@@ -642,16 +647,11 @@ typedef struct
     csSubeventInfo_t            subEventInfo;         /* Subevent Info */
     csMainModeRepetitionsInfo_t mModeRepetitions;     /* Main Mode Repetitions Info */
     csSubModeInsertionInfo_t    subModeInsertion;     /* Submode insertions info */
-    csProcedureAntennasInfo_t   antennasInfo;         /* Antennas Info */
     uint16_t                    mMStepsRemain;        /* Number of main mode steps remain to be done. When this reaches 0, the procedure ends. */
-    uint16_t                    eventsPerProcedure;   /* MAX_PROC_LEN / (EVENT_INTERVAL) * connEvent */
     uint32_t                    eventAnchorPoint;     /* The time from which consecutive subevents are anchored. */
-    uint16_t                    tSw;                  /* Antenna switching time as determined by both devices capabilities */
     csFlags_t                   csFlags;              /* CS Flags Per Connection */
     csDoneInfo_t                procedure;            /* Marks the DoneInfo of the procedure */
     csDoneInfo_t                subEvent;             /* Marks the DoneInfo of the subEvent */
-    uint16_t                    peerTermProcCount;    /* The peer procedure counter received in the terminate indication */
-    csRepetitionsFlags_t        flags;                /* Flags to track procedure repetitions status */
 } csProcedureInfo_t;
 
 typedef struct
@@ -681,6 +681,8 @@ typedef struct
     llCsCapabilities_t peerCapabilities;                            /* Peer capabilities */
     csDefaultSettings_t defaultSettings;                            /* CS Default Settings */
     csProcedureInfo_t procedureInfo;                                /* Procedure Info */
+    csProcRepetitions_t procedureRepetitionsInfo;                   /* Procedure Repetitions Info */
+    csProcedureAntennasInfo_t antennasInfo;                         /* Antennas Info */
     llCsConfig_t config[CS_MAX_NUM_CONFIG_IDS];                     /* CS Config */
     llCsChannelMapClassification_t peerChannelMapClassification;    /* Channel Map Classification */
 } llCs_t;

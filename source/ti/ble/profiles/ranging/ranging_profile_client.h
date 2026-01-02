@@ -58,6 +58,7 @@ extern "C"
  */
 #include "ti/ble/stack_util/bcomdef.h"
 #include "ti/ble/services/ranging/ranging_types.h"
+#include "ti/ble/profiles/ranging/ranging_db_client.h"
 
 /*********************************************************************
 *  EXTERNAL VARIABLES
@@ -77,7 +78,7 @@ extern "C"
 
 typedef void (*RREQ_DataReadyCallback)(uint16_t connHandle, uint16_t rangingCount);
 typedef void (*RREQ_SubeventDataCallback)(uint16_t connHandle, uint16_t rangingCount, void *pCSSubEvent);
-typedef void (*RREQ_CompleteEventCallback)(uint16_t connHandle, uint16_t rangingCount, uint8_t status, uint16_t dataLen, uint8_t* pData);
+typedef void (*RREQ_CompleteEventCallback)(uint16_t connHandle, uint16_t rangingCount, uint8_t status, RangingDBClient_procedureSegmentsReader_t segmentsReader);
 typedef void (*RREQ_StatusCallback)(uint16_t connHandle, uint8_t statusCode, uint8_t statusDataLen, uint8_t* statusData);
 
 /*********************************************************************
@@ -95,27 +96,39 @@ typedef enum
 // RREQ Enable modes
 typedef enum
 {
-    RREQ_IDLE = 0x00,  // Idle state, not enabled
-    RREQ_ON_DEMAND,    // On-demand ranging request
-    RREQ_REAL_TIME,    // Real-time ranging request
+    RREQ_MODE_NONE = 0x00,  // data exchange mode not set
+    RREQ_MODE_ON_DEMAND,    // On-demand ranging request
+    RREQ_MODE_REAL_TIME,    // Real-time ranging request
 } RREQEnableModeType_e;
 
-// RREQ Subscriptions configuration structure
+// RREQ On-Demand configuration structure
 typedef struct
 {
     RREQConfigSubType_e onDemandSubType;       // On-demand data subscription type
     RREQConfigSubType_e controlPointSubType;   // Control point subscription type
     RREQConfigSubType_e dataReadySubType;      // Data ready event subscription type
     RREQConfigSubType_e overwrittenSubType;    // Data overwritten event subscription type
-} RREQSubConfig_t;
+} RREQOnDemandSubConfig_t;
+
+// RREQ Real-Time configuration structure
+typedef struct
+{
+    RREQConfigSubType_e realTimeSubType;       // Real-time data subscription type
+} RREQRealTimeSubConfig_t;
+
+// RREQ Timeout configuration structure
+typedef struct
+{
+    uint32_t timeOutFirstSegment;   // Timeout for receiving first segment (Real-Time only)
+    uint32_t timeOutNextSegment;    // Timeout for next segment event in milliseconds
+} RREQTimeoutConfig_t;
 
 // RREQ Configuration structure
 typedef struct
 {
-    RREQSubConfig_t subConfig;      // Subscriptions configuration
-    uint32_t timeOutDataReady;      // Timeout for data ready event in milliseconds
-    uint32_t timeOutNextSegment;    // Timeout for next segment event in milliseconds
-    uint32_t timeOutCompleteEvent;  // Timeout for complete event in milliseconds
+    RREQOnDemandSubConfig_t onDemandSubConfig;  // Subscriptions configuration for On-Demand
+    RREQRealTimeSubConfig_t realTimeSubConfig;  // Subscriptions configuration for Real-Time
+    RREQTimeoutConfig_t timeoutConfig;      // Timeout configurations
 } RREQConfig_t;
 
 // RREQ Callbacks structure
@@ -125,24 +138,6 @@ typedef struct
     RREQ_CompleteEventCallback pDataCompleteEventCallback;  // Callback for complete events
     RREQ_StatusCallback pStatusCallback;                    // Callback for status events
 } RREQCallbacks_t;
-
-// RREQ Procedure Attribute structure
-typedef struct
-{
-    uint8_t procedureState;   // Current state of the RREQ procedure
-    uint16_t connHandle;      // Connection handle for the RREQ
-    uint16_t rangingCounter;  // Counter for the ranging procedure
-} RREQProcedureAttr_t;
-
-// RREQ Procedure States
-typedef enum
-{
-    RREQ_STATE_IDLE = 0x00,                 // Idle state
-    RREQ_STATE_WAIT_FOR_FIRST_SEGMENT,      // Waiting for the first segment of the ranging data
-    RREQ_STATE_WAIT_FOR_NEXT_SEGMENT,       // Waiting for the next segment or the complete data
-    RREQ_STATE_WAIT_FOR_CONTROL_POINT_RSP,  // Waiting for the control point response
-    RREQ_STATE_WAIT_FOR_ABORT               // Waiting for the abort response
-} RREQProcedureStates_e;
 
 // RREQ Client Status Codes
 typedef enum
@@ -157,16 +152,6 @@ typedef enum
   RREQ_DATA_OVERWRITTEN,          // Data has been overwritten
 } RREQClientStatus_e;
 
-// RREQ Segments Manager structure
-typedef struct
-{
-    uint64_t bitMask;           // Bitmask to indicate if all segments are received.
-    uint16_t totalDataLen;      // Total length of the data received.
-    uint16_t segmentSize;       // Size of each segment.
-    uint8_t lastSegmentValue;   // Value of the last segment.
-    uint8_t lastSegmentFlag;    // Flag to indicate if the last segment is received.
-} RREQSegmentsMGR_t;
-
 /*********************************************************************
  * FUNCTIONS
  */
@@ -174,8 +159,10 @@ typedef struct
  /*********************************************************************
  * @fn      RREQ_Start
  *
- * @brief   Initializes the ranging requester by saving the provided
- *          configuration and callbacks.
+ * @brief   Initializes the ranging requester and
+ *          stores the provided configuration and callbacks.
+ *
+ * @note    This function should be called once.
  *
  * input parameters
  *
@@ -187,7 +174,8 @@ typedef struct
  * @param   None
  *
  * @return  SUCCESS - if the initialization was successful.
- *          INVALIDPARAMETER - if the input parameters are invalid.
+ *          INVALIDPARAMETER - if the input parameters are invalid,
+ *                             or if the RREQ already started
  *
  */
 uint8_t RREQ_Start(const RREQCallbacks_t *pCallbacks , const RREQConfig_t *pConfig);
@@ -197,12 +185,20 @@ uint8_t RREQ_Start(const RREQCallbacks_t *pCallbacks , const RREQConfig_t *pConf
  *
  * @brief   Enables the RREQ process.
  *          This function start the RREQ process by discovering the RAS (Ranging Service)
- *          service on the specified connection handle
+ *          service on the specified connection handle.
+ *          when enableMode is set to @RREQ_REAL_TIME, a registration
+ *          for the Real-Time characteristic will be done as long as the
+ *          server allows it, otherwise - will register to the relevant
+ *          On-Demand characteristics.
+ *
+ * @note    For changing data exchange modes when RREQ is already enabled,
+ *          consider using @ref RREQ_ConfigureCharRegistration API, instead
+ *          of using @ref RREQ_Disable.
  *
  * input parameters
  *
  * @param   connHandle - Connection handle.
- * @param   enableMode - Mode to enable.
+ * @param   enableMode - Preferred mode to enable: @ref RREQ_ON_DEMAND or @ref RREQ_REAL_TIME
  *
  * output parameters
  *
@@ -233,6 +229,29 @@ uint8_t RREQ_Enable(uint16_t connHandle, RREQEnableModeType_e enableMode);
 uint8_t RREQ_Disable(uint16_t connHandle);
 
 /*********************************************************************
+ * @fn      RREQ_ConfigureCharRegistration
+ *
+ * @brief Configures the registration for a characteristic in the Ranging Profile Client.
+ *
+ * This function registers or unregisters for notifications or indications on a specific
+ * characteristic identified by its UUID for a given connection handle.
+ *
+ * @param connHandle   The connection handle identifying the BLE connection.
+ * @param charUUID     The UUID of the characteristic to configure.
+ * @param subType      The type of configuration to apply (see RREQConfigSubType_e).
+ *
+ * @note Does not accept RAS_FEATURE_UUID for configuration.
+ *
+ * @return SUCCESS - if the configuration was successful.
+ * @return INVALIDPARAMETER - if the connection handle is invalid, the characteristic
+ *                            UUID is not supported, subType is not valid, the service
+ *                            has not been discovered yet, or if trying to register to
+ *                            both Real-Time and On-Demand characteristics.
+ * @return status derived by @ref GATT_WriteCharValue function in case of executing the configuration.
+ */
+uint8_t RREQ_ConfigureCharRegistration(uint16_t connHandle, uint16_t charUUID, RREQConfigSubType_e subType);
+
+/*********************************************************************
  * @fn      RREQ_GetRangingData
  *
  * @brief   Starts the process of reading data for a ranging request.
@@ -258,6 +277,8 @@ uint8_t RREQ_GetRangingData(uint16_t connHandle, uint16_t rangingCount);
  * @brief   Aborts the ongoing ranging request.
  *          This function is responsible for aborting the ongoing ranging request
  *          for a specified connection handle.
+ *          The function ensures that the On-Demand is being used and that
+ *          the server supports an abort operation.
  *
  * input parameters
  *
@@ -270,6 +291,27 @@ uint8_t RREQ_GetRangingData(uint16_t connHandle, uint16_t rangingCount);
  * @return return SUCCESS or an error status indicating the failure reason.
  */
 uint8_t RREQ_Abort(uint16_t connHandle);
+
+/*********************************************************************
+ * @fn      RREQ_ProcedureStarted
+ *
+ * @brief API to notify the RREQ profile that a Channel Sounding procedure
+ *        has started.
+ *        Relevant for Real-Time mode only.
+ *        The function won't take any action if the given procedure counter
+ *        is the same as the last notified one.
+ *
+ * @param connHandle - Connection handle.
+ * @param procedureCounter - CS procedure counter that has been started.
+ *
+ * @return SUCCESS
+ * @return INVALIDPARAMETER - if the connection handle is invalid.
+ * @return bleIncorrectMode - if Real-Time mode is not enabled or
+ *                            another procedure is already in progress.
+ * @return bleAlreadyInRequestedMode - if the given procedure counter
+ *                                     is the same as the last notified one.
+ */
+uint8_t RREQ_ProcedureStarted(uint16_t connHandle, uint16_t procedureCounter);
 
 #endif // RANGING_CLIENT
 

@@ -40,7 +40,7 @@
 #include <stdint.h>
 
 /* Length of binary image. */
-#define LRF_RFE_BINARY_BLE_CS_NOPLL_LENGTH 843 
+#define LRF_RFE_BINARY_BLE_CS_NOPLL_LENGTH 883 
 
 /* Declaration of raw binary. */
 extern const uint32_t LRF_RFE_binary_ble_cs_nopll[LRF_RFE_BINARY_BLE_CS_NOPLL_LENGTH];

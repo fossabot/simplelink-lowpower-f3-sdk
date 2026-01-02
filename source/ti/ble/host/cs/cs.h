@@ -348,9 +348,9 @@ typedef struct
 
 typedef struct
 {
+  uint8_t* role;        //!< Output role
   uint16_t connHandle;  //!< Connection handle
   uint8_t  configID;    //!< Configuration ID
-  uint8_t* role;        //!< Output role
 } CS_GetRoleCmdParams_t;
 
 /*

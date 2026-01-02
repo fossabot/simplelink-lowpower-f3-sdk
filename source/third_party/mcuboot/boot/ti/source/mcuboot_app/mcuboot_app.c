@@ -121,10 +121,6 @@ int main(void)
     lightRedLed();
 #endif //EXCLUDE_GPIOS
 
-#ifdef DEBUG
-    delay(3000);
-#endif
-
     trace_init();
     MCUBOOT_LOG_INF("mcuboot_app");
 
@@ -144,9 +140,7 @@ int main(void)
 
     if ((0 == bootStatus) && (IMAGE_MAGIC == bootRsp.br_hdr->ih_magic))
     {
-#ifndef EXCLUDE_GPIOS
         blinkLed(GREEN_LED, 3, 500);
-#endif //EXCLUDE_GPIOS
         MCUBOOT_LOG_INF("bootRsp: slot = %x, offset = %x, ver=%d.%d.%d.%d",
                             bootStatus,
                             bootRsp.br_image_off,

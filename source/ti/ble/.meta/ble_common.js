@@ -933,8 +933,7 @@ function getRadioScript(rfDesign, deviceId)
 function hideGroup(group, toHide, ui)
 {
   let namesArray = _.map(group,function(n) {return n.name});
-  _.each(namesArray, (cfg) => {cfg.includes("hide") ||
-         cfg.includes("numOfDefAdvSets") || cfg == "DeviceInfo" ? true : ui[cfg].hidden = toHide;});
+  _.each(namesArray, (cfg) => {cfg.includes("hide") || cfg == "DeviceInfo" ? true : ui[cfg].hidden = toHide;});
 }
 
 /*

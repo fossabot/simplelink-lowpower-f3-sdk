@@ -40,7 +40,7 @@
 #include <stdint.h>
 
 /* Length of binary image. */
-#define LRF_RFE_BINARY_IEEE_LENGTH 887 
+#define LRF_RFE_BINARY_IEEE_LENGTH 880 
 
 /* Declaration of raw binary. */
 extern const uint32_t LRF_RFE_binary_ieee[LRF_RFE_BINARY_IEEE_LENGTH];

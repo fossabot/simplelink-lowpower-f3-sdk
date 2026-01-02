@@ -59,12 +59,21 @@
  * DEFINES
  */
 
-// Position of Client Characteristic Configuration entries in the attribute array
-#define RAS_REAL_TIME_CCC_TBL_INDEX         0xFF // Currently not supported
-#define RAS_ON_DEMAND_CCC_TBL_INDEX         6    // On Demand Ranging Data CCC index
-#define RAS_CP_CCC_TBL_INDEX                10   // Ranging Control Point CCC index
-#define RAS_DATA_READY_TBL_CCC_INDEX        14   // Ranging Data Ready CCC index
-#define RAS_DATA_OVERWRITTEN_CCC_TBL_INDEX  18   // Ranging Data Overwritten CCC index
+// Indicate if Real Time Ranging Data characteristic is supported
+#if defined(RANGING_SERVER_REAL_TIME)
+    // If RANGING_SERVER_REAL_TIME is defined, enable support
+    #define RAS_REAL_TIME_SUPPORTED  1
+#else
+    // Otherwise, disable support
+    #define RAS_REAL_TIME_SUPPORTED  0
+#endif // defined(RANGING_SERVER_REAL_TIME)
+
+// Position of Client Characteristic Configuration entries in the attribute array (0 - not supported)
+#define RAS_REAL_TIME_CCC_TBL_INDEX         (RAS_REAL_TIME_SUPPORTED * 6)           // Real Time Ranging Data CCC index
+#define RAS_ON_DEMAND_CCC_TBL_INDEX         (6 + (RAS_REAL_TIME_SUPPORTED * 4))     // On Demand Ranging Data CCC index
+#define RAS_CP_CCC_TBL_INDEX                (RAS_ON_DEMAND_CCC_TBL_INDEX + 4)       // Ranging Control Point CCC index
+#define RAS_DATA_READY_CCC_TBL_INDEX        (RAS_CP_CCC_TBL_INDEX + 4)              // Ranging Data Ready CCC index
+#define RAS_DATA_OVERWRITTEN_CCC_TBL_INDEX  (RAS_DATA_READY_CCC_TBL_INDEX + 4)      // Ranging Data Overwritten CCC index
 
 /*********************************************************************
  * TYPEDEFS
@@ -80,10 +89,10 @@ GATT_BT_UUID( ras_serv_UUID, RANGING_SERVICE_UUID );
 // RAS Feature UUID: 0x2C14
 GATT_BT_UUID(ras_feat_UUID, RAS_FEATURE_UUID);
 
-/* *** Not Supported yet ***
+#if defined(RANGING_SERVER_REAL_TIME)
 // RAS Ranging Data real-time UUID: 0x2C15
 GATT_BT_UUID(ras_rt_UUID, RAS_REAL_TIME_UUID);
-*/
+#endif // defined(RANGING_SERVER_REAL_TIME)
 
 // RAS Ranging Data on-demand UUID: 0x2C16
 GATT_BT_UUID(ras_od_UUID, RAS_ON_DEMAND_UUID);
@@ -111,13 +120,13 @@ static uint8_t ras_feat_props = GATT_PROP_READ;            // Characteristic pro
 static uint32  ras_feat_val = 0;                           // Value variable
 static uint8_t ras_feat_userDesp[] = "Ranging Feature";    // User description
 
-/* *** Not Supported yet ***
+#if defined(RANGING_SERVER_REAL_TIME)
 // RAS real-time Ranging Data
 static uint8_t ras_realTimeRD_props = GATT_PROP_INDICATE | GATT_PROP_NOTIFY;  // Characteristic properties
 static uint8_t ras_realTimeRD_val = 0;                                        //  Value variable
 static uint8_t ras_realTimeRD_userDesp[] = "RAS real-time Ranging Data";      // User description
 static gattCharCfg_t *ras_realTimeRD_config = NULL;
-*/
+#endif // defined(RANGING_SERVER_REAL_TIME)
 
 // RAS on-demand Ranging Data
 static uint8_t ras_onDemandRD_props = GATT_PROP_INDICATE | GATT_PROP_NOTIFY;  // Characteristic properties
@@ -151,60 +160,61 @@ static gattAttribute_t ras_attrTbl[] =
 {
  /*----------------------type---------------------*/ /*------------------permissions-------------------*/ /*---------------pValue---------------*/
     // ras Service
-    GATT_BT_ATT( primaryServiceUUID,                    GATT_PERMIT_ENCRYPT_READ,                                    (uint8_t *) &ras_service ),
+    GATT_BT_ATT( primaryServiceUUID,                    GATT_PERMIT_READ,                                        (uint8_t *) &ras_service ),
 
     // ras Feature Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_feat_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_feat_props ),
     // ras Feature Value
-    GATT_BT_ATT( ras_feat_UUID,                         GATT_PERMIT_ENCRYPT_READ,                                    (uint8_t *) &ras_feat_val ),
+    GATT_BT_ATT( ras_feat_UUID,                         GATT_PERMIT_ENCRYPT_READ,                                (uint8_t *) &ras_feat_val ),
     // ras Feature User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_feat_userDesp ),
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_feat_userDesp ),
 
-    /* *** Not Supported yet ***
+#if defined(RANGING_SERVER_REAL_TIME)
     // RAS real-time Ranging Data Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_realTimeRD_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_realTimeRD_props ),
     // RAS real-time Ranging Data Value
-    GATT_BT_ATT( ras_rt_UUID,                           0,                                                           &ras_realTimeRD_val ),
+    GATT_BT_ATT( ras_rt_UUID,                           0,                                                       &ras_realTimeRD_val ),
     // RAS real-time Ranging Data configuration
-    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,        (uint8_t *) &ras_realTimeRD_config ),
+    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,    (uint8_t *) &ras_realTimeRD_config ),
     // RAS real-time Ranging Data User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_realTimeRD_userDesp ),
-    */
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_realTimeRD_userDesp ),
+#endif // defined(RANGING_SERVER_REAL_TIME)
+
     // RAS on-demand Ranging Data Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_onDemandRD_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_onDemandRD_props ),
     // RAS on-demand Ranging Data Value
-    GATT_BT_ATT( ras_od_UUID,                           0,                                                           &ras_onDemandRD_val ),
+    GATT_BT_ATT( ras_od_UUID,                           0,                                                       &ras_onDemandRD_val ),
     // RAS on-demand Ranging Data configuration
-    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,        (uint8_t *) &ras_onDemandRD_config ),
+    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,    (uint8_t *) &ras_onDemandRD_config ),
     // RAS on-demand Ranging Data User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_onDemandRD_userDesp ),
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_onDemandRD_userDesp ),
 
     // Ranging Control Point Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_CP_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_CP_props ),
     // Ranging Control Point Value
-    GATT_BT_ATT( ras_CP_UUID,                           GATT_PERMIT_ENCRYPT_WRITE,                                   &ras_CP_val ),
+    GATT_BT_ATT( ras_CP_UUID,                           GATT_PERMIT_ENCRYPT_WRITE,                               &ras_CP_val ),
     // Ranging Control Point configuration
-    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,        (uint8_t *) &ras_CP_config ),
+    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,    (uint8_t *) &ras_CP_config ),
     // Ranging Control Point User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_CP_userDesp ),
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_CP_userDesp ),
 
     // Ranging Data Ready Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_dataReady_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_dataReady_props ),
     // Ranging Data Ready Value
-    GATT_BT_ATT( ras_ready_UUID,                        0,                                                           (uint8_t *)&ras_dataReady_val ),
+    GATT_BT_ATT( ras_ready_UUID,                        0,                                                       (uint8_t *)&ras_dataReady_val ),
     // Ranging Data Ready configuration
-    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,        (uint8_t *) &ras_dataReady_config ),
+    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,    (uint8_t *) &ras_dataReady_config ),
     // Ranging Data Ready User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_dataReady_userDesp ),
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_dataReady_userDesp ),
 
     // Ranging Data Overwritten Properties
-    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_ENCRYPT_READ,                                    &ras_dataOW_props ),
+    GATT_BT_ATT( characterUUID,                         GATT_PERMIT_READ,                                        &ras_dataOW_props ),
     // Ranging Data Overwritten Value
-    GATT_BT_ATT( ras_data_overwritten_UUID,             0,                                                           (uint8_t *)&ras_dataOW_val ),
+    GATT_BT_ATT( ras_data_overwritten_UUID,             0,                                                       (uint8_t *)&ras_dataOW_val ),
     // Ranging Data Overwritten configuration
-    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,        (uint8_t *) &ras_dataOW_config ),
+    GATT_BT_ATT( clientCharCfgUUID,                     GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE,    (uint8_t *) &ras_dataOW_config ),
     // Ranging Data Overwritten User Description
-    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_ENCRYPT_READ,                                    ras_dataOW_userDesp ),
+    GATT_BT_ATT( charUserDescUUID,                      GATT_PERMIT_READ,                                        ras_dataOW_userDesp ),
 };
 
 /*********************************************************************
@@ -214,6 +224,8 @@ static gattAttribute_t ras_attrTbl[] =
 static uint8_t rasSendNotiInd(uint16_t connHandle, uint8_t sendModePreference, uint8_t *pValue,
                               uint16 len, gattCharCfg_t *charCfgTbl, uint8_t *pAttValue);
 static uint8_t rasInitCCC( void );
+static bStatus_t rasCCCWriteReqMode( uint16 connHandle, gattAttribute_t *pAttr,
+                                     uint8_t *pValue, uint16 len, uint16 offset);
 static uint8_t rasCCCWriteReq( uint16 connHandle, gattAttribute_t *pAttr,
                                uint8_t *pValue, uint16 len, uint16 offset,
                                uint16 validCfg, InvokeFromBLEAppUtilContext_t callback,
@@ -309,8 +321,8 @@ uint8_t RAS_setParameter(uint16_t connHandle, uint8_t param, void *pValue, uint1
 
     switch ( param )
     {
+#if defined(RANGING_SERVER_REAL_TIME)
         // RAS real-time Ranging Data
-        /* *** Not Supported yet ***
         case RAS_REAL_TIME_ID:
             if (len <= ATT_MAX_MTU_SIZE)
             {
@@ -318,8 +330,7 @@ uint8_t RAS_setParameter(uint16_t connHandle, uint8_t param, void *pValue, uint1
                 status = rasSendNotiInd(connHandle, GATT_CLIENT_CFG_NOTIFY, pValue, len, ras_realTimeRD_config, &ras_realTimeRD_val);
             }
             break;
-        */
-
+#endif // defined(RANGING_SERVER_REAL_TIME)
         // RAS on-demand Ranging Data
         case RAS_ON_DEMAND_ID:
             if (len <= ATT_MAX_MTU_SIZE)
@@ -333,8 +344,18 @@ uint8_t RAS_setParameter(uint16_t connHandle, uint8_t param, void *pValue, uint1
         case RAS_FEAT_ID:
             if (len ==  RAS_FEAT_LEN)
             {
-                status = SUCCESS;
-                VOID memcpy( &ras_feat_val, pValue, RAS_FEAT_LEN );
+                uint32_t features = *((uint32_t*) pValue);
+
+                // Check given features value against supported features
+                if ( (RAS_REAL_TIME_SUPPORTED == 0) && (features & RAS_FEATURES_REAL_TIME) )
+                {
+                    status = FAILURE;
+                }
+                else
+                {
+                    status = SUCCESS;
+                    VOID memcpy( &ras_feat_val, pValue, RAS_FEAT_LEN );
+                }
             }
             break;
 
@@ -405,7 +426,14 @@ uint8_t RAS_getParameter(uint8_t param, void *pValue)
  */
 static uint8_t rasInitCCC(void)
 {
-    gattCharCfg_t **configs[] = { &ras_onDemandRD_config, &ras_CP_config, &ras_dataReady_config, &ras_dataOW_config };
+    gattCharCfg_t **configs[] = {
+#if defined(RANGING_SERVER_REAL_TIME)
+                                  &ras_realTimeRD_config,
+#endif // defined(RANGING_SERVER_REAL_TIME)
+                                  &ras_onDemandRD_config,
+                                  &ras_CP_config,
+                                  &ras_dataReady_config,
+                                  &ras_dataOW_config };
     uint8_t numConfigs = sizeof(configs) / sizeof(configs[0]);
 
     // Allocate and initialize each Client Characteristic Configuration table
@@ -453,27 +481,10 @@ static uint8_t rasWriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr,
     /******************************************************/
     if ( ! memcmp( pAttr->type.uuid, clientCharCfgUUID, pAttr->type.len ) )
     {
-        // Real Time CC writing **Not Supported**
-        /*
-        if ( pAttr->handle == ras_attrTbl[RAS_REAL_TIME_CCC_TBL_INDEX].handle )
-        {
+        // Check mode writing (On-Demand / Real-Time)
+        status = rasCCCWriteReqMode( connHandle, pAttr, pValue, len, offset);
 
-            status = rasCCCWriteReq( connHandle, pAttr, pValue, len, offset,
-                                      ras_realTimeRD_props,
-                                      ras_profileCBs->pfnCccUpdateCB);
-
-        }
-        */
-        if ( pAttr->handle == ras_attrTbl[RAS_ON_DEMAND_CCC_TBL_INDEX].handle )
-        {
-
-            status = rasCCCWriteReq( connHandle, pAttr, pValue, len, offset,
-                                     GATT_CLIENT_CFG_NOTIFY | GATT_CLIENT_CFG_INDICATE,
-                                     ras_profileCBs->pfnCccUpdateCB,
-                                     RAS_ON_DEMAND_UUID );
-        }
-
-        if ( pAttr->handle == ras_attrTbl[RAS_DATA_READY_TBL_CCC_INDEX].handle )
+        if ( pAttr->handle == ras_attrTbl[RAS_DATA_READY_CCC_TBL_INDEX].handle )
         {
 
             status = rasCCCWriteReq( connHandle, pAttr, pValue, len, offset,
@@ -712,6 +723,70 @@ static uint8_t rasSendNotiInd(uint16_t connHandle, uint8_t sendModePreference, u
 
     // Return status value
     return ( status );
+}
+
+/*********************************************************************
+ * @fn      rasCCCWriteReqMode
+ *
+ * @brief Handles write requests to the Ranging Server's CCC attribute for mode.
+ *
+ * This function processes write requests from a client to the CCC descriptor of the mode characteristic.
+ * It validates the request, updates the attribute value, and manages notification/indication enabling.
+ *
+ * @param connHandle   Connection handle identifying the client.
+ * @param pAttr        Pointer to the GATT attribute being written.
+ * @param pValue       Pointer to the value being written.
+ * @param len          Length of the value being written.
+ * @param offset       Offset within the attribute value for the write operation.
+ *
+ * @return bStatus_t   Status of the write operation (SUCCESS or appropriate error code).
+ */
+static bStatus_t rasCCCWriteReqMode( uint16 connHandle, gattAttribute_t *pAttr,
+                                     uint8_t *pValue, uint16 len, uint16 offset)
+{
+    bStatus_t status = SUCCESS;
+
+#if defined(RANGING_SERVER_REAL_TIME)
+    if ( pAttr->handle == ras_attrTbl[RAS_REAL_TIME_CCC_TBL_INDEX].handle )
+    {
+        // Find the characteristic value attribute
+        uint16_t onDemandCCCVal = GATTServApp_ReadCharCfg(connHandle, ras_onDemandRD_config);
+
+        if ((onDemandCCCVal != 0) && (*pValue != 0))
+        {
+            // send error if already registered to on-demand
+            status = RAS_ERR_CCC_IMPROPERLY_CONFIGURED;
+        }
+        else
+        {
+            status = rasCCCWriteReq( connHandle, pAttr, pValue, len, offset,
+                                     GATT_CLIENT_CFG_NOTIFY | GATT_CLIENT_CFG_INDICATE,
+                                     ras_profileCBs->pfnCccUpdateCB,
+                                     RAS_REAL_TIME_UUID );
+        }
+    }
+#endif // defined(RANGING_SERVER_REAL_TIME)
+    if ( pAttr->handle == ras_attrTbl[RAS_ON_DEMAND_CCC_TBL_INDEX].handle )
+    {
+#if defined(RANGING_SERVER_REAL_TIME)
+        uint16_t realTimeCCCVal = GATTServApp_ReadCharCfg(connHandle, ras_realTimeRD_config);
+
+        if ((realTimeCCCVal != 0) && (*pValue != 0))
+        {
+            // send error if already registered to real-Time
+            status = RAS_ERR_CCC_IMPROPERLY_CONFIGURED;
+        }
+        else
+#endif // defined(RANGING_SERVER_REAL_TIME)
+        {
+            status = rasCCCWriteReq( connHandle, pAttr, pValue, len, offset,
+                                     GATT_CLIENT_CFG_NOTIFY | GATT_CLIENT_CFG_INDICATE,
+                                     ras_profileCBs->pfnCccUpdateCB,
+                                     RAS_ON_DEMAND_UUID );
+        }
+    }
+
+    return status;
 }
 
 /*********************************************************************

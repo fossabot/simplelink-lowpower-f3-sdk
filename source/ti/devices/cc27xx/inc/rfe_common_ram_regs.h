@@ -129,29 +129,35 @@
 // Loop Filter Pre-Lock Kp
 #define RFE_COMMON_RAM_O_LFKPBL                                      0x0000083EU
 
+// Loop Filter Post-Lock Ki
+#define RFE_COMMON_RAM_O_LFKIAL                                      0x00000840U
+
+// Loop Filter Post-Lock Kp
+#define RFE_COMMON_RAM_O_LFKPAL                                      0x00000842U
+
 // Phy specific RSSI offset
-#define RFE_COMMON_RAM_O_PHYRSSIOFFSET                               0x00000840U
+#define RFE_COMMON_RAM_O_PHYRSSIOFFSET                               0x00000844U
 
 // Shadow register for SPARE0
-#define RFE_COMMON_RAM_O_SPARE0SHADOW                                0x00000842U
+#define RFE_COMMON_RAM_O_SPARE0SHADOW                                0x00000846U
 
 // Shadow register for SPARE1
-#define RFE_COMMON_RAM_O_SPARE1SHADOW                                0x00000844U
+#define RFE_COMMON_RAM_O_SPARE1SHADOW                                0x00000848U
 
 // AGC type information
-#define RFE_COMMON_RAM_O_AGCINFO                                     0x00000846U
+#define RFE_COMMON_RAM_O_AGCINFO                                     0x0000084AU
 
 // COEX GRANT pin information
-#define RFE_COMMON_RAM_O_GRANTPIN                                    0x00000848U
+#define RFE_COMMON_RAM_O_GRANTPIN                                    0x0000084CU
 
 // PA Trim for Mode 0 and Mode 1
-#define RFE_COMMON_RAM_O_PATRIM01                                    0x0000084AU
+#define RFE_COMMON_RAM_O_PATRIM01                                    0x0000084EU
 
 // PA Trim for Mode 2 and Mode 3
-#define RFE_COMMON_RAM_O_PATRIM23                                    0x0000084CU
+#define RFE_COMMON_RAM_O_PATRIM23                                    0x00000850U
 
 // Estimated 2^24/(KDCO)
-#define RFE_COMMON_RAM_O_IKT                                         0x0000084EU
+#define RFE_COMMON_RAM_O_IKT                                         0x00000852U
 
 //******************************************************************************
 // Register: SYNTHCTL
@@ -792,6 +798,33 @@
 #define RFE_COMMON_RAM_LFKPBL_KP_W                                           15U
 #define RFE_COMMON_RAM_LFKPBL_KP_M                                       0x7FFFU
 #define RFE_COMMON_RAM_LFKPBL_KP_S                                            0U
+
+//******************************************************************************
+// Register: LFKIAL
+//******************************************************************************
+// Field: [12:12] hpm
+//
+// High Precision Mode
+#define RFE_COMMON_RAM_LFKIAL_HPM                                        0x1000U
+#define RFE_COMMON_RAM_LFKIAL_HPM_M                                      0x1000U
+#define RFE_COMMON_RAM_LFKIAL_HPM_S                                          12U
+
+// Field: [11:0] ki
+//
+// KI written by RFE
+#define RFE_COMMON_RAM_LFKIAL_KI_W                                           12U
+#define RFE_COMMON_RAM_LFKIAL_KI_M                                       0x0FFFU
+#define RFE_COMMON_RAM_LFKIAL_KI_S                                            0U
+
+//******************************************************************************
+// Register: LFKPAL
+//******************************************************************************
+// Field: [14:0] kp
+//
+// KP written by RFE
+#define RFE_COMMON_RAM_LFKPAL_KP_W                                           15U
+#define RFE_COMMON_RAM_LFKPAL_KP_M                                       0x7FFFU
+#define RFE_COMMON_RAM_LFKPAL_KP_S                                            0U
 
 //******************************************************************************
 // Register: PHYRSSIOFFSET

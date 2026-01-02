@@ -155,7 +155,7 @@ void llCsDbClearCsConnData(uint16 connId);
 void llCsDbClearProcedureData(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbClearProcedureData
+ * @fn          llCsDbClearFilteredChanIdxData
  *
  * @brief       Clear CS channel indexes data
  * Used when CS procedure ends and is not to be repeated.
@@ -2330,6 +2330,65 @@ void llCsDbSetEventAnchorPoint(uint16 connId, uint32_t anchorPoint);
 uint32_t llCsDbGetEventAnchorPoint(uint16 connId);
 
 /*******************************************************************************
+* @fn          llCsDbGetProcedureRepetitionsCount
+*
+* @brief       Get the current count of procedure repetitions
+*
+* @details     Returns the number of times the current procedure has been repeated
+*
+* input parameters
+*
+* @param       connId - connection Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      Current procedure repetitions count
+*/
+uint16 llCsDbGetProcedureRepetitionsCount(uint16 connId);
+
+/*******************************************************************************
+* @fn          llCsDbIncrementProcedureRepetitionsCount
+*
+* @brief       Increment the procedure repetitions counter
+*
+* @details     Increases the counter tracking how many times the current
+*              procedure has been repeated and returns the new value
+*
+* input parameters
+*
+* @param       connId - connection Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      New procedure repetitions count after increment
+*/
+uint16 llCsDbIncrementProcedureRepetitionsCount(uint16 connId);
+
+/*******************************************************************************
+* @fn          llCsDbResetProcedureRepetitionsCount
+*
+* @brief       Reset the procedure repetitions counter to zero
+*
+* @details     Clears the counter that tracks how many times a procedure
+*              has been repeated
+*
+* input parameters
+*
+* @param       connId - connection Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      None
+*/
+void llCsDbResetProcedureRepetitionsCount(uint16 connId);
+
+/*******************************************************************************
 * @fn          llCsDbSetProcedureRepetitionsPreviousProcedureStatus
 *
 * @brief       Store the status of the preceding CS procedure
@@ -3400,7 +3459,6 @@ void llCsDbDrbgSetTransactionId( uint16 connId, uint8 transactionId );
  * input parameters
  *
  * @param       connId       - connection Id.
- * @param       configId     - configuration Id
  * @param       connEvtCount - connection event count for the repeat procedure
  *
  * output parameters
@@ -3409,8 +3467,7 @@ void llCsDbDrbgSetTransactionId( uint16 connId, uint8 transactionId );
  *
  * @return      None
  */
-void llCsDbSetRepeatProcedureConnEvent(uint16 connId, uint8 configId,
-                                       uint16 connEvtCount);
+void llCsDbSetRepeatProcedureConnEvent(uint16 connId, uint16 connEvtCount);
 
 /*******************************************************************************
  * @fn          llCsDbGetRepeatProcedureConnEvent
@@ -3420,7 +3477,6 @@ void llCsDbSetRepeatProcedureConnEvent(uint16 connId, uint8 configId,
  * input parameters
  *
  * @param       connId    - connection Id.
- * @param       configId  - configuration Id
  *
  * output parameters
  *
@@ -3428,7 +3484,7 @@ void llCsDbSetRepeatProcedureConnEvent(uint16 connId, uint8 configId,
  *
  * @return      Connection event count for the repeat procedure
  */
-uint16_t llCsDbGetRepeatProcedureConnEvent(uint16 connId, uint8 configId);
+uint16_t llCsDbGetRepeatProcedureConnEvent(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsDbSetFirstProcedureAfterSecurity
@@ -3501,41 +3557,6 @@ void llCsDbSetValidProcedureFlag(uint16 connId, bool valid);
  * @return      true if this flag is enabled, false otherwise
  */
 bool llCsDbGetValidProcedureFlag(uint16_t connId);
-
-/*******************************************************************************
- * @fn          llCsDbSetTerminateErrCode
- *
- * @brief       Set the termination error code
- *
- * input parameters
- *
- * @param       connId     - connection Id
- * @param       errCode    - The error code
- *
- * output parameters
- *
- * @param       None
- *
- * @return      None
- */
-void llCsDbSetTerminateErrCode(uint16_t connId, uint8_t errCode);
-
-/*******************************************************************************
- * @fn          llCsDbGetTerminateErrCode
- *
- * @brief       Get the termination error code
- *
- * input parameters
- *
- * @param       connId    - connection Id
- *
- * output parameters
- *
- * @param       None
- *
- * @return      the termination error code
- */
-uint8_t llCsDbGetTerminateErrCode(uint16_t connId);
 
 /*******************************************************************************
  * @fn          llCsDbSetCsReqIntiatedByPeerFlag
@@ -3735,5 +3756,91 @@ uint8_t llCsDbGetMModeRepetitionsChannelArray(uint16 connId, uint8_t index);
  *
  */
 void llCsDbClearMModeRepetitions(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbGetProcedureRepetitionsDoneStatus
+ *
+ * @brief       Get the completion status of CS procedure repetitions
+ *
+ * @details     Returns the current status code that indicates whether the
+ *              procedure repetitions sequence is complete and if any errors
+ *              were encountered during execution.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Procedure repetitions completion status code
+ */
+uint8 llCsDbGetProcedureRepetitionsDoneStatus(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetProcedureRepetitionsDoneStatus
+ *
+ * @brief       Set the completion status of CS procedure repetitions
+ *
+ * @details     Updates the status code that tracks completion of the procedure
+ *              repetitions sequence, including any error conditions that may
+ *              have occurred.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       procErrorCode - procedure completion status or error code
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSetProcedureRepetitionsDoneStatus(uint16 connId, uint8 procErrorCode);
+
+/*******************************************************************************
+ * @fn          llCsProcedureRepetitionsCleanup
+ *
+ * @brief       Reset procedure repetitions information
+ *
+ * @details     Clears all data related to procedure repetitions, including
+ *              counters, status flags, and timing information. This function
+ *              prepares the system for a new sequence of procedure repetitions.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsProcedureRepetitionsCleanup(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsProcedureAntennaSelectionCleanup
+ *
+ * @brief       Reset antenna selection information
+ *
+ * @details     Clears all antenna selection data used during CS procedures,
+ *              including patterns, configurations, and tracking information.
+ *              This prepares the system for new antenna selection in future
+ *              procedures.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsProcedureAntennaSelectionCleanup(uint16 connId);
 
 #endif //LL_CS_DB_H

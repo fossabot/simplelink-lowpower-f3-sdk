@@ -926,6 +926,30 @@ bool llCsProcIsTestModeEnabled(void);
 uint16 llCsProcGetActiveConnId(void);
 
 /*******************************************************************************
+* @fn          llCsProcSetActiveConnId
+*
+* @brief       Set active connection ID
+*
+* @details     Stores the connection ID for the currently active CS procedure.
+*              This parameter should be used instead of llConns.currentConn
+*              as in case of multiple connections, another connection might be
+*              scheduled between the CS events and results processing time, which
+*              would lead to an irrelevant connId when accessing the DB and
+*              reporting this invalid connId to the application.
+*
+* input parameters
+*
+* @param       connId - connection Id
+*
+* output parameters
+*
+* @param       None.
+*
+* @return      None
+*/
+void llCsProcSetActiveConnId(uint16 connId);
+
+/*******************************************************************************
  * @fn          llCsProcGetReportedConnId
  *
  * @brief       Get Reported Connection ID
@@ -947,5 +971,28 @@ uint16 llCsProcGetActiveConnId(void);
  * @return      ConnId
  */
 uint16 llCsProcGetReportedConnId(void);
+
+/*******************************************************************************
+* @fn          llCsProcGetConnIdAndConfigId
+*
+* @brief       Retrieve active connection and configuration IDs for CS procedure
+*
+* @details     Retrieves the connection ID and configuration ID for the currently
+*              active CS procedure. These identifiers are essential for proper
+*              database access and procedure management.
+*
+* input parameters
+*
+* @param       pConnId - pointer to store the connection ID
+* @param       pConfigId - pointer to store the configuration ID
+*
+* output parameters
+*
+* @param       pConnId - retrieved connection ID value
+* @param       pConfigId - retrieved configuration ID value
+*
+* @return      TRUE if valid IDs were retrieved, FALSE otherwise
+*/
+bool llCsProcGetConnIdAndConfigId(uint16_t *pConnId, uint8_t *pConfigId);
 
 #endif // LL_CS_PROCEDURE_H

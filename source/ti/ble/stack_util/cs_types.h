@@ -73,7 +73,6 @@
 // Procedure done status
 #define    CS_PROCEDURE_DONE     0x0            //!< Procedure completed successfully
 #define    CS_PROCEDURE_ACTIVE   0x1            //!< Procedure is currently active
-#define    CS_PROCEDURE_INACTIVE 0x2            //!< Procedure is inactive
 #define    CS_PROCEDURE_ABORTED  0xF            //!< Procedure was aborted
 /** @} */
 
@@ -91,7 +90,7 @@
 #define    CS_SE_NO_ABORT              (0x0 << 4)         //!< Report with no abort
 #define    CS_SE_ABORT_REQUEST         (0x1 << 4)         //!< Abort because of local Host or remote request
 #define    CS_SE_ABORT_NO_SYNC         (0x2 << 4)         //!< Abort because no CS_SYNC (mode-0) received
-#define    CS_SE_ABORT_SCHED_CONFLITS  (0x3 << 4)         //!< Abort because of scheduling conflicts or limited resources
+#define    CS_SE_ABORT_SCHED_CONFLICTS (0x3 << 4)         //!< Abort because of scheduling conflicts or limited resources
 #define    CS_SE_ABORT_UNSPECIFIED     (0xF << 4)         //!< Abort because of unspecified reasons
 
 
@@ -218,13 +217,13 @@ typedef enum csStatus_e {
     CS_STATUS_ERROR_TRANSACTION_COLLISION = 0x23,       /* SPEC defined error code, collision */
     CS_STATUS_INSTANT_PASSED              = 0x28,       /* SPEC defined error code, instant passed */
     CS_STATUS_INSUFFICIENT_SECURITY       = 0x2F,       /* SPEC defined error code, insufficient security */
+    CS_STATUS_PROCEDURE_IN_PROGRESS       = 0x3A,       /* SPEC defined error code, Controller Busy */
     CS_STATUS_INVALID_CHM                 = 0x48,       /* SPEC defined error code, insufficient channels*/
     CS_STATUS_INVALID_CONN_PTR            = 0xA0,       /* Custom CS error codes */
     CS_STATUS_INVALID_BUFFER,
     CS_STATUS_CONNECTION_TERMINATED,
     CS_STATUS_INVALID_PKT_LEN,
     CS_STATUS_INVALID_CONFIG_ID,
-    CS_STATUS_PROCEDURE_IN_PROGRESS,
     CS_STATUS_UNKNOWN_CTRL_PKT,
     CS_STATUS_UNSUPPORTED_FEATURE,
     CS_STATUS_DISABLED_CONFIG_ID,
@@ -241,7 +240,8 @@ typedef enum csStatus_e {
     CS_STATUS_INVALID_CHAN_IDX,
     CS_STATUS_INVALID_STEP_MODE,
     CS_STATUS_INVOKE_FUNC_FAIL,
-    CS_STATUS_NO_SYNC
+    CS_STATUS_NO_SYNC,
+    CS_STATUS_SE_ABORT_SCHED_CONFLICTS
 } csStatus_e;
 
 typedef enum

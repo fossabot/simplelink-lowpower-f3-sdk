@@ -190,4 +190,9 @@ void OPT_llStopCurrentScan(void)
     llStopCurrentScan();
 }
 
+void OPT_llCmdScanStartedEventHandle(void)
+{
+    llCmdScanStartedEventHandle();
+}
+
 #endif /* defined(CTRL_SCANNER_CFG) */

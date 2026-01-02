@@ -8,7 +8,6 @@
             "+../../app/inc/app_key_node.h -> app/inc/app_key_node.h",
             "+../../app/inc/app_extctrl_common.h -> app/inc/app_extctrl_common.h",
             "+../../app/inc/app_central_api.h -> app/inc/app_central_api.h",
-            "+../../app/inc/app_peripheral_api.h -> app/inc/app_peripheral_api.h",
             "+../../app/inc/app_connection_api.h -> app/inc/app_connection_api.h",
             "+../../app/inc/app_pairing_api.h -> app/inc/app_pairing_api.h",
             "+../../app/inc/app_handover_api.h -> app/inc/app_handover_api.h",

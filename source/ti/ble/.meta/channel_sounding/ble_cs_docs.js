@@ -56,7 +56,17 @@ TI Drivers -> RCL Observables -> signals -> enable PBEGPO2 and PBEGPO3.
 RCL will set default gpios pins. To change the default pins - use the PinMux section inside the module.
 PBEGPO2 will be mapped to the lsb and PBEGPO3 to the msb.\n`
 
+// Long description for the Ranging Client Mode configuration parameter
+const rangingClientModeLongDescription =
+`Specifies the mode to be used for ranging data exchange with the Ranging Server.\n
+When configured to "Real-Time":\n
+- The client will register to the Real-Time characteristic as long as the server allows it.\n
+- If the server doesn't allow Real-Time, the client will register to On-Demand instead.\n
+When configured to "On-Demand":\n
+- The client will always register to the On-Demand characteristic.\n`
+
  // Exports the long descriptions for each configurable
  exports = {
-    antennasMuxValuesLongDescription: antennasMuxValuesLongDescription
+    antennasMuxValuesLongDescription: antennasMuxValuesLongDescription,
+    rangingClientModeLongDescription: rangingClientModeLongDescription
 };

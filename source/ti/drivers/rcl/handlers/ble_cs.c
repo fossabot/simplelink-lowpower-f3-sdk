@@ -136,7 +136,7 @@ struct
 
 /* Storage to decompress data */
 RCL_CmdBleCs_Step_Internal       step;
-RCL_CmdBleCs_StepResult_Internal result;
+RCL_CmdBleCs_StepResult_Internal stepResult;
 
 /* Precalculated base terms */
 uint32_t tStepLut[RCL_CmdBleCs_StepMode_Length];
@@ -853,13 +853,13 @@ static void RCL_Handler_BLE_CS_fetchAndforwardNextStep(RCL_CmdBleCs* pCmd)
  */
 static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bool forceBufferToFinishState)
 {
-    uint32_t *ptr = (uint32_t *) &result;
+    uint32_t *ptr = (uint32_t *) &stepResult;
     for(uint8_t j=0; j<sizeof(RCL_CmdBleCs_StepResult_Internal)/sizeof(uint32_t); j++)
     {
         *(ptr+j) = HWREG_READ_LRF(LRFDRXF_BASE + LRFDRXF_O_RXD);
     }
 
-    if (result.pktResult == RCL_CmdBleCs_PacketResult_Ok)
+    if (stepResult.pktResult == RCL_CmdBleCs_PacketResult_Ok)
     {
         pCmd->stats->nRxOk += 1;
     }
@@ -872,7 +872,7 @@ static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bo
     RCL_CmdBleCs_StepResult_Internal *pResult = RCL_Handler_BLE_CS_fetchNextStepResult(pCmd);
     if (pResult)
     {
-        memcpy(pResult, (RCL_CmdBleCs_StepResult_Internal *) &result, sizeof(RCL_CmdBleCs_StepResult_Internal));
+        memcpy(pResult, (RCL_CmdBleCs_StepResult_Internal *) &stepResult, sizeof(RCL_CmdBleCs_StepResult_Internal));
 
         #define DCDEBUG 1
         #ifdef DCDEBUG
@@ -924,7 +924,7 @@ static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bo
     }
 
     /* Identify HCI compression size */
-    uint16_t requiredSpaceInBytes = RCL_Handler_BLE_CS_estimateStepResultLength(pCmd, (RCL_CmdBleCs_StepResult_Internal *) &result);
+    uint16_t requiredSpaceInBytes = RCL_Handler_BLE_CS_estimateStepResultLength(pCmd, (RCL_CmdBleCs_StepResult_Internal *) &stepResult);
 
     /* Alternative HCI destination */
     RCL_MultiBuffer *pResultBuffer = RCL_Handler_BLE_CS_findBufferFitNumberOfBytes(&pCmd->resultBuffers, requiredSpaceInBytes);
@@ -998,7 +998,7 @@ static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bo
         uint8_t *pResult = RCL_MultiBuffer_getNextWritableByte(pResultBuffer);
 
         /* Compress and write the data */
-        uint32_t nBytes = RCL_Handler_BLE_CS_convertStepResult(pCmd, pResult, (RCL_CmdBleCs_StepResult_Internal *) &result);
+        uint32_t nBytes = RCL_Handler_BLE_CS_convertStepResult(pCmd, pResult, (RCL_CmdBleCs_StepResult_Internal *) &stepResult);
 
         /* Commit the pointers in the buffer */
         RCL_MultiBuffer_commitBytes(pResultBuffer, nBytes);

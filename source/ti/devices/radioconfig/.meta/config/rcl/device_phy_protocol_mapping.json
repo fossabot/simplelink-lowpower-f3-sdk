@@ -1,23 +1,4 @@
 {
-  "CC2340R5": [
-    "IEEE",
-    "Proprietary",
-    "BLE"
-  ],
-  "CC2340R2": [
-    "IEEE",
-    "BLE"
-  ],
-  "CC2340R53": [
-    "IEEE",
-    "Proprietary",
-    "BLE"
-  ],
-  "CC2340R22": [
-    "IEEE",
-    "Proprietary",
-    "BLE"
-  ],
   "CC2744R7Q1": [
     "BLE",
     "IEEE"
@@ -41,6 +22,25 @@
   "CC2755R10": [
     "BLE",
     "IEEE"
+  ],
+  "CC2340R5": [
+    "Proprietary",
+    "IEEE",
+    "BLE"
+  ],
+  "CC2340R53": [
+    "Proprietary",
+    "IEEE",
+    "BLE"
+  ],
+  "CC2340R22": [
+    "Proprietary",
+    "IEEE",
+    "BLE"
+  ],
+  "CC2340R2": [
+    "IEEE",
+    "BLE"
   ],
   "CC2340R5Q1": [
     "BLE"

@@ -51,12 +51,6 @@ const config = {
             hidden: true
         },
         {
-            name: "numOfDefAdvSets",
-            displayName: "Num of Default Advertisement Sets",
-            default: 2,
-            hidden: true
-        },
-        {
             name: "numOfAdvSets",
             displayName: "Number of Advertisement Sets",
             default: 2,
@@ -134,15 +128,6 @@ function moduleInstances(inst)
  */
 function validate(inst, validation)
 {
-    if(inst.deviceRole.includes("PERIPHERAL_CFG") || inst.deviceRole.includes("BROADCASTER_CFG"))
-    {
-        if(inst.numOfAdvSets != inst.numOfDefAdvSets)
-        {
-            validation.logWarning("The example app code handles " + inst.numOfDefAdvSets + " advertisement sets. "
-                                    + "Please make sure to update the example app code " +
-                                    "according to the configured number of sets.", inst, "numOfAdvSets");
-        }
-    }
 }
 
 // Exports to the top level BLE module

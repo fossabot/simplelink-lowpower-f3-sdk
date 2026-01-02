@@ -112,10 +112,10 @@ extern "C"
 #define LL_SCHED_START_CS_PRECAL    4
 #define LL_SDAA_SCHED_HANDLED       5
 //
-#define LL_SCHED_START_IMMED_PAD    (3 *  RAT_TICKS_IN_625US)
-#define LL_SCHED_PRE_CUTOFF         (10 * RAT_TICKS_IN_625US)
-#define LL_SCHED_POST_CUTOFF        (4 * RAT_TICKS_IN_625US)
-#define LL_SCHED_OVERHEAD           (LL_SCHED_PRE_CUTOFF + LL_SCHED_POST_CUTOFF)
+#define LL_SCHED_SETUP_PROCESSING_TIME  RAT_TICKS_IN_220US
+#define LL_SCHED_PRE_CUTOFF             (10 * RAT_TICKS_IN_625US)
+#define LL_SCHED_POST_CUTOFF            (4 * RAT_TICKS_IN_625US)
+#define LL_SCHED_OVERHEAD               (LL_SCHED_PRE_CUTOFF + LL_SCHED_POST_CUTOFF)
 
 // Task ID
 #define LL_TASK_ID_NONE                          0
@@ -176,10 +176,12 @@ extern "C"
 // TODO: Can be optimize, if not scanner role NUM_TASK_BLOCKS_SCAN_CFG can be 0.
 #define NUM_TASK_BLOCKS_SCAN_CFG                 2 //scanner + periodic scanner
 
+#define NUM_TASK_BLOCKS_CS_CFG                   2 //CS + CS PRECAL
+
 // collect the total number of non-connection related task blocks based config
 // Note: The number of connections is defined in the llConfigTable.
 #define LL_NUM_TASK_BLOCKS                    (NUM_TASK_BLOCKS_ADV_NCONN_CFG + \
-                                               NUM_TASK_BLOCKS_SCAN_CFG + 1)
+                                               NUM_TASK_BLOCKS_SCAN_CFG + NUM_TASK_BLOCKS_CS_CFG + 1)
 
 #define NUM_RCL_HANDLES    2 // A Standard BLE handle and a CS handle
 #define BLE_RCL_HANDLE     0 // The Standard BLE handle index

@@ -268,7 +268,7 @@ void APULPF3_dataMemTransfer(const float *src, float *dst, size_t length)
                 size_t wordsTransferred = (length - wordsLeftToTransfer);
                 srcTemp                 = (float *)src + wordsTransferred;
 
-                /* Due to errata SYS_211, copy FLASH data to SRAM before
+                /* Due to errata SYS_211, copy FLASH or APU data to SRAM before
                  * starting a DMA transfer.
                  *
                  * Check for both S and NS ranges.
@@ -278,6 +278,16 @@ void APULPF3_dataMemTransfer(const float *src, float *dst, size_t length)
                     ((uint32_t)srcTemp < (FLASH_MAIN_S_BASE + FLASH_MAIN_SIZE)))
                 {
                     memcpy(dmaCache, srcTemp, sizeof(float) * transferSize);
+                    srcTemp = (float *)dmaCache;
+                }
+                /* Due to errata SYS_211, when both source and destination are
+                 * in the APU, we need to move the data out before moving it
+                 * back in to the new location. This recursion should only ever
+                 * go one call deep, since the destination is in SRAM.
+                 */
+                else if (APULPF3_inAPU((void *)srcTemp) && APULPF3_inAPU((void *)(dst + wordsTransferred)))
+                {
+                    APULPF3_dataMemTransfer(srcTemp, dmaCache, transferSize);
                     srcTemp = (float *)dmaCache;
                 }
 

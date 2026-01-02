@@ -510,7 +510,7 @@ void llCsClearStepBuffers();
  *
  * @return      None
  */
-uint8 llCsInitProcedure(uint16 connId);
+csStatus_e llCsInitProcedure(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsUpdateProcedureCounter

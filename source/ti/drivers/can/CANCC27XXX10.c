@@ -128,14 +128,14 @@ static void CANCC27XX_writeRegDma(uint32_t addr, uint32_t value)
     uint32_t dmaDoneMask;
     uint32_t primask;
 
-    /* Store the value in SRAM */
-    CANCC27XX_regVal = value;
-
     /* Acquire HSM semaphore to prevent AHB bus master transactions. There is no
      * protection against I2S bus master so I2S cannot be used at the same
      * time as CAN.
      */
     CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
+    /* Store the value in SRAM */
+    CANCC27XX_regVal = value;
 
     /* Store current PRIMASK and set PRIMASK=1 to disable interrupts.
      * HwiP_disable() is not used here since it may write BASEPRI which leaves

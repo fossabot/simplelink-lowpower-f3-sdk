@@ -187,11 +187,6 @@ void OPT_llBuildCtrlPktCent(llConnState_t* connPtr, uint8_t* pData, uint8_t ctrl
     llBuildCtrlPktCent(connPtr, pData, ctrlPkt);
 }
 
-void OPT_llCmdScanStartedEventHandle(void)
-{
-    llCmdScanStartedEventHandle();
-}
-
 uint8_t OPT_llIsInitPriorityValid(uint16_t taskID, uint8_t priority, uint8_t connPriority)
 {
     return llIsInitPriorityValid(taskID, priority, connPriority);

@@ -202,7 +202,7 @@ typedef struct
 typedef enum
 {
   CM_PKT_STATUS_NOT_RECEIVED = 0x00, //!< Packet didn't receive
-  CM_PKT_VALID_CENTARL       = 0x01, //!< Central Packet received successfully
+  CM_PKT_VALID_CENTRAL       = 0x01, //!< Central Packet received successfully
   CM_PKT_VALID_PERIPHERAL    = 0x02, //!< Peripheral Packet received successfully
   CM_PKT_STATUS_UNDETERMINED = 0x03, //!< Packet received and can't distinguish if it is peripheral or central
 } cmPacketStatus_e;

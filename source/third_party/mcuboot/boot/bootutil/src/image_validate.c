@@ -135,7 +135,7 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
         if (blk_sz > tmp_buf_sz) {
             blk_sz = tmp_buf_sz;
         }
-#if defined(MCUBOOT_ENC_IMAGES) && !defined(MCUBOOT_HW_ROLLBACK_PROT) 
+#ifdef MCUBOOT_ENC_IMAGES
         /* The only data that is encrypted in an image is the payload;
          * both header and TLVs (when protected) are not.
          */
