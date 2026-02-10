@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -3842,5 +3842,97 @@ void llCsProcedureRepetitionsCleanup(uint16 connId);
  * @return      None
  */
 void llCsProcedureAntennaSelectionCleanup(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetEventStartedFlag
+ *
+ * @brief       Marks the status of the event
+ *                - TRUE if properly started
+ *                - FALSE otherwise
+ * @details
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       eventStatus - event Status
+ *                             - TRUE if properly started
+ *                             - FALSE otherwise
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSetEventStartedFlag(uint16_t connId, bool eventStatus);
+
+/*******************************************************************************
+ * @fn          llCsDbGetEventStartedFlag
+ *
+ * @brief       Retrieves the status of the event
+ *                - TRUE if properly started
+ *                - FALSE otherwise
+ *
+ * @details
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      eventStatus - event Status
+ *                             - TRUE if properly started
+ *                             - FALSE otherwise
+ */
+bool llCsDbGetEventStartedFlag(uint16_t connId);
+
+/*******************************************************************************
+ * @fn          llCsDbSetProcedureCounterIncrementedFlag
+ *
+ * @brief        Marks the indication whether the Procedure Counter was incremented for this procedure
+ *                - TRUE if was incremented
+ *                - FALSE otherwise
+ * @details
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ * @param       eventStatus - event Status
+ *                             - TRUE if properly started
+ *                             - FALSE otherwise
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsDbSetProcedureCounterIncrementedFlag(uint16_t connId, bool valid);
+
+/*******************************************************************************
+ * @fn          llCsDbGetProcedureCounterIncrementedFlag
+ *
+ * @brief       Retrieves the indication whether the Procedure Counter was incremented for this procedure
+ *                - TRUE was incremented
+ *                - FALSE otherwise
+ *
+ * @details
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      eventStatus - event Status
+ *                             - TRUE if was incremented
+ *                             - FALSE otherwise
+ */
+bool llCsDbGetProcedureCounterIncrementedFlag(uint16_t connId);
 
 #endif //LL_CS_DB_H

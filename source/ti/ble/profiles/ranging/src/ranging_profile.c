@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@
 #define SUBEVENT_STATUSES_INDEX            0x04
 #define SUBEVENT_STATUSES_SIZE             0x01
 #define SUBEVENT_STEPS_NUM_INDEX           0x07
-#define RRSP_RANGING_COUNTER_INVALID_VALUE 0xFF
+#define RRSP_RANGING_COUNTER_INVALID_VALUE 0xFFFFFFFF
 #define RRSP_ABORT_REASON_MASK             0x0F
 #define RRSP_SIZE_OF_STEP                  0x02
 #define RRSP_GATT_HEADER_SIZE              0x04
@@ -850,7 +850,7 @@ void rrspSendData(uint16_t connHandle, uint16_t rangingCounter)
     gRAPControlBlock.rrspSegmentationProcess.lastSegment = FALSE;
 
     // Set the ranging counter
-    gRAPControlBlock.rrspSegmentationProcess.rangingCounter = rangingCounter;
+    gRAPControlBlock.rrspSegmentationProcess.rangingCounter = (uint32_t) rangingCounter;
 
     if(gRAPControlBlock.rrspRegisteredData[connHandle] == RRSP_ON_DEMAND_NOTI ||
        gRAPControlBlock.rrspRegisteredData[connHandle] == RRSP_REAL_TIME_NOTI)
@@ -1070,6 +1070,12 @@ uint8_t rrspSendSegmentsNoti(uint16_t connHandle, uint16_t rangingCounter)
 
         if(pData == NULL)
         {
+            // Mark as not busy
+            gRAPControlBlock.rrspSegmentationProcess.busy = FALSE;
+
+            // Mark that we don't wait for notification
+            gRAPControlBlock.rrspSegmentationProcess.waitForNoti = FALSE;
+
             status = bleInvalidRange;
             // Unregister the application callback function for Flow Control
             L2CAP_RegisterFlowCtrlTask(INVALID_TASK_ID);
@@ -1330,7 +1336,7 @@ void rrspL2CapEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
     uint8_t status = SUCCESS;
     // Use the saved connHandle from the segmentation process
     uint16_t connHandle = gRAPControlBlock.rrspSegmentationProcess.currentConnHandle;
-    uint8_t rangingCounter = gRAPControlBlock.rrspSegmentationProcess.rangingCounter;
+    uint16_t rangingCounter = (uint16_t) gRAPControlBlock.rrspSegmentationProcess.rangingCounter;
     switch (event)
     {
         case BLEAPPUTIL_L2CAP_NUM_CTRL_DATA_PKT_EVT:
@@ -1421,7 +1427,7 @@ void rrspGattEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
                             CPRsp.opCode = RAS_CP_OPCODE_COMPLETE_DATA_RSP;
 
                             // The ranging counter for the request
-                            CPRsp.param1 = gRAPControlBlock.rrspSegmentationProcess.rangingCounter;
+                            CPRsp.param1 = (uint16_t) gRAPControlBlock.rrspSegmentationProcess.rangingCounter;
 
                             // Send the response, On-Demand only
                             rrspSetParameter(connHandle, RAS_CONTROL_POINT_ID, &CPRsp, RAS_CP_RSP_COMPLETE_DATA_RSP_LEN);
@@ -1432,13 +1438,13 @@ void rrspGattEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
                             // If the current mode is Real-Time, call the data sent handler and finish
                             if (rrspGetCurrentMode(connHandle) == RAS_REAL_TIME_ID)
                             {
-                                rrspDataSentHandler(connHandle, gRAPControlBlock.rrspSegmentationProcess.rangingCounter);
+                                rrspDataSentHandler(connHandle, (uint16_t) gRAPControlBlock.rrspSegmentationProcess.rangingCounter);
                             }
                         }
                         else
                         {
                             // Continue sending segments
-                            rrspSendSegmentsIndi(connHandle, gRAPControlBlock.rrspSegmentationProcess.rangingCounter);
+                            rrspSendSegmentsIndi(connHandle, (uint16_t) gRAPControlBlock.rrspSegmentationProcess.rangingCounter);
                         }
                     }
                 }

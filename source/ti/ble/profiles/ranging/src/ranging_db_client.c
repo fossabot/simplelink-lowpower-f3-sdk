@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -59,10 +59,7 @@
 /*********************************************************************
  * MACROS
  */
-// Invalid index
-#define RANGING_DB_CLIENT_INVALID_INDEX 0xFF
-// Maximum number of procedures supported
-#define RANGING_DB_CLIENT_MAX_NUM_PROC  1
+
 // Maximum size of a procedure in bytes
 #define RANGING_DB_CLIENT_MAX_PROC_SIZE 0x1400
 
@@ -79,11 +76,11 @@
  * TYPEDEFS
  */
 
- // Structure to hold the ranging procedure data for each connection handle.
+ // Structure to hold the ranging procedure data for each handle.
 typedef struct
 {
-    // Connection handle associated with this procedure data.
-    uint16_t connHandle;
+    // Indicates if this entry is used.
+    bool isUsed;
 
     // Total number of segments added.
     uint16_t totalNumSegments;
@@ -105,7 +102,7 @@ typedef struct
 /*********************************************************************
  * LOCAL VARIABLES
  */
-// Ranging Profile DB, each entry represent different connection handle
+// Ranging Profile DB, each entry represents a different handle
 static RangingDBClient_procedureData_t gRangingProcedureDB[RANGING_DB_CLIENT_MAX_NUM_PROC];
 
 /*********************************************************************
@@ -117,7 +114,7 @@ static RangingDBClient_procedureData_t gRangingProcedureDB[RANGING_DB_CLIENT_MAX
  */
 static void rangingDBClient_clearIndex(uint8_t index);
 static void rangingDBClient_clearProcedure(uint8_t index);
-static uint8_t rangingDBClient_getIndex( uint16_t connHandle );
+static uint8_t rangingDBClient_getEmptyIndex(void);
 static void rangingDBClient_clearList(List_List *list);
 static uint8_t rangingDBClient_validateSegments(uint8_t index);
 static uint8_t rangingDBClient_getNBytes(RangingDBClient_procedureSegmentsReader_t* segmentsReader, uint16_t n, uint8_t* buffer);
@@ -130,21 +127,8 @@ static uint8_t rangingDBClient_getSubeventData(RangingDBClient_procedureSegments
  * PUBLIC FUNCTIONS
  */
 
-/*********************************************************************
- * @fn      RangingDBClient_initDB
- *
- * @brief   This function initializes the ranging procedure DB
- *          variables and array.
- *
- * input parameters
- *
- * @param   None
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS or stack call status
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
 uint8_t RangingDBClient_initDB(void)
 {
@@ -157,130 +141,73 @@ uint8_t RangingDBClient_initDB(void)
     return SUCCESS;
 }
 
-/*********************************************************************
- * @fn      RangingDBClient_procedureOpen
- *
- * @brief   This function open the ranging procedure DB
- *          variables and array per connection handle.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS - if the connection handle was successfully assigned.
- *          FAILURE - if no available entry found in the DB.
- *          INVALIDPARAMETER - if the connection handle is invalid.
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
-uint8_t RangingDBClient_procedureOpen(uint16_t connHandle)
+uint8_t RangingDBClient_procedureOpen(void)
 {
     // Initialize the index to an invalid value
-    uint8_t index = RANGING_DB_CLIENT_INVALID_INDEX ;
+    uint8_t index = RANGING_DB_CLIENT_INVALID_HANDLE;
 
-    // Check if the connection handle is valid
-    if (connHandle == LINKDB_CONNHANDLE_INVALID)
+    // Get an empty index if possible
+    index = rangingDBClient_getEmptyIndex();
+
+    // If found an empty index
+    if (index != RANGING_DB_CLIENT_INVALID_HANDLE)
     {
-        return INVALIDPARAMETER;
+        // Assign a new entry
+        gRangingProcedureDB[index].isUsed = true;
     }
 
-    // Check if connHandle exist in the DB
-    index = rangingDBClient_getIndex(connHandle);
-    if (index != RANGING_DB_CLIENT_INVALID_INDEX )
-    {
-        // If connHandle exist return success
-        // and do not assign it again
-        return SUCCESS;
-    }
-
-    // Found an empty entry, assign the connection handle
-    index = rangingDBClient_getIndex(LINKDB_CONNHANDLE_INVALID);
-    if (index != RANGING_DB_CLIENT_INVALID_INDEX )
-    {
-        // Assign the connection handle to the empty entry
-        gRangingProcedureDB[index].connHandle = connHandle;
-        return SUCCESS;
-    }
-
-    // No available entry found in the DB
-    return FAILURE;
+    return index;
 }
 
-/*********************************************************************
- * @fn      RangingDBClient_procedureClose
- *
- * @brief   This function closes the ranging procedure DB.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS - if the connection handle was successfully cleared.
- *          INVALIDPARAMETER - if the connection handle is invalid.
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
-uint8_t RangingDBClient_procedureClose(uint16_t connHandle)
+uint8_t RangingDBClient_procedureClose(uint8_t handle)
 {
-    uint8_t status = INVALIDPARAMETER;
+    uint8_t status = SUCCESS;
 
-    // Get the index of the connection handle
-    uint8_t index = rangingDBClient_getIndex(connHandle);
-    if(index != RANGING_DB_CLIENT_INVALID_INDEX )
+    if (handle >= RANGING_DB_CLIENT_MAX_NUM_PROC ||
+        gRangingProcedureDB[handle].isUsed != true)
     {
-        rangingDBClient_clearIndex(index);
-        status = SUCCESS;
+        status = INVALIDPARAMETER;
+    }
+
+    if (status == SUCCESS)
+    {
+        rangingDBClient_clearIndex(handle);
     }
 
     return status;
 }
 
-/*********************************************************************
- * @fn      RangingDBClient_addData
- *
- * @brief   This function Add raw Data to the Ranging DB.
- *          It adds the data as long as the total procedure size
- *          does not exceed the maximum allowed size, and the segment
- *          number is valid and was not added before.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- * @param   segmentNum - Segment number in the procedure data to add the new data.
- * @param   datalen - Length of the data to be added.
- * @param   pData - Pointer to the data to be added.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS - if the data was successfully added.
- *          bleMemAllocError - if memory allocation failed.
- *          INVALIDPARAMETER - if the input parameters are invalid.
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
-uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData)
+uint8_t RangingDBClient_addData(uint8_t handle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData)
 {
     uint8_t status = SUCCESS;
+    uint8_t index = handle;
 
     // Effective segment number considering segments numbers wrap arounds
     uint16_t effectiveSegmentNum = 0;
 
-    // Get the index of the connection handle
-    uint8_t index = rangingDBClient_getIndex(connHandle);
+    // Check parameters
+    if (index >= RANGING_DB_CLIENT_MAX_NUM_PROC ||
+        gRangingProcedureDB[index].isUsed != true ||
+        pData == NULL ||
+        datalen == 0)
+    {
+        return INVALIDPARAMETER;
+    }
 
     // Check:
-    // 1. Parameters validity
-    // 2. We are not exceeding the maximum procedure size
-    // 3. The segment number is valid
-    // 4. The segment number was not added before
-    if( (pData != NULL) &&
-        (index != RANGING_DB_CLIENT_INVALID_INDEX ) &&
-        (datalen > 0) &&
-        ((datalen + gRangingProcedureDB[index].totalSegmentsSize) < RANGING_DB_CLIENT_MAX_PROC_SIZE) &&
+    // 1. We are not exceeding the maximum procedure size
+    // 2. The segment number is valid
+    // 3. The segment number was not added before
+    if( ((datalen + gRangingProcedureDB[index].totalSegmentsSize) < RANGING_DB_CLIENT_MAX_PROC_SIZE) &&
         (segmentNum < RANGING_DB_CLIENT_MAX_NUM_SEGMENTS) &&
         (!RANGING_DB_CLIENT_IS_BIT_SET(gRangingProcedureDB[index].segmentsReceivedBitMask, segmentNum)) )
     {
@@ -372,36 +299,17 @@ uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_
     return status;
 }
 
-/*********************************************************************
- * @fn      RangingDBClient_getData
- *
- * @brief   This function retrieves data from the ranging procedure DB.
- *          It builds a segments reader structure that can be used to
- *          parse the procedure data.
- *          Before building, it validates that all segments have been received
- *          and that the data is continuous, according to segments numbers.
- *          If successful, the procedure is cleared from the DB.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- *
- * output parameters
- *
- * @param   segmentsReader - Pointer to the procedure data reader structure to be built
- *
- * @return  SUCCESS - if the data was successfully retrieved.
- *          INVALIDPARAMETER - if the input parameters are invalid, or
- *                              not all segments have been received.
- *          bleMemAllocError - if memory allocation failed.
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
-uint8_t RangingDBClient_getData(uint16_t connHandle, RangingDBClient_procedureSegmentsReader_t* segmentsReader)
+uint8_t RangingDBClient_getData(uint8_t handle, RangingDBClient_procedureSegmentsReader_t* segmentsReader)
 {
     uint8_t status = SUCCESS;
-    uint8_t index = rangingDBClient_getIndex(connHandle); // Get the index of the connection handle
+    uint8_t index = handle;
 
-    // Check parameters and that a procedure exist for the given connection handle
-    if (segmentsReader == NULL || index == RANGING_DB_CLIENT_INVALID_INDEX)
+    if (index >= RANGING_DB_CLIENT_MAX_NUM_PROC ||
+        gRangingProcedureDB[index].isUsed != true ||
+        segmentsReader == NULL)
     {
         status = INVALIDPARAMETER;
     }
@@ -435,34 +343,24 @@ uint8_t RangingDBClient_getData(uint16_t connHandle, RangingDBClient_procedureSe
     return status;
 }
 
-/*********************************************************************
- * @fn      RangingDBClient_clearProcedure
- *
- * @brief   This function clears the ranging procedure data for a given
- *          connection handle.
- *
- * input parameters
- *
- * @param   connHandle - Connection handle.
- *
- * output parameters
- *
- * @param   None
- *
- * @return  SUCCESS - if the connection handle was successfully cleared.
- *         INVALIDPARAMETER - if the connection handle is invalid.
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
  */
-uint8_t RangingDBClient_clearProcedure(uint16_t connHandle)
+uint8_t RangingDBClient_clearProcedure(uint8_t handle)
 {
-    uint8_t status = INVALIDPARAMETER;
-    // Get the index of the connection handle
-    uint8_t index = rangingDBClient_getIndex(connHandle);
+    uint8_t status = SUCCESS;
+    uint8_t index = handle;
 
-    if(index != RANGING_DB_CLIENT_INVALID_INDEX )
+    if (index >= RANGING_DB_CLIENT_MAX_NUM_PROC ||
+        gRangingProcedureDB[index].isUsed != true)
     {
-        // Clear the procedure DB for the given connection handle
+        status = INVALIDPARAMETER;
+    }
+
+    if(status == SUCCESS)
+    {
+        // Clear the procedure DB for the given handle
         rangingDBClient_clearProcedure(index);
-        status = SUCCESS;
     }
 
     return status;
@@ -636,7 +534,7 @@ void RangingDBClient_freeSegmentsReader(RangingDBClient_procedureSegmentsReader_
  * @fn      rangingDBClient_clearIndex
  *
  * @brief   This function clears the ranging procedure data for a given
- *          index in the DB, also clearing the connection handle.
+ *          index in the DB.
  *          Releases all allocated memory for segments.
  *
  * input parameters
@@ -653,7 +551,7 @@ static void rangingDBClient_clearIndex(uint8_t index)
 {
     if (index < RANGING_DB_CLIENT_MAX_NUM_PROC)
     {
-        gRangingProcedureDB[index].connHandle = LINKDB_CONNHANDLE_INVALID;
+        gRangingProcedureDB[index].isUsed = false;
         rangingDBClient_clearProcedure(index);
     }
 }
@@ -662,8 +560,8 @@ static void rangingDBClient_clearIndex(uint8_t index)
  * @fn      rangingDBClient_clearProcedure
  *
  * @brief   This function clears the ranging procedure data for a given
- *          index in the DB, without clearing the connection handle,
- *          i.e the index is still assigned to its current connection handle.
+ *          index in the DB, without clearing the isUsed flag,
+ *          i.e the index is still assigned.
  *          Releases all allocated memory for segments.
  *
  * input parameters
@@ -689,32 +587,32 @@ static void rangingDBClient_clearProcedure(uint8_t index)
 }
 
 /*********************************************************************
- * @fn      rangingDBClient_getIndex
+ * @fn      rangingDBClient_getEmptyIndex
  *
- * @brief   This function retrieves the index of the ranging procedure DB
- *          for a given connection handle.
+ * @brief   This function retrieves an empty index from the
+ *          ranging procedure DB, if exists.
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   None
  *
  * output parameters
  *
  * @param   None
  *
- * @return  Index of the ranging procedure DB,
- *          RANGING_DB_CLIENT_INVALID_INDEX  - if the connection handle is not found.
+ * @return Index of an empty entry in the DB.
+ * @return @ref RANGING_DB_CLIENT_INVALID_HANDLE - if no empty entry found.
  */
-static uint8_t rangingDBClient_getIndex(uint16_t connHandle)
+static uint8_t rangingDBClient_getEmptyIndex(void)
 {
-    uint8_t index = RANGING_DB_CLIENT_INVALID_INDEX ;
+    uint8_t index = RANGING_DB_CLIENT_INVALID_HANDLE;
 
-    // Loop through the ranging procedure database to find the connection handle
+    // Loop through the ranging procedure database to find an empty entry
     for(uint8_t i = 0; i < RANGING_DB_CLIENT_MAX_NUM_PROC; i++)
     {
-        if(gRangingProcedureDB[i].connHandle == connHandle)
+        if(gRangingProcedureDB[i].isUsed != true)
         {
-            // Found the connection handle, store the index
+            // Found, store the index
             index = i;
             break;
         }

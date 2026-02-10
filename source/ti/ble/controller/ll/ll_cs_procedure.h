@@ -12,7 +12,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -994,5 +994,39 @@ uint16 llCsProcGetReportedConnId(void);
 * @return      TRUE if valid IDs were retrieved, FALSE otherwise
 */
 bool llCsProcGetConnIdAndConfigId(uint16_t *pConnId, uint8_t *pConfigId);
+
+/*******************************************************************************
+* @fn          llCsIsSingleProcedure
+*
+* @brief       Determines if current procedure is a single procedure or repetitions
+*
+* @details
+*
+* input parameters
+*
+* @param       connId - connection Id
+* @param       configId - configuration Id
+*
+* output parameters
+*
+* @param
+*
+* @return      TRUE in case of single procedure
+*              FALSE in case repetitions
+*/
+bool llCsIsSingleProcedure(uint16_t connId, uint8_t configId);
+
+/*******************************************************************************
+ * @fn          llCsResetConnMaxTime
+ *
+ * @brief       Resets connection max time by clearing the external update flag.
+ *              The scheduler will recalculate connMaxTimeLength when it
+ *              schedules the next connection event.
+ *
+ * @param       connId - Connection ID
+ *
+ * @return      None
+ */
+void llCsResetConnMaxTime(uint16 connId);
 
 #endif // LL_CS_PROCEDURE_H

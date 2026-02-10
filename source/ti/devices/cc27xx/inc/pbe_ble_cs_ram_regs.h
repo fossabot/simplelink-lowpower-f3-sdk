@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025, Texas Instruments Incorporated
+ * Copyright (c) 2018-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -196,26 +196,26 @@
 #define PBE_BLE_CS_RAM_MODE_NUM_STEPS_M                                  0xFF00U
 #define PBE_BLE_CS_RAM_MODE_NUM_STEPS_S                                       8U
 
-// Field: [7:7] reserved
+// Field: [7:7] coherent_phase
 //
 // 
-#define PBE_BLE_CS_RAM_MODE_RESERVED                                     0x0080U
-#define PBE_BLE_CS_RAM_MODE_RESERVED_M                                   0x0080U
-#define PBE_BLE_CS_RAM_MODE_RESERVED_S                                        7U
+#define PBE_BLE_CS_RAM_MODE_COHERENT_PHASE                               0x0080U
+#define PBE_BLE_CS_RAM_MODE_COHERENT_PHASE_M                             0x0080U
+#define PBE_BLE_CS_RAM_MODE_COHERENT_PHASE_S                                  7U
 
-// Field: [6:6] precal
+// Field: [6:6] inline_phase
 //
 // 
-#define PBE_BLE_CS_RAM_MODE_PRECAL                                       0x0040U
-#define PBE_BLE_CS_RAM_MODE_PRECAL_M                                     0x0040U
-#define PBE_BLE_CS_RAM_MODE_PRECAL_S                                          6U
+#define PBE_BLE_CS_RAM_MODE_INLINE_PHASE                                 0x0040U
+#define PBE_BLE_CS_RAM_MODE_INLINE_PHASE_M                               0x0040U
+#define PBE_BLE_CS_RAM_MODE_INLINE_PHASE_S                                    6U
 
-// Field: [5:5] channel_filter
+// Field: [5:5] precal
 //
 // 
-#define PBE_BLE_CS_RAM_MODE_CHANNEL_FILTER                               0x0020U
-#define PBE_BLE_CS_RAM_MODE_CHANNEL_FILTER_M                             0x0020U
-#define PBE_BLE_CS_RAM_MODE_CHANNEL_FILTER_S                                  5U
+#define PBE_BLE_CS_RAM_MODE_PRECAL                                       0x0020U
+#define PBE_BLE_CS_RAM_MODE_PRECAL_M                                     0x0020U
+#define PBE_BLE_CS_RAM_MODE_PRECAL_S                                          5U
 
 // Field: [4:4] repeat_steps
 //

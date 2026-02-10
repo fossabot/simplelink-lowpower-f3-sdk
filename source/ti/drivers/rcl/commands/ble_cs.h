@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, Texas Instruments Incorporated
+ * Copyright (c) 2022-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,7 @@ typedef enum   RCL_CMD_BLE_CS_Nadm_e                      RCL_CmdBleCs_Nadm;
 #define RCL_BLE_CS_MCE_TIMER_TO_US(x)           ((x)/48)
 #define RCL_BLE_CS_PBE_TIMER_TO_US(x)           ((x)/12)
 #define RCL_BLE_CS_MCE_TIMER_TO_PBE_TIMER(x)    ((x)/4)
+#define RCL_BLE_CS_MCE_TIMER_TO_PREFREF(x)      ((x)/3)
 #define RCL_BLE_CS_DELAY_PS_TO_LUT(x)           (((x)+16)/32)
 
 /* Helper macros for constants */
@@ -123,15 +124,16 @@ struct RCL_CMD_BLE_CS_IQ_SAMPLE_t {
  */
 struct RCL_CMD_BLE_CS_t {
     RCL_Command common;
+
     union {
         struct {
-            uint16_t role:2;                         /*!< Role of the device @ref RCL_CmdBleCs_Role */
-            uint16_t phy:2;                          /*!< Phy used for packet exchange @ref RCL_CmdBleCs_Phy */
-            uint16_t repeatSteps:1;                  /*!< Enable continuous repetition of step list */
-            uint16_t chFilterEnable:1;               /*!< Enable filtering of restricted channels at (2402, 2403, 2425, 2426, 2427, 2479, 2480 MHz) */
-            uint16_t precal:1;                       /*!< Enable usage of DC precalibration values */
-            uint16_t reserved:1;
-            uint16_t nSteps:8;                       /*!< Total number of steps within the BLE CS Sub-Event */
+            uint16_t role:2;                     /*!< Role of the device @ref RCL_CmdBleCs_Role */
+            uint16_t phy:2;                      /*!< Phy used for packet exchange @ref RCL_CmdBleCs_Phy */
+            uint16_t repeatSteps:1;              /*!< Enable continuous repetition of step list */
+            uint16_t reserved0:1;
+            uint16_t inlinePhase:1;              /*!< Enable the reflector to apply inline phase adjustment */
+            uint16_t reserved1:1;
+            uint16_t nSteps:8;                   /*!< Total number of steps within the BLE CS Sub-Event */
         };
         uint16_t val;
     } mode;
@@ -156,7 +158,7 @@ struct RCL_CMD_BLE_CS_t {
 
     struct {
         RCL_Command_TxPower txPower;              /*!< Transmit power */
-        uint8_t  rxGain;                          /*!< 0: Automatic Gain Control enabled, 1...15: Index value of manual RX gain @ref RCL_CmdBleCs_RxGain */
+        uint8_t  rxGain;                          /*!< Automatic Gain Control enabled @ref RCL_CmdBleCs_RxGain */
     } frontend;
 
     int16_t foffOverride;                         /*!< Frequency offset compensation override value in [4xFOFF = 4x (FRF/2^21)] units. */
@@ -196,7 +198,7 @@ struct RCL_CMD_BLE_CS_STEP_INTERNAL_t {
     uint16_t foffErr;                                /*!< Internal! Used for frequency offset compensation */
     uint16_t tAdjustA;                               /*!< Internal! Used for timegrid adjustment */
     uint16_t tAdjustB;                               /*!< Internal! Used for timegrid adjustment */
-    uint16_t reserved0;
+    uint16_t tPllRx;
     RCL_CmdBleCs_IQSample dcComp[RCL_BLE_CS_NUM_RX_GAIN_LEVEL]; /*!< Internal! Used for DC compensation with precalibrated values */
     uint32_t payloadTx[RCL_BLE_CS_MAX_PAYLOAD_SIZE]; /*!< Payload to transmit containing random bit sequence (TX) */
     uint32_t payloadRx[RCL_BLE_CS_MAX_PAYLOAD_SIZE]; /*!< Expected payload to receive containing random bit sequence (RX) */
@@ -208,7 +210,7 @@ struct RCL_CMD_BLE_CS_STEP_INTERNAL_t {
     uint16_t tStep;                                  /*!< Internal! The total duration of step dynamically calculated */
     uint16_t tAntennaA;                              /*!< Internal! Antenna timing adjustment */
     uint16_t tAntennaB;                              /*!< Internal! Antenna timing adjustment */
-    uint16_t reserved1;
+    uint16_t reserved;
 };
 
 /**
@@ -442,8 +444,6 @@ enum RCL_CMD_BLE_CS_Payload_e {
  */
 enum RCL_CMD_BLE_CS_RxGain_e {
     RCL_CmdBleCs_RxGain_Auto = 0,
-    RCL_CmdBleCs_RxGain_Low  = 7,
-    RCL_CmdBleCs_RxGain_High = 15
 };
 
 /**
@@ -530,7 +530,7 @@ struct RCL_CMD_BLE_CS_PRECAL_TABLE_t {
     uint32_t timestamp;
     uint8_t  highThreshold;
     uint8_t  lowThreshold;
-    uint8_t  rxGain;
+    uint8_t  reserved;
     int8_t   temperature;
     uint8_t  chSpacing;
     uint8_t  numEntries : 7;
@@ -548,7 +548,7 @@ void RCL_Handler_BLE_CS_PrecalDefaultCallback(RCL_CmdBleCs_PrecalTable *table, u
     .timestamp     = 0,                                        \
     .highThreshold = 50,                                       \
     .lowThreshold  = 10,                                       \
-    .rxGain        = 0xF7,                                     \
+    .reserved      = 0,                                        \
     .temperature   = 0,                                        \
     .chSpacing     = 10,                                       \
     .numEntries    = 8,                                        \

@@ -15,7 +15,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2022-2025, Texas Instruments Incorporated
+ Copyright (c) 2022-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -395,6 +395,31 @@ csStatus_e LL_CS_CreateConfig(uint16 connId, const csConfigurationSet_t* pConfig
 csStatus_e LL_CS_RemoveConfig(uint16 connId, uint8 configId);
 
 /*******************************************************************************
+ * @fn          LL_CS_GetConfig
+ *
+ * @brief       Get (read) a CS Configuration.
+ * This API retrieves a previously created CS configuration from
+ * the CS database. It allows the application to query the current
+ * configuration parameters.
+ *
+ * input parameters
+ *
+ * @param       connId - connection handle
+ * @param       configId - configuration ID
+ *
+ * output parameters
+ *
+ * @param       pConfig - Pointer to configuration structure to be filled
+ *
+ * @return      Status:
+ *              CS_STATUS_SUCCESS - Configuration retrieved successfully
+ *              CS_STATUS_UNEXPECTED_PARAMETER - Invalid configId or NULL pointer
+ *              CS_STATUS_COMMAND_DISALLOWED - CS feature not supported
+ *              CS_STATUS_INACTIVE_CONNECTION - Connection handle inactive
+ */
+csStatus_e LL_CS_GetConfig(uint16_t connId, uint8_t configId, csConfigurationSet_t* pConfig);
+
+/*******************************************************************************
  * @fn          LL_CS_SetChannelClassification
  *
  * @brief       Update the channel classification based on its local info
@@ -444,6 +469,35 @@ csStatus_e LL_CS_SetChannelClassification(uint8_t* pChannelClassification);
  * @return      @ref CS_STATUS_UNEXPECTED_PARAMETER if config Id isn't valid
  */
 csStatus_e LL_CS_GetRole(uint16_t connId, uint8_t configId, uint8_t* role);
+
+/*******************************************************************************
+ * @fn          LL_CS_GetTswByACI
+ *
+ * @brief       Calculate the antenna switch timing (T_SW) value based on
+ *              Antenna Configuration Index (ACI) and device capabilities.
+ *
+ *              The T_SW value is determined by the ACI configuration:
+ *              - ACI_A1_B1 (1x1): No antenna switching -> T_SW = 0
+ *              - ACI_A2/3/4_B1: Uses initiator's T_SW capability
+ *              - ACI_A1_B2/3/4: Uses reflector's T_SW capability
+ *              - ACI_A2_B2 (2x2): Uses max(initiator, reflector) T_SW capability
+ *
+ * input parameters
+ *
+ * @param       ACI      - Antenna Configuration Index
+ * @param       initTsw  - Initiator's T_SW capability (from tSwCap)
+ * @param       reflTsw  - Reflector's T_SW capability (from tSwCap)
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Calculated T_SW value in microseconds
+ *
+ * @note        For invalid aci, the function will return 0.
+ * @note        Doesn't validate Initiator and Reflector parameters.
+ */
+uint8_t LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw);
 
 /*******************************************************************************
  * @fn          LL_CS_SetProcedureParameters

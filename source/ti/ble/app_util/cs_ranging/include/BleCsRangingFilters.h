@@ -89,6 +89,8 @@ typedef struct
 {
     float maxAbsChangeRate;     ///< Maximum absolute change per time unit (e.g. meters/second)
     float prevValue;            ///< Previous value
+    float prevFilteredValue;    ///< Previous filtered value
+    float iirCoeff;             ///< IIR filter coefficient (weight of previous filtered value, 0.0-1.0). Example: 0.5f for equal weight. Use 0.0f for no smoothing (all current).
     uint8_t optionFlags;        ///< Filter option flags, given by enum BleCsRanging_SlewRateLimiterFilterOptionFlags_e
 } BleCsRanging_SlewRateLimiterFilter_t;
 
@@ -98,7 +100,8 @@ typedef struct
  *  Flags to enable optional features in the filter function
  */
 enum BleCsRanging_SlewRateLimiterFilterOptionFlags_e {
-    BleCsRanging_SlewRateLimiterFilter_MA2 = ((1u) << 0)        ///< Enable Moving-Average-2 filtering of SRLF output
+    BleCsRanging_SlewRateLimiterFilter_MA2 = ((1u) << 0),       ///< Enable Moving-Average-2 filtering of SRLF output
+    BleCsRanging_SlewRateLimiterFilter_IIR = ((1u) << 1)        ///< Enable IIR filtering of SRLF output (alternative to MA2)
 };
 
 
@@ -212,22 +215,25 @@ void freeMovingAverageFilter(BleCsRanging_MovingAverageFilter_t *maf);
  *
  * @param srlf Pointer to the Slew Rate Limiter filter structure to be initialized
  * @param maxAbsChangeRate Maximum absolute change per time unit (meters/second)
+ * @param iirCoeff IIR filter coefficient (weight of previous filtered value, 0.0-1.0). Only used if IIR flag is set. Example: 0.5f for equal weight. Use 0.0f for no smoothing (all current).
  * @param optionFlags Flags to enable optional features, see enum BleCsRanging_SlewRateLimiterFilterOptionFlags_e
  * @return Return status to report success or error
  */
 BleCsRanging_Status_e BleCsRanging_initSlewRateLimiterFilter(BleCsRanging_SlewRateLimiterFilter_t *srlf,
-                                            float maxAbsChangeRate, uint8_t optionFlags);
+                                            float maxAbsChangeRate, float iirCoeff, uint8_t optionFlags);
 
 /**
  * @brief Update the Slew Rate Limiter Filter
  *
  * This function updates the Slew Rate Limiter Filter with a new value and returns the filtered value.
+ * The filter limits the rate of change based on maxAbsChangeRate and optional velocity estimate.
  *
  * @param srlf Pointer to the Slew Rate Limiter filter structure
  * @param deltaTimeSec Time lapsed since previous data sample, in seconds. Not used for the first data sample (can set to 0).
  * @param value New value to add to the filter, in meter
+ * @param v_est Estimated velocity (in m/s). Used to adjust allowed change rate dynamically. Use 0.0f if velocity is unknown.
  * @return The filtered value
  */
-float BleCsRanging_computeSlewRateLimiterFilter(BleCsRanging_SlewRateLimiterFilter_t *srlf, float deltaTimeSec, float value);
+float BleCsRanging_computeSlewRateLimiterFilter(BleCsRanging_SlewRateLimiterFilter_t *srlf, float deltaTimeSec, float value, float v_est);
 
 #endif //_BLECSRANGINGFILTERS_H_

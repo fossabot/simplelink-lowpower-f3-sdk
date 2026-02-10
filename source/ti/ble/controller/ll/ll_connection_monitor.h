@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -91,6 +91,7 @@
 #define CM_EMPTY_PACKET_OCTETS             0U
 #define CM_INVALID_ACCESS_ADDR             0xFFFFFFFFU
 #define CM_DEFAULT_ADJUSTMENTS_EVT_TRIES   4
+#define CM_INVALID_PKT_PHY                  0xFFU
 
 
 /*******************************************************************************
@@ -160,6 +161,7 @@ typedef struct
   uint16_t               lastValidCentralEvent;       //! The last valid central event
   uint16_t               lastAdjustmentUpdateEvent;   //! The last valid central event
   uint8_t                lastPktLength;               //! The length of the last packet received
+  uint8_t                lastCentralPktPhy;           //! The phy used to receive the central last valid packet @RCL_Ble5_RxPhy
   uint8_t                rssiCentral;                 //! Last Rssi value Central
   uint8_t                rssiPeripheral;              //! Last Rssi value Peripheral
   uint8_t                rxEntryNum;                  //! The number of the current packets recived in the RX window
@@ -304,7 +306,7 @@ cmErrorCodes_e LL_CM_StopMonitor( uint16_t connHandle );
 cmErrorCodes_e LL_CM_UpdateConn( cmConnUpdateEvt_t *connUpdateEvt );
 
 /*******************************************************************************
- * @fn          llDynamicAlloc
+ * @fn          llCmDynamicAlloc
  *
  *
  * @brief       This function is used to dynamically allocate memory needed by

@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -289,6 +289,13 @@
 /* CS Channel Map Update type */
 #define CS_CHM_UPDATE_FORCE_IMMEDIATE          1U
 #define CS_CHM_UPDATE_WAIT_FOR_INSTANT         0U
+
+#define CS_EVENT_STATUS_NONE                   0
+#define CS_EVENT_STATUS_STARTED                1
+
+
+#define CS_PROCEDURE_COUNTER_NONE              0
+#define CS_PROCEDURE_COUNTER_INCREMENTED       1
 
 /*******************************************************************************
  * ENUMS
@@ -606,8 +613,10 @@ typedef struct
 
 typedef struct
 {
-    uint8_t validProcedure:1;          /* Marks if a procedure was valid - at least one subevent was good */
-    uint8_t reserved:7;                /* Reserved for future use */
+    uint8_t procedureCounterIncremented:1;        /* Marks if the Procedure Counbter was incremented for this procedure */
+    uint8_t validProcedure:1;                     /* Marks if a procedure was valid - at least one subevent was good */
+    uint8_t eventStarted:1;                       /* Marks if the Event has started properly */
+    uint8_t reserved:5;                           /* Reserved for future use */
 } csFlags_t;
 
 typedef struct

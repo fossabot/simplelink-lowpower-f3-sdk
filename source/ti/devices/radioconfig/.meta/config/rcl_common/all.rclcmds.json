@@ -1133,10 +1133,16 @@
             ]
           },
           {
-            "name": "mode.chFilterEnable",
+            "name": "mode.reserved0",
             "type": "uint16_t",
             "size": "1",
-            "desc": "Enable filtering restricted channels (2402, 2403, 2425, 2426, 2427, 2479, 2480 MHz)",
+            "desc": "Reserved"
+          },
+          {
+            "name": "mode.inlinePhase",
+            "type": "uint16_t",
+            "size": "1",
+            "desc": "Enable adjusting the phase of response tone of the reflector to mirror the incoming tone",
             "enum": [
               {
                 "symbol": "0",
@@ -1151,25 +1157,7 @@
             ]
           },
           {
-            "name": "mode.precal",
-            "type": "uint16_t",
-            "size": "1",
-            "desc": "Enable using the DC precalibration table",
-            "enum": [
-              {
-                "symbol": "0",
-                "value": "0",
-                "label": "Disable"
-              },
-              {
-                "symbol": "1",
-                "value": "1",
-                "label": "Enable"
-              }
-            ]
-          },
-          {
-            "name": "mode.reserved",
+            "name": "mode.reserved1",
             "type": "uint16_t",
             "size": "1",
             "desc": "Reserved"

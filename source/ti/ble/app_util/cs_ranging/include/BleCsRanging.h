@@ -54,15 +54,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <float.h>
+#include <math.h>
+#include <complex.h>
 
 /**
  * Type/Data structure definitions
  */
-#define PCT_LEN         75  /*!< Maximum length of PCT vector*/
-#define MAX_NUM_ANTPATH 4   /*!< Maximum number of antenna path*/
-#define MAX_RANGE       150 /*!< Maximum range can be estimated*/
-#define MAX_NNCC_BIN    64
-#define MAX_WINDOW_SIZE 128
+#define PCT_LEN              75  /*!< Maximum length of PCT vector */
+#define MAX_NUM_ANTPATH      4   /*!< Maximum number of antenna path */
+#define MAX_RANGE            150 /*!< Maximum range can be estimated */
+#define MAX_MUSIC_SPECTRUM   256
+#define RANGINGLIB_HEAP_SIZE 1000 /*!< Size of heap of RangingLib in number of floats */
 
 typedef uint16_t BleCsRanging_Return_t; /*!< Function return code, see BleCsRanging_Status_e */
 
@@ -89,6 +91,22 @@ typedef struct BleCsRanging_Tone_t
     uint32_t q:12;
     uint32_t quality:8;
 } BleCsRanging_Tone_t;
+
+/**
+ *  @brief Container format for timing parameters
+ * The values to use should be same value as in CS_CONFIG_COMPLETE event.
+ * Ranginglib will convert to us internally.
+ * Note: T_SW is special, see index mapping below.
+ *
+ */
+typedef struct BleCsRanging_TimingParams_t
+{
+    uint8_t tIP1; /*!< The interlude period used between RTT packets (us)*/
+    uint8_t tIP2; /*!< The interlude period used between CS tones (us) */
+    uint8_t tFCs; /*!< The period of frequency changes (us) */
+    uint8_t tPM;  /*!< The measurement period of CS tones (us) */
+    uint8_t tSw;  /*!< The switch period (us) */
+} BleCsRanging_TimingParams_t;
 
 /**
  *  @brief Enumerator of algorithm option
@@ -164,22 +182,29 @@ typedef enum
  */
 typedef struct BleCsRanging_Config_t
 {
-    uint16_t maxDistance;               /*!< Maximum distance to measure in meter, must less than 150m */
-    uint16_t numAntPath;                /*!< Number of antenna paths, max 4 */
-    uint16_t numChannels;               /*!< Number of actual CS steps, up to 75 */
-    uint16_t qq3Thresh;                 /*!< Quality threshold to select algorithm dynamically-very good signal */
-    uint16_t qq3Thresh2;                /*!< Second quality threshold to select algorithm dynamically-very bad signal */
-    int8_t NnPathLossThres;             /*!< When PathLoss = txPower - RSSI < NnPathLossThres for debugging purposes */
-    float distanceOffset;               /*!< Distance offset from calibration, in meters */
-    BleCsRanging_MAP_e sumAntPath;      /*!< Individual or Summation before estimating distance */
-    BleCsRanging_GapInterp_e gapInterp; /*!< Interpolation method for gap */
-    BleCsRanging_Algorithm_e algorithm; /*!< Enum to select the algorithm for distance */
+    uint16_t maxDistance;                           /*!< Maximum distance to measure in meter, must less than 150m */
+    uint16_t numAntPath;                            /*!< Number of antenna paths, max 4 */
+    uint16_t numChannels;                           /*!< Number of actual CS steps, up to 75 */
+    float distanceOffset;                           /*!< Distance offset from calibration, in meters */
+    float maxVelocity;                              /*!< Maximum velocity in meters per second for motion compensation */
+    BleCsRanging_MAP_e sumAntPath;                  /*!< Individual or Summation before estimating distance */
+    BleCsRanging_GapInterp_e gapInterp;             /*!< Interpolation method for gap */
+    BleCsRanging_Algorithm_e algorithm;             /*!< Enum to select the algorithm for distance */
     BleCsRanging_DistanceFusion_e distFusion;       /*!< Combine Antenna Path Method */
     BleCsRanging_FilterChain_e antFilter;           /*!< Antenna Path Filtering Method */
     BleCsRanging_AdaptiveProfile_e adaptiveProfile; /*!< NLOS adaptive profile */
     float tqiThresh;                                /*!< TQI threshold */
     float peakEnergyThresh;                         /*!< Peak energy threshold */
     uint16_t peakDiffThresh;                        /*!< Peak distance difference threshold */
+    float dVarMax;                                  /*!< Max distance variance*/
+    uint16_t resetHist;                             /*!< Reset history when disconnected for a long time*/
+    float iirCoeff;                                 /*!< IIR filter coefficient sets weight of current dataset vs history
+                                                         data buffer, in range [0, 1]. Higher value gives more weight to current dataset.*/
+    BleCsRanging_TimingParams_t timingParams;       /*!< Timing parameters */
+    uint8_t *pBuffer; /*!< For Adaptive algorithm: application needs to provide pointer to a history
+                          data buffer for BleCsRanging library to store the last datasets for smoother estimation.
+                          The application must use the function @ref BleCsRanging_getHeapSize to get the required buffer
+                         size. */
 } BleCsRanging_Config_t;
 
 /**
@@ -194,7 +219,7 @@ typedef enum
     BleCsRanging_Status_InvalidOutput, /*!< Invalid output argument error */
     BleCsRanging_Status_APUError,      /*!< APU access error */
     BleCsRanging_Status_MemAllocError, /*!< Dynamic memory allocation on heap failed */
-    BleCsRanging_Status_Undefined      /*!< Undefined, used as uninitialized value, application should never see this. */
+    BleCsRanging_Status_Undefined /*!< Undefined, used as uninitialized value, application should never see this. */
 } BleCsRanging_Status_e;
 
 typedef struct
@@ -216,8 +241,10 @@ typedef struct
     float d_var[MAX_NUM_ANTPATH];          /*!< Debug information: Reserved for future use */
     uint16_t class[MAX_NUM_ANTPATH];       /*!< Debug information: Reserved for future use */
     float runtime_ms;                      /*!< Debug information: Reserved for future use */
-    float powerDelayProfile[MAX_NUM_ANTPATH][MAX_NNCC_BIN]; /*!< Debug information: Reserved for future use */
-    float runtimeProfile[10];                               /*!< Debug information: Reserved for future use */
+    float runtimeProfile[10];              /*!< Debug information: Reserved for future use */
+    uint16_t peakBinIFFT;    /*!< Peak Bin IFFT*/
+    uint16_t peakCountIFFT;  /*!< Peak Count IFFT*/
+    uint16_t ifftValid;      /*!< IFFT Valid*/
 } BleCsRanging_DebugResult_t;
 
 typedef struct
@@ -226,6 +253,7 @@ typedef struct
     float quality;                            /*!< Quality metric QQ3 of the estimated distance */
     float confidence;                         /*!< Confidence of the estimation */
     uint16_t numMPC;                          /*!< Number of multipath-component (MPC) of the estimated distance */
+    float velocity;                           /*!< Estimated velocity (meters/second) used in motion compensation */
     BleCsRanging_DebugResult_t *pDebugResult; /*!< Debug results (optional) */
 } BleCsRanging_Result_t;
 
@@ -236,35 +264,63 @@ typedef struct
  * Main function for Phase-based Ranging algorithms
  * NOTE: Current version assumed input is stored as
  *  [tone_ant0[PCT_LEN], tone_ant1[PCT_LEN], tone_ant2[PCT_LEN], tone_ant3[PCT_LEN]]
+ * NOTE: The new vector with channel list will have 72 entries, chronological order.
+ * The values in the array should be the same channel index as coming from the HCI report.
+ * (lowest=2, highest=76).
  * Future version will relax this assumption
  *
  * @param pResult Result struct
  * @param pTone_i Tone with TQI from Initiator
  * @param pTone_r Tone with TQI from Reflector
- * @param pathLoss pathLoss = txPower-RSSI for each pConfig.numAntPath, set to NULL to disable NN selection based on
- * pConfig.NnPathLossThres
+ * @param pRPL_i Reference Power Level (RPL) from Initiator
+ * @param pRPL_r Reference Power Level (RPL) from Reflector
+ * @param pChannelIdxList Channel index list
  * @param pConfig General config
  *
  * @return Status of distance estimation
  *
  * @retval BleCsRanging_Status_Success          Success. The result in @pResult is valid.
  * @retval BleCsRanging_Status_InvalidInput     Invalid input error. The result in @pResult is invalid.
- * @retval BleCsRanging_Status_MemAllocError    Dynamic memory allocation on heap failed. Not enough memory. The result in @pResult is invalid.
+ * @retval BleCsRanging_Status_MemAllocError    Dynamic memory allocation on heap failed. Not enough memory. The result
+ * in @pResult is invalid.
  * @retval BleCsRanging_Status_Undefined        Undefined error.
  */
-
 BleCsRanging_Status_e BleCsRanging_estimatePbr(BleCsRanging_Result_t *pResult,
-                                               BleCsRanging_Tone_t *pTone_i,
-                                               BleCsRanging_Tone_t *pTone_r,
-                                               BleCsRanging_PathLoss_t *pathLoss,
-                                               BleCsRanging_RPL_t *pRPL_i, // RPL initiator
-                                               BleCsRanging_RPL_t *pRPL_r, // RPL reflector
+                                               BleCsRanging_Tone_t *pTone_i, /*!< Tone with TQI from Local */
+                                               BleCsRanging_Tone_t *pTone_r, /*!< Tone with TQI from Remote */
+                                               BleCsRanging_RPL_t *pRPL_i,   /*!<  Reference Power Level (RPL) local */
+                                               BleCsRanging_RPL_t *pRPL_r,   /*!< Reference Power Level (RPL) remote */
+                                               uint8_t *pChannelIdxList,     /*!< Channel index list */
                                                BleCsRanging_Config_t *pConfig);
 
 /**
- * A default funciton to init the default config
- * NOTE: Declared as ((weak)) for backward-compatible and open to be override
+ * @brief Initialize the configuration structure with default values
+ *
+ * This function initializes the BleCsRanging_Config_t structure with default configuration values.
+ * NOTE: Declared as ((weak)) for backward-compatibility and open to be overridden.
+ *
+ * @param pConfig Pointer to the configuration structure to initialize
+ *
+ * @return Status of initialization
+ *
+ * @retval BleCsRanging_Status_Success      Configuration initialized successfully
+ * @retval BleCsRanging_Status_InvalidInput Invalid input error
  */
 extern BleCsRanging_Status_e __attribute__((weak)) BleCsRanging_initConfig(BleCsRanging_Config_t *pConfig);
+
+/**
+ * @brief Calculate the required heap buffer size for the ranging algorithm
+ *
+ * This function calculates the required buffer size (in bytes) if a history data buffer is
+ * to be used. The application must call this function to determine the buffer size
+ * needed for the pBuffer field in BleCsRanging_Config_t before calling BleCsRanging_estimatePbr.
+ *
+ * @param pConfig Pointer to the configuration structure
+ *
+ * @return Required buffer size in bytes. If pConfig is NULL or invalid, returns 0.
+ *
+ * @see BleCsRanging_Config_t::pBuffer
+ */
+uint16_t BleCsRanging_getHeapSize(BleCsRanging_Config_t *pConfig);
 
 #endif //_BLECSRANGING_H_

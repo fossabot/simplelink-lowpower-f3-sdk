@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025, Texas Instruments Incorporated
+ * Copyright (c) 2018-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,8 +98,8 @@
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_NOSYNC                              0x0002U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_RXERR                               0x0003U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_CONNECT                             0x0004U
-#define PBE_COMMON_RAM_ENDCAUSE_STAT_MAXNAK                              0x0006U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_SCANRSP                             0x0006U
+#define PBE_COMMON_RAM_ENDCAUSE_STAT_MAXNAK                              0x0006U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_EOPSTOP                             0x0007U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_ERR_RXF                             0x00F9U
 #define PBE_COMMON_RAM_ENDCAUSE_STAT_ERR_TXF                             0x00FAU

@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2011-2025, Texas Instruments Incorporated
+ Copyright (c) 2011-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -2691,6 +2691,8 @@ static uint8_t gapBondMgrAddBond(gapBondRec_t *pBondRec,
   uint8_t bondIdx;
   uint8_t rlIndex = INVALID_RESOLVE_LIST_INDEX;
   uint8_t snvErrorCode = SUCCESS;
+  rlEntry_t *pResolvingList = NULL;
+  linkDBItem_t *pItem = NULL;
 
   // Check if the IRK can be found in the Resolving List
   if(pPkt->pIdentityInfo)
@@ -2805,6 +2807,29 @@ static uint8_t gapBondMgrAddBond(gapBondRec_t *pBondRec,
                                       pPkt->pSigningInfo->srk,
                                       pPkt->pSigningInfo->signCounter,
                                       FALSE);
+
+    // Check if the peer device using identity address and added to the RL
+    // as part of saving new bond record
+    if ( snvErrorCode == SUCCESS )
+    {
+      // Get pointer to the resolving list
+      pResolvingList = LL_PRIV_GetResolvingList();
+      // Get linkDB item
+      pItem = MAP_linkDB_Find(pPkt->connectionHandle);
+      // If the peer address is not RPA and it is in the RL, set the Privacy Mode
+      // to Device Privacy Mode.
+      if ( ( pResolvingList != NULL ) && ( pItem != NULL ) &&
+           ( GAP_IS_ADDR_RPR(pItem->addrPriv) == FALSE ) &&
+           ( MAP_LL_PRIV_FindPeerInRL( pResolvingList,
+                                       pBondRec->addrType & MASK_ADDRTYPE_ID,
+                                       pBondRec->addr ) != INVALID_RESOLVE_LIST_INDEX) )
+      {
+        // Set Privacy Mode to Device Privacy Mode
+        HCI_LE_SetPrivacyModeCmd( (pBondRec->addrType & MASK_ADDRTYPE_ID),
+                                  pBondRec->addr,
+                                  LL_DEVICE_PRIVACY_MODE);
+      }
+    }
 
     // Update NV to have same CCC values as GATT database
     gapBondMgr_SyncCharCfg(pPkt->connectionHandle);

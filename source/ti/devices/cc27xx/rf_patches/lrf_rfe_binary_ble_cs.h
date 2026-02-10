@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025, Texas Instruments Incorporated
+ * Copyright (c) 2018-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #include <stdint.h>
 
 /* Length of binary image. */
-#define LRF_RFE_BINARY_BLE_CS_LENGTH 888 
+#define LRF_RFE_BINARY_BLE_CS_LENGTH 968 
 
 /* Declaration of raw binary. */
 extern const uint32_t LRF_RFE_binary_ble_cs[LRF_RFE_BINARY_BLE_CS_LENGTH];

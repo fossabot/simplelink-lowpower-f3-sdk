@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,12 @@ extern "C"
  /*********************************************************************
   * DEFINES
   */
+
+// Maximum number of procedures supported
+#define RANGING_DB_CLIENT_MAX_NUM_PROC  ((uint8_t) 1)
+
+// Invalid handle value
+#define RANGING_DB_CLIENT_INVALID_HANDLE ((uint8_t) 0xFF)
 
  /*********************************************************************
   * TYPEDEFS
@@ -143,53 +149,54 @@ typedef struct
  * @return  SUCCESS or stack call status
  */
 uint8_t RangingDBClient_initDB(void);
-
 /*********************************************************************
  * @fn      RangingDBClient_procedureOpen
  *
- * @brief   This function open the ranging procedure data base
- *          variables and array per connection handle.
+ * @brief   This function open a new ranging procedure DB.
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   None
  *
  * output parameters
  *
  * @param   None
  *
- * @return  SUCCESS - if the connection handle was successfully assigned.
- *          FAILURE - if no available entry found in the DB.
- *          INVALIDPARAMETER - if the connection handle is invalid.
+ * @return  @ref RANGING_DB_CLIENT_INVALID_HANDLE - if no available entry found in the DB.
+ * @return  Handle of the opened procedure DB otherwise
  */
-uint8_t RangingDBClient_procedureOpen(uint16_t connHandle);
+uint8_t RangingDBClient_procedureOpen(void);
 
 /*********************************************************************
  * @fn      RangingDBClient_procedureClose
  *
- * @brief   This function closes the ranging procedure data base.
+ * @brief   This function closes the ranging procedure DB.
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   handle - Handle of the procedure DB to close.
  *
  * output parameters
  *
  * @param   None
  *
- * @return  SUCCESS - if the connection handle was successfully cleared.
- *          INVALIDPARAMETER - if the connection handle is invalid.
+ * @return SUCCESS - if the given handle was successfully cleared.
+ * @return INVALIDPARAMETER - if the given handle is invalid or not
+ *                            assigned.
  */
-uint8_t RangingDBClient_procedureClose(uint16_t connHandle);
+uint8_t RangingDBClient_procedureClose(uint8_t handle);
 
 /*********************************************************************
  * @fn      RangingDBClient_addData
  *
- * @brief   This function add raw data to the Ranging DB.
+ * @brief   This function Add raw Data to the Ranging DB.
+ *          It adds the data as long as the total procedure size
+ *          does not exceed the maximum allowed size, and the segment
+ *          number is valid and was not added before.
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   handle - Handle of the procedure DB.
  * @param   segmentNum - Segment number in the procedure data to add the new data.
  * @param   datalen - Length of the data to be added.
  * @param   pData - Pointer to the data to be added.
@@ -202,7 +209,7 @@ uint8_t RangingDBClient_procedureClose(uint16_t connHandle);
  *          bleMemAllocError - if memory allocation failed.
  *          INVALIDPARAMETER - if the input parameters are invalid.
  */
-uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData);
+uint8_t RangingDBClient_addData(uint8_t handle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData);
 
 /*********************************************************************
  * @fn      RangingDBClient_getData
@@ -216,7 +223,7 @@ uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   handle - Handle of the procedure DB.
  *
  * output parameters
  *
@@ -224,29 +231,29 @@ uint8_t RangingDBClient_addData(uint16_t connHandle, uint8_t segmentNum, uint16_
  *
  * @return  SUCCESS - if the data was successfully retrieved.
  *          INVALIDPARAMETER - if the input parameters are invalid, or
- *                              not all segments have been received.
+ *                             not all segments have been received.
  *          bleMemAllocError - if memory allocation failed.
  */
-uint8_t RangingDBClient_getData(uint16_t connHandle, RangingDBClient_procedureSegmentsReader_t* segmentsReader);
+uint8_t RangingDBClient_getData(uint8_t handle, RangingDBClient_procedureSegmentsReader_t* segmentsReader);
 
 /*********************************************************************
  * @fn      RangingDBClient_clearProcedure
  *
  * @brief   This function clears the ranging procedure data for a given
- *          connection handle.
+ *          handle.
  *
  * input parameters
  *
- * @param   connHandle - Connection handle.
+ * @param   handle - Handle of the procedure DB.
  *
  * output parameters
  *
  * @param   None
  *
- * @return  SUCCESS - if the connection handle was successfully cleared.
- *         INVALIDPARAMETER - if the connection handle is invalid.
+ * @return  SUCCESS - if the given handle was successfully cleared.
+ *          INVALIDPARAMETER - if the given handle is invalid.
  */
-uint8_t RangingDBClient_clearProcedure(uint16_t connHandle);
+uint8_t RangingDBClient_clearProcedure(uint8_t handle);
 
 /*********************************************************************
  * @fn      RangingDBClient_getRangingHeader

@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2009-2025, Texas Instruments Incorporated
+ Copyright (c) 2009-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -452,10 +452,22 @@ void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8 configId, uint8 status)
       pMsg->ch3cShape          = csConfig->ch3cShape;
       pMsg->ch3CJump           = csConfig->ch3CJump;
       pMsg->rfu0               = csConfig->rfu0;
-      pMsg->tIP1               = csConfig->tIP1;
-      pMsg->tIP2               = csConfig->tIP2;
-      pMsg->tFCs               = csConfig->tFCs;
-      pMsg->tPM                = csConfig->tPM;
+
+      if (status == CS_STATUS_SUCCESS)
+      {
+        pMsg->tIP1             = llCsDbGetTip(csConfig->tIP1);
+        pMsg->tIP2             = llCsDbGetTip(csConfig->tIP2);
+        pMsg->tFCs             = llCsDbGetTfcs(csConfig->tFCs);
+        pMsg->tPM              = llCsDbGetTpm(csConfig->tPM);
+      }
+      else
+      {
+        pMsg->tIP1             = llCsDbGetTip(0);
+        pMsg->tIP2             = llCsDbGetTip(0);
+        pMsg->tFCs             = llCsDbGetTfcs(0);
+        pMsg->tPM              = llCsDbGetTpm(0);
+      }
+
       pMsg->rfu1               = csConfig->rfu1;
       osal_memcpy(&pMsg->channelMap, &csConfig->channelMap, CS_CHM_SIZE);
     }

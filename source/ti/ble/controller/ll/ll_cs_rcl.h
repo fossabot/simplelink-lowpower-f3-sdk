@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -470,7 +470,7 @@ csStatus_e llCsAllocCsTask( void );
 void llCsFreeCsTask( void );
 
 /*******************************************************************************
- * @fn          llCsTaskSetup
+ * @fn          llCsTaskSetupCallback
  *
  * @brief       Setup function for the CS Task.
  *              This function will set the ProcedureDoneStatus to Active state.
@@ -488,7 +488,7 @@ void llCsFreeCsTask( void );
  *
  * @return      None
  */
-void llCsTaskSetup( taskInfo_t *llTask );
+void llCsTaskSetupCallback( taskInfo_t *llTask );
 
 /*******************************************************************************
  * @fn          llCsInitStepAndResultBuffers

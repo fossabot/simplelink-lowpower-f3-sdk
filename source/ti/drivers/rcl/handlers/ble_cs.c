@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, Texas Instruments Incorporated
+ * Copyright (c) 2022-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,7 +75,7 @@
 #define BLE_CS_BASE_FREQ_MHZ            2402
 #define BLE_CS_MAX_CHANNEL              78
 #define BLE_CS_MID_CHANNEL              40
-#define BLE_CS_NUM_CHANNELS             90
+#define BLE_CS_NUM_CHANNELS             79
 #define BLE_CS_NUM_INVALID_CHANNELS     7
 #define BLE_CS_SILENT_CHANNEL           100
 #define BLE_CS_NUM_PERMUTATION          24
@@ -88,13 +88,6 @@
 #define BLE_CS_FIRST_BATCH_SIZE         2
 #define BLE_CS_TONE_QUALITY_HIGH_THR    20
 #define BLE_CS_TONE_QUALITY_NA          255
-#define BLE_CS_RPL_HIGH_GAIN_THR        (-55)
-#define BLE_CS_RPL_LOW_GAIN_THR         (-35)
-#define BLE_CS_RPL_DELTA_DB             (-6)
-#define BLE_CS_RPL_HIGH_GAIN            (-45)
-#define BLE_CS_RPL_LOW_GAIN             (-21)
-#define BLE_CS_HIGH_GAIN_DB             (RCL_CmdBleCs_RxGain_High * RCL_BLE_CS_STEP_RX_GAIN_DB)
-#define BLE_CS_LOW_GAIN_DB              (RCL_CmdBleCs_RxGain_Low * RCL_BLE_CS_STEP_RX_GAIN_DB)
 #define BLE_CS_TONE_EXTENSION_INITIATOR_TX 0b01
 #define BLE_CS_TONE_EXTENSION_REFLECTOR_TX 0b10
 #define BLE_CS_COMBINE_IQ(i, q)         ((((int32_t) i) & 0xFFFF) | ((((int32_t) q) & 0xFFFF) << 16))
@@ -106,18 +99,19 @@
 #define INT32_L(x)                      ((x) & 0xFFFF)
 
 /* Prepare constant terms for step specific calculations */
-#define T1US  48  // Constant 1us at 48MHz
-#define T3US  144 // Constant 3us at 48MHz
-#define TRD   240 // Constant 5us at 48MHz
-#define TGD   480 // Constant 10us at 48MHz
-#define TPLT  960 // Constant 20us at 48MHz
-#define TPYL  0   // Unknown at this point
+#define T1US  RCL_BLE_CS_US_TO_MCE_TIMER(1)
+#define T3US  RCL_BLE_CS_US_TO_MCE_TIMER(3)
+#define TRD   RCL_BLE_CS_US_TO_MCE_TIMER(5)
+#define TGD   RCL_BLE_CS_US_TO_MCE_TIMER(10)
+#define TFM   RCL_BLE_CS_US_TO_MCE_TIMER(80)
+#define TPLT  RCL_BLE_CS_US_TO_MCE_TIMER(20)
+#define TPYL  0   // Unknown at this point, will be calculated per step
 
 /* Define Antenna Indexes */
-#define A1  0
-#define A2  1
-#define A3  2
-#define A4  3
+#define A1 (0)
+#define A2 (1)
+#define A3 (2)
+#define A4 (3)
 
 /*
  *  ======== Execution status ========
@@ -140,6 +134,7 @@ RCL_CmdBleCs_StepResult_Internal stepResult;
 
 /* Precalculated base terms */
 uint32_t tStepLut[RCL_CmdBleCs_StepMode_Length];
+uint16_t tPllRx[RCL_CmdBleCs_StepMode_Length];
 uint16_t tAdjALut[RCL_CmdBleCs_StepMode_Length];
 uint16_t tAdjBLut[RCL_CmdBleCs_StepMode_Length];
 uint16_t tAntALut[RCL_CmdBleCs_StepMode_Length];
@@ -236,7 +231,6 @@ typedef struct {
     uint16_t        tPostProcessDiv4;   /*!<  Duration set aside for post processing */
     uint16_t        tRxTimeoutI0;       /*!<  Initiator must terminate packet reception before end of step */
     uint16_t        tRxTimeoutI3;       /*!<  Initiator must terminate packet reception before end of step */
-    int16_t         tPilotAdjust;       /*!<  Pilot tone need to be adjusted with shaper delay */
     uint16_t        tStartup;           /*!<  Duration set aside for starting up the topSMs and start to emit a tone on the antenna */
     uint16_t        tPacket;            /*!<  Duration of packet [preamble + AA + Trailer] */
     uint16_t        tRxTimeoutRn;       /*!<  Reception timeout on reflector side */
@@ -285,7 +279,6 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
         /* Tuned */
         .tStartup          = 93,  // 1.937us (pbe_timer_event -> mce_timer start)
         .tTxModDelay       = 245, // 5.109us (wait -> signal on shaper)
-        .tPilotAdjust      = 0,
         .tPostProcessDiv1  = 936, // 19.5us
         .tPostProcessDiv4  = 234, // 19.5us
         .tInfiniteRx       = 60,  // 1.25us
@@ -363,7 +356,6 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
         /* Tuned */
         .tStartup          = 93,  // 1.937us (pbe_timer_event -> mce_timer start)
         .tTxModDelay       = 245, // 5.109us (wait -> signal on shaper)
-        .tPilotAdjust      = 0,
         .tPostProcessDiv1  = 936, // 19.5us
         .tPostProcessDiv4  = 234, // 19.5us
         .tInfiniteRx       = 60,  // 1.25us
@@ -373,7 +365,7 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
         .tDem              = 914, // 19.05us
 
         .tRxTimeoutI0      = RCL_BLE_CS_US_TO_MCE_TIMER(65), // MCE
-        .tRxTimeoutI3      = RCL_BLE_CS_US_TO_MCE_TIMER(50), // MCE
+        .tRxTimeoutI3      = RCL_BLE_CS_US_TO_MCE_TIMER(49), // MCE
         .tRxTimeoutRn      = RCL_BLE_CS_US_TO_MCE_TIMER(64), // MCE
 
         .pctConfig = {
@@ -393,15 +385,15 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
                 /* Initiator */
                 .mode0 = {-293, 0},
                 .mode1 = {-293, 0},
-                .mode2 = {-138, +112},
-                .mode3 = {-293, -22}
+                .mode2 = {-149, +112},
+                .mode3 = {-293, +26}
             },
             {
                 /* Reflector */
                 .mode0 = {0, 0},
                 .mode1 = {0, 0},
-                .mode2 = {-94, -78},
-                .mode3 = {-96, +10}
+                .mode2 = {-48, -456},
+                .mode3 = {0, -504}
             }
         },
 
@@ -440,7 +432,6 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
         /* Tuned */
         .tStartup          = 95,   // 1.979us (pbe_timer_event -> mce_timer start)
         .tTxModDelay       = 142,  // 2.957us (wait -> signal on shaper)
-        .tPilotAdjust      = 0,
         .tPostProcessDiv1  = 720,  // 15us
         .tPostProcessDiv4  = 180,  // 15us
         .tInfiniteRx       = 60,   // 1.25us
@@ -477,8 +468,8 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
                 /* Reflector */
                 .mode0 = {0, 0},
                 .mode1 = {0, 0},
-                .mode2 = {-38, -132},
-                .mode3 = {-60, -30}
+                .mode2 = {-38, -512},
+                .mode3 = {-60, -456}
             }
         },
 
@@ -516,7 +507,6 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
         /* Tuned */
         .tStartup          = 95,   // 1.979us (pbe_timer_event -> mce_timer start)
         .tTxModDelay       = 142,  // 2.957us (wait -> signal on shaper)
-        .tPilotAdjust      = 0,
         .tPostProcessDiv1  = 720,  // 15us
         .tPostProcessDiv4  = 180,  // 15us
         .tInfiniteRx       = 60,   // 1.25us
@@ -551,10 +541,10 @@ const RCL_PhyConfig_t phyConfigLut[RCL_CmdBleCs_Phy_Length] = {
             },
             {
                 /* Reflector */
-                .mode0 = {0, 0},
-                .mode1 = {0, 0},
-                .mode2 = {-38, -132},
-                .mode3 = {-60, -30}
+                 .mode0 = {0, 0},
+                 .mode1 = {0, 0},
+                .mode2 = {-38, -512},
+                .mode3 = {-60, -456}
             }
         },
 
@@ -592,8 +582,7 @@ const int8_t foffErrorLut[BLE_CS_NUM_CHANNELS] = {
     /*2440 MHz =*/ -10,-10,-14,-14,-14,-14,-18,-18,-18,-22,
     /*2450 MHz =*/ -22,-22,-26,-26,-26,-26,-30,-30,-30,-34,
     /*2460 MHz =*/ -34,-34,-34,-38,-38,-38,-42,-42,-42,-46,
-    /*2470 MHz =*/ -46,-46,-46,-50,-50,-50,-54,-54,-54,-54,
-    /*2480 MHz =*/ -58,-58,-58,-62,-62,-62,-62,-66,-66,-66
+    /*2470 MHz =*/ -46,-46,-46,-50,-50,-50,-54,-54,-54,-54
 };
 
 /* Look up table of payload length in units of MCE Timer at rate of [1M]. Scaling dynamically if needed. */
@@ -628,7 +617,7 @@ static void RCL_Handler_BLE_CS_preprocessStep(RCL_CmdBleCs *pCmd, RCL_CmdBleCs_S
 static RCL_CmdBleCs_StepResult_Internal* RCL_Handler_BLE_CS_fetchNextStepResult(RCL_CmdBleCs *pCmd);
 static int16_t RCL_Handler_BLE_CS_convertFreqOffset(int16_t foffMeasured, bool ceil);
 static int16_t RCL_Handler_BLE_CS_convertRtt(RCL_CmdBleCs *pCmd, uint8_t mode, int8_t channel, uint8_t payload, bool secondToneExtensionSlot, int32_t toAD, uint16_t corrBefore, uint16_t corrPeak, uint16_t corrAfter);
-static uint32_t RCL_Handler_BLE_CS_convertPct(const RCL_CmdBleCs_IQSample *pPct, const uint8_t channelIdx, const uint8_t rplScaler);
+static uint32_t RCL_Handler_BLE_CS_convertPct(const RCL_CmdBleCs_IQSample *pPct, const uint8_t channelIdx, bool inlinePhase);
 static uint8_t RCL_Handler_BLE_CS_calcQ3(uint16_t qMin, uint16_t qMax, uint16_t qAvg);
 static uint8_t RCL_Handler_BLE_CS_convertPctQuality(uint16_t qMin, uint16_t qMax, uint16_t qAvg, bool toneExtensionSlot, bool toneExpected, bool toneQualityOverride);
 static uint16_t RCL_Handler_BLE_CS_estimateStepResultLength(RCL_CmdBleCs *pCmd,RCL_CmdBleCs_StepResult_Internal* src);
@@ -873,54 +862,6 @@ static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bo
     if (pResult)
     {
         memcpy(pResult, (RCL_CmdBleCs_StepResult_Internal *) &stepResult, sizeof(RCL_CmdBleCs_StepResult_Internal));
-
-        #define DCDEBUG 1
-        #ifdef DCDEBUG
-        /* TODO (RCL-777): This code is used for performance analysis and shall be removed */
-        if ((pResult->mode == RCL_CmdBleCs_StepMode_2)
-        ||  (pResult->mode == RCL_CmdBleCs_StepMode_3))
-        {
-            RCL_CmdBleCs_IQSample high;
-            RCL_CmdBleCs_IQSample low;
-
-            if ((pCmd->precalTable) && (pCmd->precalTable->valid))
-            {
-                pCmd->precalTable->callback(pCmd->precalTable,
-                                            pResult->channelIdx,
-                                            &high,
-                                            &low);
-
-                /* Read the RX gain to decide which compensation value to return (high vs low gain) */
-                uint8_t rxGaindB = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_RFGAIN);
-                if (rxGaindB == (RCL_BLE_CS_STEP_RX_GAIN_DB * RCL_CmdBleCs_RxGain_High))
-                {
-                    pResult->dc.i = high.i;
-                    pResult->dc.q = high.q;
-                }
-                else
-                {
-                    pResult->dc.i = low.i;
-                    pResult->dc.q = low.q;
-                }
-            }
-            else
-            {
-                /* If mode-0 compensation is used, the value is available in the actuation registers */
-                pResult->dc.i = HWREG_READ_LRF(LRFDMDM_BASE + LRFDMDM_O_DEMCODC1);
-                pResult->dc.q = HWREG_READ_LRF(LRFDMDM_BASE + LRFDMDM_O_DEMCODC2);
-
-                /* Sign extend from 13bit to 16bit */
-                if (pResult->dc.i & 0x1000)
-                {
-                    pResult->dc.i |= 0xF000;
-                }
-                if (pResult->dc.q & 0x1000)
-                {
-                    pResult->dc.q |= 0xF000;
-                }
-            }
-        }
-        #endif
     }
 
     /* Identify HCI compression size */
@@ -959,14 +900,10 @@ static void RCL_Handler_BLE_CS_retrieveAndStoreNextResult(RCL_CmdBleCs* pCmd, bo
             pSubeventResults->numStepsReported     += 1;
             pSubeventResults->subeventDoneStatus   = (pCmd->mode.nSteps != pCmd->stats->nResultsRead);
 
-            /* Only available after AGC is locked:
+            /* Only available after AGC is locked
              * RPL = IQ[dBm] - 20*log(IQ/2048) */
-            pSubeventResults->referencePowerLevel   = (HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_RFGAIN) == BLE_CS_HIGH_GAIN_DB)
-                                                    ? (BLE_CS_RPL_HIGH_GAIN)
-                                                    : (BLE_CS_RPL_LOW_GAIN);
-            pSubeventResults->referencePowerLevel  += (pCmd->stats->rplScaler)
-                                                    ? (0)
-                                                    : (BLE_CS_RPL_DELTA_DB);
+            pSubeventResults->referencePowerLevel = -(int8_t) HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_RFGAIN);
+
             /* Only available after last mode-0 step */
             pSubeventResults->frequencyCompensation = (pCmd->mode.role == RCL_CmdBleCs_Role_Initiator)
                                                     ? RCL_Handler_BLE_CS_convertFreqOffset(HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_FOFFCOMP) << 2, true)
@@ -1202,7 +1139,7 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
     }
 
     /* Mode */
-    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE) = pCmd->mode.val;
+    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE)   = pCmd->mode.val;
 
     /* Antenna */
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_ANTN)   = antennaEntry->numPath;
@@ -1214,7 +1151,6 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
 
     /* Timing */
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TFCS)    = pCmd->timing.tFcs - (TPLT + config->tStartup); // Pilot tone + startup time is included into the TFCS budget
-    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TFM)     = pCmd->timing.tFm;
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TPM)     = pCmd->timing.tPm;
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TIP1)    = pCmd->timing.tIp1;
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TIP2)    = pCmd->timing.tIp2;
@@ -1236,16 +1172,19 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
 
     /* Frequency dependent config (2402MHz + channel dependent correction by RFE */
     HWREG_WRITE_LRF(LRFDMDM32_BASE + LRFDMDM32_O_DEMFRAC1_DEMFRAC0) = 0x0D800000;     // P: Constant
-    HWREG_WRITE_LRF(LRFDMDM32_BASE + LRFDMDM32_O_DEMFRAC3_DEMFRAC2) = 0x0000399A;     // Q: Being dinammically scaled by RFE per channel
+    HWREG_WRITE_LRF(LRFDMDM32_BASE + LRFDMDM32_O_DEMFRAC3_DEMFRAC2) = 0x0000399A;     // Q: Being dynamically scaled by RFE per channel
 
     /* Shaper gain */
     HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_MOD0) = 0x1824;
 
-    /* Configure AGC with gain=15/7 or a static value=gain/gain */
-    uint16_t rxGain = pCmd->frontend.rxGain;
-    HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE0) = (rxGain == 0)
-                                                     ? (0x30F7)
-                                                     : ((rxGain << 4) | rxGain);
+    /* Configure AGC */
+    if (pCmd->frontend.rxGain == RCL_CmdBleCs_RxGain_Auto)
+    {
+        /* [0:7]   = Max gain RSSI threshold
+           [8:11]  = Max gain index
+           [12]    = 3/6 dB step selection */
+        HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE0) = 0x0EC9;
+    }
 
     uint8_t lutIdx = RCL_CmdBleCs_Tpm_40us;
     if (pCmd->timing.tPm <= RCL_BLE_CS_US_TO_MCE_TIMER(20))
@@ -1271,16 +1210,6 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
     /* Fife IIR adaptation rate = 64 (provides good mode-0 frequency tolerance for both PHYs) */
     HWREG_WRITE_LRF(LRFDMDM_BASE + LRFDMDM_O_DEMFIFE0) = 0x0007;
 
-    /* Use precalibration values or mode-0 estimates */
-    if ((pCmd->precalTable) && (pCmd->precalTable->valid) && (pCmd->mode.precal))
-    {
-        HWREG_WRITE_LRF(LRFDMDM_BASE + LRFDMDM_O_SPARE1) = (1<<8);
-    }
-    else
-    {
-        HWREG_WRITE_LRF(LRFDMDM_BASE + LRFDMDM_O_SPARE1) = 0;
-    }
-
     /* Baudrate specific settings */
     HWREG_WRITE_LRF(LRFDMDM_BASE + LRFDMDM_O_SPARE0)                      = config->pctConfig[lutIdx].val;
     HWREG_WRITE_LRF(LRFDMDM_BASE + LRFDMDM_O_BAUD)                        = config->baud;
@@ -1292,12 +1221,10 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TPOSTPROCESSDIV) = config->tPostProcessDiv4;
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TRXTIMEOUTI0)    = config->tRxTimeoutI0;
     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TRXTIMEOUTI3)    = config->tRxTimeoutI3;
-    HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TPILOTADJ)       = config->tPilotAdjust;
 
     /* Alias for dynamic parameters for calculations */
     uint16_t tIp1  = pCmd->timing.tIp1;
     uint16_t tIp2  = pCmd->timing.tIp2;
-    uint16_t tFm   = pCmd->timing.tFm;
     uint16_t tPm   = pCmd->timing.tPm;
     uint16_t tFcs  = pCmd->timing.tFcs;
     uint16_t tSw   = pCmd->timing.tSw;
@@ -1315,7 +1242,7 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
 
     /* Calculate base terms of step duration for each mode.
        Later can be extended with optional payload per step before sending it over to the PBE. */
-    tStepLut[RCL_CmdBleCs_StepMode_0] = (tFcs + ((tPkt + TRD) << 1) + TGD + tIp1 + tFm);
+    tStepLut[RCL_CmdBleCs_StepMode_0] = (tFcs + ((tPkt + TRD) << 1) + TGD + tIp1 + TFM);
     tStepLut[RCL_CmdBleCs_StepMode_1] = (tFcs + ((tPkt + TPYL + TRD) << 1) + tIp1);
     tStepLut[RCL_CmdBleCs_StepMode_2] = (tFcs + ((((tPm + tSw) * (nPath + 1)) + TRD) << 1) + tIp2);
     tStepLut[RCL_CmdBleCs_StepMode_3] = (tFcs + ((tPkt + TPYL + TGD + ((tPm + tSw) * (nPath + 1)) + TRD) << 1) + tIp2);
@@ -1346,6 +1273,12 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
         tRttAdjustLut[RCL_CmdBleCs_StepMode_2] = 0; /* NA, no RTT defined */
         tRttAdjustLut[RCL_CmdBleCs_StepMode_3] = TPYL + (TGD << 1) + (((tPm + tSw) * ((nPath << 1) + 1))) + TRD + tIp2 + tPkt + tRtt->mode3[0];
 
+        /* LIF */
+        tPllRx[RCL_CmdBleCs_StepMode_0] = 0xFFFF;
+        tPllRx[RCL_CmdBleCs_StepMode_1] = 0xFFFF;
+        tPllRx[RCL_CmdBleCs_StepMode_2] = 0xFFFF;
+        tPllRx[RCL_CmdBleCs_StepMode_3] = 0xFFFF;
+
         /* Initiator: timeout is hardcoded in the MCE in order to comply with the static timegrid.
            This parameter is therefor ignored.  */
         HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TRXTIMEOUTR013)   = 0;
@@ -1363,14 +1296,20 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
         /* TX */
         tAdjBLut[RCL_CmdBleCs_StepMode_0] = tAdj->mode0[1];
         tAdjBLut[RCL_CmdBleCs_StepMode_1] = tAdj->mode1[1];
-        tAdjBLut[RCL_CmdBleCs_StepMode_2] = tAdj->mode2[1] - tFidc - tSw /* + TRD */ + tIp2 - TPLT; // Ramp-down delay is added by the topSM
-        tAdjBLut[RCL_CmdBleCs_StepMode_3] = tAdj->mode3[1] - tFidc - tSw /* + TRD */ + tIp2 - TPLT - tTxModDelay;
+        tAdjBLut[RCL_CmdBleCs_StepMode_2] = tAdj->mode2[1] - tFidc + TRD  + tIp2 - TPLT - tTxModDelay;
+        tAdjBLut[RCL_CmdBleCs_StepMode_3] = tAdj->mode3[1] - tFidc + TRD  + tIp2 - TPLT - tTxModDelay;
 
         /* ToAD common term */
         tRttAdjustLut[RCL_CmdBleCs_StepMode_0] = 0; /* NA, no RTT defined */
         tRttAdjustLut[RCL_CmdBleCs_StepMode_1] = TPYL + TRD + tIp1 + tPkt - tRtt->mode1[1];
         tRttAdjustLut[RCL_CmdBleCs_StepMode_2] = 0; /* NA, no RTT defined */
         tRttAdjustLut[RCL_CmdBleCs_StepMode_3] = TPYL + (TGD << 1) + (((tPm + tSw) * ((nPath << 1) + 1))) + TRD + tIp2 + tPkt - tRtt->mode3[1];
+
+        /* LIF */
+        tPllRx[RCL_CmdBleCs_StepMode_0] = 0xFFFF;
+        tPllRx[RCL_CmdBleCs_StepMode_1] = 0xFFFF;
+        tPllRx[RCL_CmdBleCs_StepMode_2] = RCL_BLE_CS_MCE_TIMER_TO_PREFREF(TPLT- tStartup + (tPm + tSw) * (nPath + 1));
+        tPllRx[RCL_CmdBleCs_StepMode_3] = RCL_BLE_CS_MCE_TIMER_TO_PREFREF(TPLT- tStartup + (tPm + tSw) * (nPath + 1));
 
         /* The miminum value is defined by the static timegrid. Different for each datarate and implemented by the MCE. */
         HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TRXTIMEOUTR013) = config->tRxTimeoutRn;
@@ -1382,7 +1321,7 @@ static void RCL_Handler_BLE_CS_preprocessCommand(RCL_CmdBleCs *pCmd)
             : RCL_BLE_CS_MCE_TIMER_TO_PBE_TIMER(tFcs + (tPkt - tTr) + tDem + T3US + pCmd->timing.tRxWideningR0);
 
         HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_TSTEPREMAININGR0) =
-          RCL_BLE_CS_MCE_TIMER_TO_PBE_TIMER(0 - tDem + tTr + TRD + tIp1 + tPkt + TGD + tFm + TRD - tInfiniteRx);
+          RCL_BLE_CS_MCE_TIMER_TO_PBE_TIMER(0 - tDem + tTr + TRD + tIp1 + tPkt + TGD + TFM + TRD - tInfiniteRx);
     }
 
     /* Adjustment of antenna control per mode per phy */
@@ -1421,27 +1360,6 @@ static void RCL_Handler_BLE_CS_preprocessStep(RCL_CmdBleCs *pCmd, RCL_CmdBleCs_S
     {
         pStepI->payloadTx[i] = pStep->payloadTx[i];
         pStepI->payloadRx[i] = pStep->payloadRx[i];
-    }
-
-    /* Disable restricted channels if filtering is turned on */
-    if (pCmd->mode.chFilterEnable == true)
-    {
-        uint16_t channelIdx = pStepI->channelIdx;
-
-        if (  channelIdx > BLE_CS_MAX_CHANNEL
-           || channelIdx == 0  /* Advertisement frequency (channel 37)*/
-           || channelIdx == 1
-           || channelIdx == 23
-           || channelIdx == 24 /* Advertisement frequency (channel 38)*/
-           || channelIdx == 25
-           || channelIdx == 77
-           || channelIdx == 78 /* Advertisement frequency (channel 39)*/)
-        {
-            /* The user configured a channel outside the allowed domain or
-               a restricted channel. Guard channels also covered!
-               We still keep the timegrid but silence this step. */
-            pStepI->channelIdx = BLE_CS_SILENT_CHANNEL;
-        }
     }
 
     /* Decode the base term for the complete duration of the step */
@@ -1491,6 +1409,9 @@ static void RCL_Handler_BLE_CS_preprocessStep(RCL_CmdBleCs *pCmd, RCL_CmdBleCs_S
     /* Antenna timing from beginning of step */
     pStepI->tAntennaA = tAntALut[pStepI->mode] + tPyl;
     pStepI->tAntennaB = tAntBLut[pStepI->mode];
+
+    /* LIF duration per step */
+    pStepI->tPllRx = (uint16_t) tPllRx[pStepI->mode];
 
     /* DC compensation */
     if ((pCmd->precalTable) && (pCmd->precalTable->valid))
@@ -1758,8 +1679,7 @@ void RCL_Handler_BLE_CS_rotateVector(int16_t *pct_i, int16_t *pct_q, int16_t the
 /*
  *  ======== RCL_Handler_BLE_CS_convertPct ========
  */
-static uint32_t RCL_Handler_BLE_CS_convertPct(const RCL_CmdBleCs_IQSample *pPct, const uint8_t channelIdx,
-                                              const uint8_t rplScaler)
+static uint32_t RCL_Handler_BLE_CS_convertPct(const RCL_CmdBleCs_IQSample *pPct, const uint8_t channelIdx, bool inlinePhase)
 {
     /* Use the linked PCT compensation table */
     const RCL_CmdBleCs_PctCompTable *pTable = (const RCL_CmdBleCs_PctCompTable *) &RCL_bleCsPctCompTable;
@@ -1769,99 +1689,91 @@ static uint32_t RCL_Handler_BLE_CS_convertPct(const RCL_CmdBleCs_IQSample *pPct,
         return 0;
     }
 
-    const uint32_t DELAY_FRAC_BITS = 4;
-    const uint32_t THETA_SCALE_BITS = 21;
+    int16_t  pct_i = pPct->i;
+    int16_t  pct_q = pPct->q;
 
-    const uint32_t MAGN_FRAC_BITS = 6;
-    const uint32_t MAGN_K_SCALE_BITS = 7;           // k = magnCoeff / 127
-    uint32_t iqDownscaleBits = rplScaler;
-
-    int16_t pct_i = pPct->i;
-    int16_t pct_q = pPct->q;
-
-    if ((pTable->enPhaseComp || pTable->enMagnComp) && (pTable->firstChannelIdx <= channelIdx))
+    /* If reflector is reporting in inline-PCT format,
+       both the phase rotation and the RPL scaling must be skipped. */
+    if (inlinePhase == false)
     {
-        /* Compensate PCT to remove antenna/front-end delay and gain imbalance */
-        uint8_t baseOffset = (channelIdx - pTable->firstChannelIdx);
-        uint8_t leftIdx = baseOffset / pTable->chSpacing;
-        uint8_t leftOffset = baseOffset - (leftIdx * pTable->chSpacing);
-        uint8_t rightIdx = leftIdx + ((leftOffset > 0) ? 1 : 0);
+        const uint32_t DELAY_FRAC_BITS = 4;
+        const uint32_t THETA_SCALE_BITS = 21;
 
-        if (rightIdx < pTable->numEntries)
+        const uint32_t MAGN_FRAC_BITS = 6;
+        const uint32_t MAGN_K_SCALE_BITS = 7;           // k = magnCoeff / 127
+
+        if ((pTable->enPhaseComp || pTable->enMagnComp) && (pTable->firstChannelIdx <= channelIdx))
         {
-            if (pTable->enPhaseComp)
+            /* Compensate PCT to remove antenna/front-end delay and gain imbalance */
+            uint8_t baseOffset = (channelIdx - pTable->firstChannelIdx);
+            uint8_t leftIdx = baseOffset / pTable->chSpacing;
+            uint8_t leftOffset = baseOffset - (leftIdx * pTable->chSpacing);
+            uint8_t rightIdx = leftIdx + ((leftOffset > 0) ? 1 : 0);
+
+            if (rightIdx < pTable->numEntries)
             {
-                /* Linear interpolate phaseDelay from LUT */
+                if (pTable->enPhaseComp)
+                {
+                    /* Linear interpolate phaseDelay from LUT */
 
-                /* Convert phaseDelay lsbit unit from [32 ps] to [1/2^INTPOL_FRAC_BITS ps] */
-                uint32_t phaseDelay0 = pTable->entries[leftIdx].phaseDelay << (5+DELAY_FRAC_BITS);
-                uint32_t phaseDelay1 = pTable->entries[rightIdx].phaseDelay << (5+DELAY_FRAC_BITS);
-                uint32_t phaseDelay = phaseDelay0;
-                if (leftOffset > 0)
-                {
-                    phaseDelay += ((phaseDelay1 - phaseDelay0) * leftOffset) / pTable->chSpacing;
-                }
-                /*
-                * For given channel, calc phase angle theta in units of 2*pi/2^16
-                * theta = 2*pi*f*t * 2^16/(2*pi) = f*t*2^16 = f_MHz * t_picosec * 1e-6 * 2^16
-                *       = f_MHz * t_picosec * (2^THETA_SCALE_BITS * 2^16 / 1e6) / 2^THETA_SCALE_BITS
-                *       = f_MHz * t_picosec * SCALE_CONST / 2^THETA_SCALE_BITS
-                *       = f_Mhz * (t_picosec * 2^DELAY_FRAC_BITS) * SCALE_CONST / 2^(THETA_SCALE_BITS + DELAY_FRAC_BITS)
-                */
-                const uint32_t SCALE_CONST = (uint32_t) ((1ULL << THETA_SCALE_BITS) * (1ULL << 16) / 1e6);
-                const uint32_t THETA_ROUND = (1UL << (THETA_SCALE_BITS + DELAY_FRAC_BITS)) / 2;
-                uint64_t theta_product = (uint64_t)channelIdx * phaseDelay * SCALE_CONST;
-                int16_t theta = (int16_t) ((theta_product + THETA_ROUND) >> (THETA_SCALE_BITS + DELAY_FRAC_BITS));
+                    /* Convert phaseDelay lsbit unit from [32 ps] to [1/2^INTPOL_FRAC_BITS ps] */
+                    uint32_t phaseDelay0 = pTable->entries[leftIdx].phaseDelay << (5+DELAY_FRAC_BITS);
+                    uint32_t phaseDelay1 = pTable->entries[rightIdx].phaseDelay << (5+DELAY_FRAC_BITS);
+                    uint32_t phaseDelay = phaseDelay0;
+                    if (leftOffset > 0)
+                    {
+                        phaseDelay += ((phaseDelay1 - phaseDelay0) * leftOffset) / pTable->chSpacing;
+                    }
+                    /*
+                     * For given channel, calc phase angle theta in units of 2*pi/2^16
+                     * theta = 2*pi*f*t * 2^16/(2*pi) = f*t*2^16 = f_MHz * t_picosec * 1e-6 * 2^16
+                     *       = f_MHz * t_picosec * (2^THETA_SCALE_BITS * 2^16 / 1e6) / 2^THETA_SCALE_BITS
+                     *       = f_MHz * t_picosec * SCALE_CONST / 2^THETA_SCALE_BITS
+                     *       = f_Mhz * (t_picosec * 2^DELAY_FRAC_BITS) * SCALE_CONST / 2^(THETA_SCALE_BITS + DELAY_FRAC_BITS)
+                     */
+                    const uint32_t SCALE_CONST = (uint32_t) ((1ULL << THETA_SCALE_BITS) * (1ULL << 16) / 1e6);
+                    const uint32_t THETA_ROUND = (1UL << (THETA_SCALE_BITS + DELAY_FRAC_BITS)) / 2;
+                    uint64_t theta_product = (uint64_t)channelIdx * phaseDelay * SCALE_CONST;
+                    int16_t theta = (int16_t) ((theta_product + THETA_ROUND) >> (THETA_SCALE_BITS + DELAY_FRAC_BITS));
 
-                /* Adjust the phase to the signal on the antenna (group delay and layout) */
-                RCL_Handler_BLE_CS_rotateVector(&pct_i, &pct_q, theta);
-            }
-            if (pTable->enMagnComp)
-            {
-                /* Linear interpolate magnCoeff from LUT */
-                uint32_t magnCoeff0 = pTable->entries[leftIdx].magnCoeff << MAGN_FRAC_BITS;
-                uint32_t magnCoeff1 = pTable->entries[rightIdx].magnCoeff << MAGN_FRAC_BITS;
-                uint32_t magnCoeff = magnCoeff0;
-                if (leftOffset > 0)
-                {
-                    magnCoeff += ((magnCoeff1 - magnCoeff0) * leftOffset) / pTable->chSpacing;
+                    /* Adjust the phase to the signal on the antenna (group delay and layout) */
+                    RCL_Handler_BLE_CS_rotateVector(&pct_i, &pct_q, theta);
                 }
-                /* Scale I/Q magnitudes with k = magnCoeff/128 , and adjust for RPL scaling*/
-                iqDownscaleBits += (MAGN_FRAC_BITS + MAGN_K_SCALE_BITS);
-                pct_i = (int16_t)(((int32_t)pct_i * magnCoeff) >> iqDownscaleBits);
-                pct_q = (int16_t)(((int32_t)pct_q * magnCoeff) >> iqDownscaleBits);
-                iqDownscaleBits = 0;    /* No further downscaling needed (rplScaler already handled) */
-
-                /*
-                 * Magnitude compensation can scale with k_max = 255/128 = ca 2.
-                 * Will need saturation check to avoid overflow of signed 12-bit I and Q
-                 * */
-                const int16_t IQ_MAX_VAL = 2047;
-                const int16_t IQ_MIN_VAL = -2048;
-                if (pct_i > IQ_MAX_VAL)
+                if (pTable->enMagnComp)
                 {
-                    pct_i = IQ_MAX_VAL;
-                }
-                else if (pct_i < IQ_MIN_VAL)
-                {
-                    pct_i = IQ_MIN_VAL;
-                }
-
-                if (pct_q > IQ_MAX_VAL)
-                {
-                    pct_q = IQ_MAX_VAL;
-                }
-                else if (pct_q < IQ_MIN_VAL)
-                {
-                    pct_q = IQ_MIN_VAL;
+                    /* Linear interpolate magnCoeff from LUT */
+                    uint32_t magnCoeff0 = pTable->entries[leftIdx].magnCoeff << MAGN_FRAC_BITS;
+                    uint32_t magnCoeff1 = pTable->entries[rightIdx].magnCoeff << MAGN_FRAC_BITS;
+                    uint32_t magnCoeff = magnCoeff0;
+                    if (leftOffset > 0)
+                    {
+                        magnCoeff += ((magnCoeff1 - magnCoeff0) * leftOffset) / pTable->chSpacing;
+                    }
+                    /* Scale I/Q magnitudes with k = magnCoeff/128 , and adjust for RPL scaling*/
+                    uint32_t iqDownscaleBits = (MAGN_FRAC_BITS + MAGN_K_SCALE_BITS);
+                    pct_i = (int16_t)(((int32_t)pct_i * magnCoeff) >> iqDownscaleBits);
+                    pct_q = (int16_t)(((int32_t)pct_q * magnCoeff) >> iqDownscaleBits);
                 }
             }
         }
     }
 
-    /* Scale by rplScaler (unless already handled in magnitude compensation), compress PCTs to 24bit */
-    uint32_t pct = (((pct_q >> iqDownscaleBits) & 0x0FFF) << 12)
-                 | ( (pct_i >> iqDownscaleBits) & 0x0FFF);
+    /* Rounding before saturation and downscaling to 12bit */
+    pct_i += 1U;
+    pct_q += 1U;
+
+    /* Will need saturation check to avoid overflow of signed 13-bit I and Q */
+    const int16_t IQ_MAX_VAL = (+4095);
+    const int16_t IQ_MIN_VAL = (-4096);
+
+    pct_i = (pct_i > IQ_MAX_VAL) ? IQ_MAX_VAL : pct_i;
+    pct_i = (pct_i < IQ_MIN_VAL) ? IQ_MIN_VAL : pct_i;
+    pct_q = (pct_q > IQ_MAX_VAL) ? IQ_MAX_VAL : pct_q;
+    pct_q = (pct_q < IQ_MIN_VAL) ? IQ_MIN_VAL : pct_q;
+
+    /* Scale down from 13bit to 12bit by using the most significant bits */
+    uint32_t pct = (((pct_q >> 1U) & 0x0FFF) << 12)
+                 | ( (pct_i >> 1U) & 0x0FFF);
 
     return (pct);
 }
@@ -1963,14 +1875,11 @@ static uint16_t RCL_Handler_BLE_CS_convertStepResult(RCL_CmdBleCs* pCmd, uint8_t
     /* Calculate number of tones to be measured. +1 = tone extension */
     uint8_t numTone = pCmd->stats->numAntennaPath + 1;
 
-    /* Log2 scaler of PCT values */
-    uint8_t rplScaler = pCmd->stats->rplScaler;
-
     /* Determine the format of the report */
     uint8_t reportFormat = pCmd->reportFormat;
 
-    /* Need for scale selection */
-    uint8_t rfGain = HWREG_READ_LRF(LRFDRFE_BASE + LRFDRFE_O_RFGAIN);
+    /* Determine whether the reflector have already adjusted the phase inline */
+    bool inlinePhase = (pCmd->mode.role == RCL_CmdBleCs_Role_Reflector) && (pCmd->mode.inlinePhase);
 
     /* Dataformat varies based on the mode */
     uint8_t mode          = src->mode;
@@ -1999,16 +1908,6 @@ static uint16_t RCL_Handler_BLE_CS_convertStepResult(RCL_CmdBleCs* pCmd, uint8_t
             *dst++ = INT16_LSB(freqOffset);
             *dst++ = INT16_MSB(freqOffset);
         }
-
-        if (src->pktResult == RCL_CmdBleCs_PacketResult_Ok)
-        {
-            /* Evaluate successful mode-0 packets, and chose PCT linear scaling accordingly */
-            if ( ((src->pktRssi > BLE_CS_RPL_HIGH_GAIN_THR) && (rfGain == BLE_CS_HIGH_GAIN_DB)) ||
-                 ((src->pktRssi > BLE_CS_RPL_LOW_GAIN_THR) && (rfGain == BLE_CS_LOW_GAIN_DB)) )
-            {
-                pCmd->stats->rplScaler = 1;
-            }
-        }
     }
     else if (mode == RCL_CmdBleCs_StepMode_1)
     {
@@ -2036,7 +1935,7 @@ static uint16_t RCL_Handler_BLE_CS_convertStepResult(RCL_CmdBleCs* pCmd, uint8_t
         for (uint8_t j = 0; j < numTone; j++)
         {
             /* Compress PCT to 24bits */
-            uint32_t pct = RCL_Handler_BLE_CS_convertPct(&src->pct[j], channel, rplScaler);
+            uint32_t pct = RCL_Handler_BLE_CS_convertPct(&src->pct[j], channel, inlinePhase);
             *dst++       = (uint8_t)((pct) & 0xFF);
             *dst++       = (uint8_t)((pct >> 8) & 0xFF);
             *dst++       = (uint8_t)((pct >> 16) & 0xFF);
@@ -2087,7 +1986,7 @@ static uint16_t RCL_Handler_BLE_CS_convertStepResult(RCL_CmdBleCs* pCmd, uint8_t
         for (uint8_t j = 0; j < numTone; j++)
         {
             /* Compress PCT to 24bits */
-            uint32_t pct = RCL_Handler_BLE_CS_convertPct(&src->pct[j], channel, rplScaler);
+            uint32_t pct = RCL_Handler_BLE_CS_convertPct(&src->pct[j], channel, inlinePhase);
             *dst++       = (uint8_t)((pct) & 0xFF);
             *dst++       = (uint8_t)((pct >> 8) & 0xFF);
             *dst++       = (uint8_t)((pct >> 16) & 0xFF);
@@ -2359,7 +2258,6 @@ RCL_Events RCL_Handler_BLE_CS_Precal(RCL_Command *cmd, LRF_Events lrfEvents, RCL
 
             /* Number of channels to calibrate on */
             HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE_CS_RAM_O_MODE) = ((pCmd->table->numEntries << PBE_BLE_CS_RAM_MODE_NUM_STEPS_S) & PBE_BLE_CS_RAM_MODE_NUM_STEPS_M);
-            HWREG_WRITE_LRF(LRFDRFE_BASE + LRFDRFE_O_SPARE0) = pCmd->table->rxGain;
 
             for (uint8_t j=0; j<pCmd->table->numEntries; j++)
             {

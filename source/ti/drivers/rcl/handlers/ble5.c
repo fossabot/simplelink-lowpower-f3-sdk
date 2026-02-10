@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, Texas Instruments Incorporated
+ * Copyright (c) 2021-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,7 @@ struct
         RCL_FilterList   *updatableFilterList;
         RCL_AuxPtrInfo    auxPtrInfo;
         RCL_TxBufferInfo  txBufferInfo;
+        bool              disableTargetRpaReplacement;
     } common;
     union {
         struct {
@@ -120,7 +121,6 @@ struct
             bool          auxScanReqReceived;
             uint8_t       auxScanRspLen;
             uint8_t       auxAdvIndLen;
-            bool          targetRpaReplacement;
         } adv;
         struct {
             bool          runRx;
@@ -1302,9 +1302,16 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_ADRMODE) = (advCmd->ctx->addrModePeer << PBE_BLE5_RAM_ADRMODE_PEERADR_S);
                     HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_RPACONNECT) = advCmd->ctx->acceptAllConnectInd << PBE_BLE5_RAM_RPACONNECT_ENDADV_S;
 
-                    if (ble5HandlerState.adv.targetRpaReplacement)
+                    if (ble5HandlerState.common.disableTargetRpaReplacement)
                     {
-                        HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_RPACONNECT) |= 1 << PBE_BLE5_RAM_RPACONNECT_NOREPLACE_S;
+                        /* By default, the LRF replaces the TargetA in the AUX_CONNECT_RSP stored in the Tx FIFO with the InitA from the received AUX_CONNECT_REQ.
+                         * If disableTargetRpaReplacement is enabled, prevent this replacement to keep the original TargetA unchanged. */
+                        HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_RPACONNECT) |= 1U << PBE_BLE5_RAM_RPACONNECT_NOREPLACE_S;
+                    }
+                    else
+                    {
+                        /* Explictly enable the replacement of TargetA in the AUX_CONNECT_RSP with InitA from the received AUX_CONNECT_REQ */
+                        HWREGH_WRITE_LRF(LRFD_BUFRAM_BASE + PBE_BLE5_RAM_O_RPACONNECT) &= ~(1U << PBE_BLE5_RAM_RPACONNECT_NOREPLACE_S);
                     }
 
                     if ((advCfg & PBE_BLE5_RAM_ADVCFG_SCANNABLE_M) != 0)
@@ -5738,9 +5745,9 @@ void RCL_BLE5_setAccessAddressModification(bool enable)
  *  ======== RCL_BLE5_disableTargetRpaReplacement ========
  */
 /* This function should be secret, so no prototype is given in the .h file */
-void RCL_BLE5_disableTargetRpaReplacement(bool enable)
+void RCL_BLE5_disableTargetRpaReplacement(bool disable)
 {
-    ble5HandlerState.adv.targetRpaReplacement = enable;
+    ble5HandlerState.common.disableTargetRpaReplacement = disable;
 }
 
 /*

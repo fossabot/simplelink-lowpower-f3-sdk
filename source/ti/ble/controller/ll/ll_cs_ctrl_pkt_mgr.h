@@ -13,7 +13,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -214,5 +214,24 @@ void llCsSetupCapabilities(uint8* data);
  * @return      None
  */
 void llCsCalcSubEventParams(const llConnState_t* connPtr, csProcedureEnable_t *pCsReq);
+
+/*******************************************************************************
+* @fn          llCsCalcEventIntervalMin
+*
+* @brief       Calculate the minimum CS event interval based on configuration
+*
+* @details     Determines connection events needed between CS events based on
+*              subevent parameters. Handles both single and multiple subevent
+*              configurations with division-by-zero protection.
+*
+* @param       maxSubEventLen     - Maximum subevent length (μs)
+* @param       subEventInterval   - Interval between subevents (625μs units)
+* @param       subEventsPerEvent  - Number of subevents per CS event
+* @param       connInterval       - Connection interval (625μs units)
+*
+* @return      Minimum event interval in connection events
+*/
+uint16_t llCsCalcEventIntervalMin(uint32_t maxSubEventLen, uint16_t subEventInterval,
+                                 uint8_t subEventsPerEvent, uint16_t connInterval);
 
 #endif //LL_CS_CTRL_PKT_MGR_H

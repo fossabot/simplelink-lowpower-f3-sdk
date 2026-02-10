@@ -13,7 +13,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2023-2025, Texas Instruments Incorporated
+ Copyright (c) 2023-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -697,5 +697,38 @@ void llCsUpdateStepCount(uint16 connId, uint8_t configId, csStepType_e stepType)
  * @return      None
 */
 void llCsAdjustSubEventStepCount(uint16 connId, uint8 configId);
+
+/*******************************************************************************
+ * @fn          llCsSetConnMaxTimeForCS
+ *
+ * @brief       Sets connection max time to ensure connection event ends before
+ *              CS procedure starts. Uses the CS offset (time from connection
+ *              anchor point to CS start) as the maximum connection time.
+ *
+ *              This function is called when the NEXT connection event will
+ *              have CS execution to prevent the connection event from overlapping
+ *              with the CS procedure timing.
+ *
+ *              Per BLE Core Spec 6.2, Vol 6, Part B, Section 4.5.18.1:
+ *              CS procedures occur at a specific offset from the connection
+ *              anchor point (T_CS_OFFSET), measured in microseconds.
+ *
+ *              Note: The scheduler automatically applies
+ *              LL_MARGIN_TIME_FOR_TIMER_HANDLING_RAT_TICKS (1200us) margin
+ *              in llLinkSchedSetup() to account for timer handling overhead
+ *              and RCL switch time.
+ *
+ * input parameters
+ *
+ * @param       connPtr  - Pointer to connection state structure
+ * @param       configId - CS configuration ID for the procedure
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsSetConnMaxTimeForCS(llConnState_t* connPtr, uint8 configId);
 
 #endif // LL_CS_PROCEDURE_INTERNAL_H

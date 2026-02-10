@@ -17,13 +17,11 @@ users by packaging essential software components, such as:
 * ProprietaryRF 2.4 GHz stack
 * TI Drivers
 
-This is version 9.14.01.16 of the SimpleLink Low Power F3 SDK.
+This is version 9.14.02.16 of the SimpleLink Low Power F3 SDK.
 
 ## What's New
 
-- MCUBoot Upgrade with Encrypted Image for CC23xx and CC27xx
-
-Refer to the [Document Overview][sdk docs] for
+Refer to the Document Overview for
 the individual release notes and details for starting development with
 each SDK component.
 ## About this Repository
@@ -45,7 +43,7 @@ it available as a Git repository to cater to various use cases:
 * **Simplified workflow for rebasing**: Git makes it simpler for you to rebase
   your changes to new releases.
 
-One temporary, notable difference in this LPF3 9.14.01.16 SDK GitHub
+One temporary, notable difference in this LPF3 9.14.02.16 SDK GitHub
 distribution when compared to the classic installer above, is the exclusion of
 the **tools/ble/ble_agent/ble_toolbox/** directory. This has been temporarily
 done as the ble_toolbox executable currently exceeds GitHub's file size limit.
@@ -116,8 +114,8 @@ Dependency download locations:
 
 Please consider creating a post on [TI's E2E forum](https://e2e.ti.com).
 
-[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.01.16
-[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.01.16
+[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.02.16
+[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.14.02.16
 [sysconfig download]: https://www.ti.com/tool/SYSCONFIG
 [ticlang download]: https://www.ti.com/tool/download/ARM-CGT-CLANG
 [gcc download]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads

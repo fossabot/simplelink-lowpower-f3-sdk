@@ -15,7 +15,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -91,6 +91,7 @@ extern csStatus_e LL_CS_ReadRemoteSupportedCapabilities(uint16_t connId);
 extern csStatus_e LL_CS_WriteCachedRemoteSupportedCapabilities(uint16_t connId, llCsCapabilities_t* pPeerCapabilitiesRaw);
 extern csStatus_e LL_CS_CreateConfig(uint16_t connId, const csConfigurationSet_t* pConfig, uint8_t createContext);
 extern csStatus_e LL_CS_RemoveConfig(uint16_t connId, uint8_t configId);
+extern csStatus_e LL_CS_GetConfig(uint16_t connId, uint8_t configId, csConfigurationSet_t* pConfig);
 extern csStatus_e LL_CS_SecurityEnable(uint16_t connId);
 extern csStatus_e LL_CS_SetDefaultSettings(uint16_t connId, csDefaultSettings_t* defaultSettings);
 extern csStatus_e LL_CS_ReadLocalFAETable(csFaeTbl_t* pFaeTable);
@@ -126,6 +127,7 @@ extern uint16 llConnGetMissCountMargin(void);
 extern bool LL_CS_isCsInProgress(uint16_t connId);
 extern bool llCsIsChannelClassificationAllowed(uint32_t currentTime);
 extern uint32_t LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
+extern uint8_t LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw);
 
 
 // Wrapper functions for the feature implementations
@@ -134,6 +136,7 @@ csStatus_e OPT_LL_CS_ReadRemoteSupportedCapabilities(uint16_t connId);
 csStatus_e OPT_LL_CS_WriteCachedRemoteSupportedCapabilities(uint16_t connId, llCsCapabilities_t* pPeerCapabilitiesRaw);
 csStatus_e OPT_LL_CS_CreateConfig(uint16_t connId, const csConfigurationSet_t* pConfig, uint8_t createContext);
 csStatus_e OPT_LL_CS_RemoveConfig(uint16_t connId, uint8_t configId);
+csStatus_e OPT_LL_CS_GetConfig(uint16_t connId, uint8_t configId, csConfigurationSet_t* pConfig);
 csStatus_e OPT_LL_CS_SecurityEnable(uint16_t connId);
 csStatus_e OPT_LL_CS_SetDefaultSettings(uint16_t connId, csDefaultSettings_t* defaultSettings);
 csStatus_e OPT_LL_CS_ReadLocalFAETable(csFaeTbl_t* pFaeTable);
@@ -169,5 +172,6 @@ uint16 OPT_llConnGetMissCountMargin(void);
 bool OPT_LL_CS_isCsInProgress(uint16_t connId);
 bool OPT_llCsIsChannelClassificationAllowed(uint32_t currentTime);
 uint32_t OPT_LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
+uint8_t OPT_LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw);
 
 #endif /* CTRL_CS_H_ */

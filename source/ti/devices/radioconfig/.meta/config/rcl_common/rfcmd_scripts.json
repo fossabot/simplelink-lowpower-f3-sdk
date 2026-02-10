@@ -1,214 +1,4 @@
 {
-  "gfsk_2_mbps_500kHz": {
-    "CMD_GENERIC_TX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWordA": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "maxPktLen": {
-        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
-        "role": "update"
-      }
-    }
-  },
-  "msk_250_kbps": {
-    "CMD_GENERIC_TX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWordA": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "maxPktLen": {
-        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
-        "role": "update"
-      }
-    }
-  },
-  "fsk_20_kbps": {
-    "CMD_GENERIC_TX_TEST": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "config.whitenMode": {
-        "#text": "getTestProperty(\"txWhitening\")",
-        "role": "update"
-      },
-      "config.sendCw": {
-        "#text": "getTestProperty(\"txSignalType\") == 0",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_TX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_TX_REPEAT": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "numPackets": {
-        "#text": "getTestProperty(\"packetCount\")",
-        "role": "update"
-      }
-    }
-  },
-  "gfsk_250_kbps": {
-    "CMD_GENERIC_TX_TEST": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "config.whitenMode": {
-        "#text": "getTestProperty(\"txWhitening\")",
-        "role": "update"
-      },
-      "config.sendCw": {
-        "#text": "getTestProperty(\"txSignalType\") == 0",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWordA": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "maxPktLen": {
-        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_TX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_TX_REPEAT": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "numPackets": {
-        "#text": "getTestProperty(\"packetCount\")",
-        "role": "update"
-      }
-    }
-  },
   "wbms": {
     "CMD_GENERIC_TX_TEST": {
       "common.phyFeatures": {
@@ -299,7 +89,71 @@
       }
     }
   },
-  "gfsk_500_kbps": {
+  "fsk_20_kbps": {
+    "CMD_GENERIC_TX_TEST": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "config.whitenMode": {
+        "#text": "getTestProperty(\"txWhitening\")",
+        "role": "update"
+      },
+      "config.sendCw": {
+        "#text": "getTestProperty(\"txSignalType\") == 0",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX_REPEAT": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "numPackets": {
+        "#text": "getTestProperty(\"packetCount\")",
+        "role": "update"
+      }
+    }
+  },
+  "gfsk_250_kbps_hidev": {
     "CMD_GENERIC_TX_TEST": {
       "rfFrequency": {
         "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
@@ -377,43 +231,8 @@
       }
     }
   },
-  "gfsk_100_kbps": {
-    "CMD_GENERIC_TX_TEST": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "config.whitenMode": {
-        "#text": "getTestProperty(\"txWhitening\")",
-        "role": "update"
-      },
-      "config.sendCw": {
-        "#text": "getTestProperty(\"txSignalType\") == 0",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWordA": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "maxPktLen": {
-        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
-        "role": "update"
-      }
-    },
+  "ble_cs_hp": {},
+  "msk_250_kbps_fec": {
     "CMD_GENERIC_TX": {
       "rfFrequency": {
         "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
@@ -432,25 +251,17 @@
         "role": "update"
       }
     },
-    "CMD_GENERIC_TX_REPEAT": {
+    "CMD_GENERIC_RX": {
       "rfFrequency": {
         "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
         "role": "update"
       },
-      "syncWord": {
+      "syncWordA": {
         "#text": "getPhyProperty(\"syncWord\")",
         "role": "update"
       },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      },
-      "numPackets": {
-        "#text": "getTestProperty(\"packetCount\")",
+      "maxPktLen": {
+        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
         "role": "update"
       }
     }
@@ -533,107 +344,8 @@
       }
     }
   },
-  "ble": {
-    "CMD_GENERIC_TX": {
-      "common.phyFeatures": {
-        "#text": "getFeatureSelector()",
-        "role": "update"
-      },
-      "rfFrequency": {
-        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
-        "role": "update",
-        "call": "updCfRfFrequency()"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "common.phyFeatures": {
-        "#text": "getFeatureSelector()",
-        "role": "update"
-      },
-      "rfFrequency": {
-        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
-        "role": "update",
-        "call": "updCfRfFrequency()"
-      }
-    }
-  },
-  "ble_cs_hp": {},
   "adc_noise": {},
-  "msk_250_kbps_fec": {
-    "CMD_GENERIC_TX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWord": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "rfFrequency": {
-        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
-        "role": "update"
-      },
-      "syncWordA": {
-        "#text": "getPhyProperty(\"syncWord\")",
-        "role": "update"
-      },
-      "maxPktLen": {
-        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
-        "role": "update"
-      }
-    }
-  },
-  "ble_hp": {
-    "CMD_GENERIC_TX": {
-      "common.phyFeatures": {
-        "#text": "getFeatureSelector()",
-        "role": "update"
-      },
-      "rfFrequency": {
-        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
-        "role": "update",
-        "call": "updCfRfFrequency()"
-      },
-      "txPower.fraction": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
-        "role": "update"
-      },
-      "txPower.dBm": {
-        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
-        "role": "update"
-      }
-    },
-    "CMD_GENERIC_RX": {
-      "common.phyFeatures": {
-        "#text": "getFeatureSelector()",
-        "role": "update"
-      },
-      "rfFrequency": {
-        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
-        "role": "update",
-        "call": "updCfRfFrequency()"
-      }
-    }
-  },
-  "gfsk_250_kbps_hidev": {
+  "gfsk_100_kbps": {
     "CMD_GENERIC_TX_TEST": {
       "rfFrequency": {
         "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
@@ -711,8 +423,7 @@
       }
     }
   },
-  "nesb": {},
-  "ble_prod_test": {
+  "ble_hp": {
     "CMD_GENERIC_TX": {
       "common.phyFeatures": {
         "#text": "getFeatureSelector()",
@@ -741,6 +452,262 @@
         "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
         "role": "update",
         "call": "updCfRfFrequency()"
+      }
+    }
+  },
+  "gfsk_500_kbps": {
+    "CMD_GENERIC_TX_TEST": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "config.whitenMode": {
+        "#text": "getTestProperty(\"txWhitening\")",
+        "role": "update"
+      },
+      "config.sendCw": {
+        "#text": "getTestProperty(\"txSignalType\") == 0",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWordA": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "maxPktLen": {
+        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX_REPEAT": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "numPackets": {
+        "#text": "getTestProperty(\"packetCount\")",
+        "role": "update"
+      }
+    }
+  },
+  "msk_250_kbps": {
+    "CMD_GENERIC_TX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWordA": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "maxPktLen": {
+        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
+        "role": "update"
+      }
+    }
+  },
+  "gfsk_2_mbps_500kHz": {
+    "CMD_GENERIC_TX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWordA": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "maxPktLen": {
+        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
+        "role": "update"
+      }
+    }
+  },
+  "ble": {
+    "CMD_GENERIC_TX": {
+      "common.phyFeatures": {
+        "#text": "getFeatureSelector()",
+        "role": "update"
+      },
+      "rfFrequency": {
+        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
+        "role": "update",
+        "call": "updCfRfFrequency()"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "common.phyFeatures": {
+        "#text": "getFeatureSelector()",
+        "role": "update"
+      },
+      "rfFrequency": {
+        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
+        "role": "update",
+        "call": "updCfRfFrequency()"
+      }
+    }
+  },
+  "gfsk_250_kbps": {
+    "CMD_GENERIC_TX_TEST": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "config.whitenMode": {
+        "#text": "getTestProperty(\"txWhitening\")",
+        "role": "update"
+      },
+      "config.sendCw": {
+        "#text": "getTestProperty(\"txSignalType\") == 0",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWordA": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "maxPktLen": {
+        "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_TX_REPEAT": {
+      "rfFrequency": {
+        "#text": "Math.floor(getPhyProperty(\"frequency\") * 1e6)",
+        "role": "update"
+      },
+      "syncWord": {
+        "#text": "getPhyProperty(\"syncWord\")",
+        "role": "update"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      },
+      "numPackets": {
+        "#text": "getTestProperty(\"packetCount\")",
+        "role": "update"
       }
     }
   },
@@ -776,7 +743,7 @@
       }
     }
   },
-  "bmack": {},
+  "nesb": {},
   "gfsk_2_mbps": {
     "CMD_GENERIC_TX": {
       "rfFrequency": {
@@ -808,6 +775,39 @@
       "maxPktLen": {
         "#text": "(getPhyProperty(\"packetLengthSize\") == 0) ? getTestProperty(\"rxFixedPayloadLength\") : 255",
         "role": "update"
+      }
+    }
+  },
+  "bmack": {},
+  "ble_prod_test": {
+    "CMD_GENERIC_TX": {
+      "common.phyFeatures": {
+        "#text": "getFeatureSelector()",
+        "role": "update"
+      },
+      "rfFrequency": {
+        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
+        "role": "update",
+        "call": "updCfRfFrequency()"
+      },
+      "txPower.fraction": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) & 1",
+        "role": "update"
+      },
+      "txPower.dBm": {
+        "#text": "Math.ceil(getTxPowerValue() * 2) >> 1",
+        "role": "update"
+      }
+    },
+    "CMD_GENERIC_RX": {
+      "common.phyFeatures": {
+        "#text": "getFeatureSelector()",
+        "role": "update"
+      },
+      "rfFrequency": {
+        "#text": "./conv_ble_channel_to_freq.js,./get_pp_frequency__ble.js,./upd_cf_rf_frequency.js",
+        "role": "update",
+        "call": "updCfRfFrequency()"
       }
     }
   },

@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@ typedef struct
     uint16_t currentConnHandle; // Current connection handle for the ongoing segmentation/send process
     uint8_t  segmentCounter;    // The next Seg to send
     uint8_t  lastSegment;       // Last segment flag (0 = False, 1 = True)
-    uint8_t  rangingCounter;    // Ranging counter for the current procedure
+    uint32_t  rangingCounter;   // Ranging counter for the current procedure
     uint8_t  busy;              // Flag to indicate if the segmentation process is busy (0 = False, 1 = True)
     uint8_t  waitForBusy;       // Flag to indicate if the server should send to peer device that it is busy (0 = False, 1 = True)
     uint8_t  waitForConf;       // Flag to indicate if the process is waiting for confirmation (0 = False, 1 = True)

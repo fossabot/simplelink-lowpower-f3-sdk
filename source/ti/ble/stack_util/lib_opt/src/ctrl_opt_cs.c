@@ -17,7 +17,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2025, Texas Instruments Incorporated
+ Copyright (c) 2025-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -108,6 +108,11 @@ csStatus_e OPT_LL_CS_CreateConfig(uint16_t connId, const csConfigurationSet_t* p
 csStatus_e OPT_LL_CS_RemoveConfig(uint16_t connId, uint8_t configId)
 {
     return LL_CS_RemoveConfig(connId, configId);
+}
+
+csStatus_e OPT_LL_CS_GetConfig(uint16_t connId, uint8_t configId, csConfigurationSet_t* pConfig)
+{
+    return LL_CS_GetConfig(connId, configId, pConfig);
 }
 
 csStatus_e OPT_LL_CS_SecurityEnable(uint16_t connId)
@@ -283,6 +288,11 @@ bool OPT_llCsIsChannelClassificationAllowed(uint32_t currentTime)
 uint32_t OPT_LL_CS_Handover_SnGetSNDataSize(uint16 connHandle)
 {
     return LL_CS_Handover_SnGetSNDataSize(connHandle);
+}
+
+uint8_t OPT_LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw)
+{
+    return LL_CS_GetTswByACI(ACI, initTsw, reflTsw);
 }
 
 #endif /* defined(CHANNEL_SOUNDING) */

@@ -11,7 +11,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2009-2025, Texas Instruments Incorporated
+ Copyright (c) 2009-2026, Texas Instruments Incorporated
 
  All rights reserved not granted herein.
  Limited License.
@@ -1818,7 +1818,6 @@ uint16               llBleToRfChannel(uint8);
 // Control Procedure Setup
 
 uint8_t              llSetupCtrlPkt( llConnState_t *connPtr, uint8_t ctrlPkt );
-uint8_t              llTrySendCtrlPktImmed(llConnState_t *connPtr, uint8_t ctrlPkt);
 void                 llBuildCtrlPktPeri( llConnState_t *connPtr, uint8 *pData, uint8_t ctrlPkt );
 void                 llBuildCtrlPktCent( llConnState_t *connPtr,uint8_t *pData, uint8_t ctrlPkt );
 void                 llPostSetupCtrlPktPeri( llConnState_t *connPtr, uint8_t ctrlPkt );
@@ -1883,7 +1882,7 @@ void                 llSecTaskInitiatorHandle( taskInfo_t* secTask, RCL_Command*
 void                 llUpdateTimeGapForInitiator( uint32_t* timeGap );
 void                 llUpdateTimeGapForScanWindow( taskInfo_t* secTask, llConnState_t* nextConnPtr, RCL_Command* secCmd, uint32_t* timeGap, uint32_t curTime );
 void                 LL_GetConnTxUsageParams( llTxUsageParams_t *pConnTxParams );
-uint32_t             llConnCalculatePacketTime( const llConnState_t *connPtr, uint16_t octets );
+uint32_t             llConnCalculatePacketTime( uint16_t octets, uint8_t llPhy, uint8_t llPhyOpts );
 
 // Access Address
 uint32               llGenerateValidAccessAddr( void );
@@ -1998,6 +1997,7 @@ uint8                llConvertBlePhyToLlPhy(uint8 blePhy, uint8 *llPhy, uint8 *l
 uint8                llConvertLlPhyToBlePhy(uint8 llPhy, uint8 *blePhy);
 uint8                llConvertLlPhyOptToBlePhyOpt(uint8 llPhyOpt, uint8 *blePhyOpt);
 void                 llConvertAePhyToBlePhy(uint8 llPhy, uint8 *blePhy);
+void                 llConvertPktRclPhyToLlPhy( llConnState_t *connPtr, uint8_t rclPktPhyStatus, uint8_t *llPhy, uint8_t *llPhyOpt );
 
 uint8                llSetPhy(llConnState_t *connPtr, uint8 rxPhy);
 void                 llSetRangeDelay(llConnState_t *connPtr);
@@ -2076,6 +2076,8 @@ uint16 llConnGetMissCountMargin();
 // Compares two BLE addresses by RL index or address and address type.
 bool llCompareAddresses( uint8_t *pAddr1, uint8_t addrType1,
                          uint8_t *pAddr2, uint8_t addrType2 );
+
+uint32_t llEstimateConnMinTimeLength(uint16_t connId);
 
 #ifdef __cplusplus
 }
