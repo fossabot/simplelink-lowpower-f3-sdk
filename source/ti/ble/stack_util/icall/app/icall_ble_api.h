@@ -141,8 +141,11 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_SetEventMaskCmd(...)                 (icall_directAPI((uint32_t) IDX_HCI_LE_SetEventMaskCmd , ##__VA_ARGS__))
 #define HCI_LE_ReadLocalSupportedFeaturesCmd(...)   (icall_directAPI((uint32_t) IDX_HCI_LE_ReadLocalSupportedFeaturesCmd))
 #define HCI_LE_ReadBufSizeCmd(...)                  (icall_directAPI((uint32_t) IDX_HCI_LE_ReadBufSizeCmd))
-#define HCI_LE_SetRandomAddressCmd(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_SetRandomAddressCmd , ##__VA_ARGS__))
 #define HCI_LE_ReadAdvChanTxPowerCmd(...)           (icall_directAPI((uint32_t) IDX_HCI_LE_ReadAdvChanTxPowerCmd))
+#define HCI_LE_ReadMaxAdvDataLenCmd(...)            (icall_directAPI((uint32_t) IDX_HCI_LE_ReadMaxAdvDataLenCmd))
+#define HCI_LE_ReadNumSupportedAdvSetsCmd(...)      (icall_directAPI((uint32_t) IDX_HCI_LE_ReadNumSupportedAdvSetsCmd))
+#define HCI_LE_CreateConnCmd(...)                   (icall_directAPI((uint32_t) IDX_HCI_LE_CreateConnCmd , ##__VA_ARGS__))
+#define HCI_LE_ExtCreateConnCmd(...)                (icall_directAPI((uint32_t) IDX_HCI_LE_ExtCreateConnCmd , ##__VA_ARGS__))
 #define HCI_LE_ReadChannelMapCmd(...)               (icall_directAPI((uint32_t) IDX_HCI_LE_ReadChannelMapCmd , ##__VA_ARGS__))
 #define HCI_LE_ReadRemoteUsedFeaturesCmd(...)       (icall_directAPI((uint32_t) IDX_HCI_LE_ReadRemoteUsedFeaturesCmd , ##__VA_ARGS__))
 #define HCI_LE_SetHostChanClassificationCmd(...)    (icall_directAPI((uint32_t) IDX_HCI_LE_SetHostChanClassificationCmd , ##__VA_ARGS__))
@@ -187,18 +190,16 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_EnhancedCteTxTestCmd(...)                  (icall_directAPI((uint32_t) IDX_HCI_LE_EnhancedCteTxTestCmd , ##__VA_ARGS__))
 /* HCI V5.0 - Advertising Extension */
 /************************/
-#define LE_SetAdvSetRandAddr(...)                         (icall_directAPI((uint32_t) IDX_LE_SetAdvSetRandAddr, ##__VA_ARGS__))
 #define LE_SetExtAdvParams(...)                           (icall_directAPI((uint32_t) IDX_LE_SetExtAdvParams, ##__VA_ARGS__))
-#define LE_SetExtAdvData(...)                             (icall_directAPI((uint32_t) IDX_LE_SetExtAdvData, ##__VA_ARGS__))
 #define LE_SetExtScanRspData(...)                         (icall_directAPI((uint32_t) IDX_LE_SetExtScanRspData, ##__VA_ARGS__))
 #define LE_SetExtAdvEnable(...)                           (icall_directAPI((uint32_t) IDX_LE_SetExtAdvEnable, ##__VA_ARGS__))
 #define LE_RemoveAdvSet(...)                              (icall_directAPI((uint32_t) IDX_LE_RemoveAdvSet, ##__VA_ARGS__))
 #define LE_ClearAdvSets(...)                              (icall_directAPI((uint32_t) IDX_LE_ClearAdvSets))
-#define LE_SetExtScanParams(...)                          (icall_directAPI((uint32_t) IDX_LE_SetExtScanParams, ##__VA_ARGS__))
 #define LE_SetExtScanEnable(...)                          (icall_directAPI((uint32_t) IDX_LE_SetExtScanEnable, ##__VA_ARGS__))
 #define LE_ReadMaxAdvDataLen(...)                         (icall_directAPI((uint32_t) IDX_LE_ReadMaxAdvDataLen))
 #define LE_ReadNumSupportedAdvSets(...)                   (icall_directAPI((uint32_t) IDX_LE_ReadNumSupportedAdvSets))
 #define LL_AE_RegCBack(...)                               (icall_directAPI((uint32_t) IDX_LL_AE_RegCBack, ##__VA_ARGS__))
+#define LL_AE_RegMultipleCBacks(...)                      (icall_directAPI((uint32_t) IDX_LL_AE_RegMultipleCBacks, ##__VA_ARGS__))
 #define LE_ExtCreateConn(...)                             (icall_directAPI((uint32_t) IDX_LE_ExtCreateConn, ##__VA_ARGS__))
 /* HCI V5.2 SC API */
 /********************/
@@ -210,6 +211,8 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_SetAdvEnableCmd(...)                       (icall_directAPI((uint32_t) IDX_HCI_LE_SetAdvEnableCmd , ##__VA_ARGS__))
 #define HCI_LE_SetScanParamCmd(...)                       (icall_directAPI((uint32_t) IDX_HCI_LE_SetScanParamCmd , ##__VA_ARGS__))
 #define HCI_LE_SetScanEnableCmd(...)                      (icall_directAPI((uint32_t) IDX_HCI_LE_SetScanEnableCmd , ##__VA_ARGS__))
+#define HCI_LE_ExtCreateConnV2(...)                       (icall_directAPI((uint32_t) IDX_HCI_LE_ExtCreateConnV2 , ##__VA_ARGS__))
+#define HCI_LE_SetExtScanEnableCmd(...)                   (icall_directAPI((uint32_t) IDX_HCI_LE_SetExtScanEnableCmd , ##__VA_ARGS__))
 #define HCI_LE_CreateConnCancelCmd(...)                   (icall_directAPI((uint32_t) IDX_HCI_LE_CreateConnCancelCmd))
 #define HCI_LE_StartEncyptCmd(...)                        (icall_directAPI((uint32_t) IDX_HCI_LE_StartEncyptCmd , ##__VA_ARGS__))
 #define HCI_LE_ConnUpdateCmd(...)                         (icall_directAPI((uint32_t) IDX_HCI_LE_ConnUpdateCmd , ##__VA_ARGS__))
@@ -226,7 +229,8 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_SetConnectionCteResponseEnableCmd(...)     (icall_directAPI((uint32_t) IDX_HCI_LE_SetConnectionCteResponseEnableCmd , ##__VA_ARGS__))
 #define HCI_LE_ReadAntennaInformationCmd(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_ReadAntennaInformationCmd))
 /* Periodic Adv */
-#define HCI_LE_SetPeriodicAdvParamsCmd(...)               (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvParamsCmd , ##__VA_ARGS__))
+#define HCI_LE_SetPeriodicAdvParamsV1Cmd(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvParamsV1Cmd , ##__VA_ARGS__))
+#define HCI_LE_SetPeriodicAdvParamsV2Cmd(...)             (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvParamsV2Cmd , ##__VA_ARGS__))
 #define HCI_LE_SetPeriodicAdvDataCmd(...)                 (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvDataCmd , ##__VA_ARGS__))
 #define HCI_LE_SetPeriodicAdvEnableCmd(...)               (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvEnableCmd , ##__VA_ARGS__))
 #define HCI_LE_PeriodicAdvCreateSyncCmd(...)              (icall_directAPI((uint32_t) IDX_HCI_LE_PeriodicAdvCreateSyncCmd , ##__VA_ARGS__))
@@ -238,7 +242,6 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_LE_ReadPeriodicAdvListSizeCmd(...)            (icall_directAPI((uint32_t) IDX_HCI_LE_ReadPeriodicAdvListSizeCmd))
 #define HCI_LE_SetPeriodicAdvReceiveEnableCmd(...)        (icall_directAPI((uint32_t) IDX_HCI_LE_SetPeriodicAdvReceiveEnableCmd , ##__VA_ARGS__))
 #define HCI_LE_SetExtScanRspData(...)                     (icall_directAPI((uint32_t) IDX_HCI_LE_SetExtScanRspData , ##__VA_ARGS__))
-#define HCI_LE_SetExtAdvData(...)                         (icall_directAPI((uint32_t) IDX_HCI_LE_SetExtAdvData , ##__VA_ARGS__))
 #define HCI_LE_SetAdvStatus(...)                          (icall_directAPI((uint32_t) IDX_HCI_LE_SetAdvStatus , ##__VA_ARGS__))
 
 /* HCI POWER CONTROL API */
@@ -321,7 +324,6 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_SendDataPkt(...)                                       (icall_directAPI((uint32_t) IDX_HCI_SendDataPkt , ##__VA_ARGS__))
 #define HCI_TL_getCmdResponderID(...)                              (icall_directAPI((uint32_t) IDX_HCI_TL_getCmdResponderID, ##__VA_ARGS__))
 #define HCI_CommandStatusEvent(...)                                (icall_directAPI((uint32_t) IDX_HCI_CommandStatusEvent, ##__VA_ARGS__))
-#define HCI_CommandCompleteEvent(...)                              (icall_directAPI((uint32_t) IDX_HCI_CommandCompleteEvent, ##__VA_ARGS__))
 #define HCI_VendorSpecifcCommandCompleteEvent(...)                 (icall_directAPI((uint32_t) IDX_HCI_VendorSpecifcCommandCompleteEvent , ##__VA_ARGS__))
 #define HCI_bm_alloc(...)                                          (icall_directAPI((uint32_t) IDX_HCI_bm_alloc , ##__VA_ARGS__))
 #define HCI_bm_free(...)                                           (icall_directAPI((uint32_t) IDX_HCI_bm_free , ##__VA_ARGS__))

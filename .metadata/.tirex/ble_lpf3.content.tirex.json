@@ -1,5 +1,175 @@
 [
     {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755R10"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755R10"
+        ],
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755P20"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755P20"
+        ],
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
         "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble/README.html",
         "resourceType": "categoryInfo",
         "name": "basic_ble",
@@ -16,17 +186,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -45,15 +212,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -61,10 +227,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -84,17 +271,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -113,15 +297,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -129,10 +312,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -152,17 +356,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -181,15 +382,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -197,10 +397,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -220,17 +441,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -249,15 +467,14 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -265,14 +482,38 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble/freertos/ticlang/basic_ble_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -280,23 +521,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble",
-        "description": "basic_ble",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_extctrl",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_ble_extctrl",
         "mainCategories": [
             [
                 "Examples",
@@ -304,14 +544,38 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -319,23 +583,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_ble",
-        "description": "basic_ble",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_extctrl",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_ble_extctrl",
         "mainCategories": [
             [
                 "Examples",
@@ -343,92 +606,35 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_ble",
-        "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble/freertos/iar/basic_ble_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble",
-        "description": "basic_ble",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -447,15 +653,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_extctrl",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -463,14 +668,35 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -489,15 +715,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_ble_extctrl",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -505,14 +730,35 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -531,15 +777,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_ble_extctrl",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -547,14 +792,35 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -573,14 +839,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_extctrl",
-        "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_extctrl",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_extctrl"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_extctrl/freertos/ticlang/basic_ble_extctrl_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_multistep_oad/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_multistep_oad",
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "devices": [
+            "CC2340R5"
         ],
         "mainCategories": [
             [
@@ -589,14 +898,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -612,15 +924,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_extctrl",
-        "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_multistep_oad",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_ble_multistep_oad",
         "mainCategories": [
             [
                 "Examples",
@@ -628,37 +939,42 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth",
+            "basic_ble_multistep_oad"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_multistep_oad/freertos/ticlang/basic_ble_multistep_oad_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_multistep_oad/freertos/iar/basic_ble_multistep_oad_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_multistep_oad/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_multistep_oad",
+        "devtools": [
+            "LP-EM-CC2340R53"
         ],
         "devices": [
-            "CC2755P10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2755P10"
-        ],
-        "devtools": [
-            "LP-EM-CC2755P10"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_ble_extctrl",
-        "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
+            "CC2340R53"
         ],
         "mainCategories": [
             [
@@ -667,53 +983,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
+            "TI Bluetooth"
+        ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_ble_extctrl",
-        "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "IAR Compiler"
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -729,14 +1009,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_extctrl/freertos/iar/basic_ble_extctrl_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_extctrl",
-        "description": "basic_ble_extctrl",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_multistep_oad",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_multistep_oad",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_multistep_oad"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_multistep_oad/freertos/ticlang/basic_ble_multistep_oad_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_multistep_oad/freertos/iar/basic_ble_multistep_oad_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_dual_image/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_oad_dual_image",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -745,10 +1068,157 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_extctrl",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755R10"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755R10"
+        ],
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_oad_dual_image",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_dual_image/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_oad_dual_image",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2755P20"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2755P20"
+        ],
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_oad_dual_image",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -768,17 +1238,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -797,15 +1264,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -813,10 +1279,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -836,17 +1323,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -865,15 +1349,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -881,10 +1364,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -904,17 +1408,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -933,15 +1434,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -949,10 +1449,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -972,17 +1493,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1001,15 +1519,14 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_dual_image",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1017,166 +1534,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "TI Clang Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "basic_ble_oad_dual_image"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R5"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R5"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_oad_dual_image",
-        "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2755P10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2755P10"
-        ],
-        "devtools": [
-            "LP-EM-CC2755P10"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_ble_oad_dual_image",
-        "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_ble_oad_dual_image",
-        "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_oad_dual_image",
-        "description": "basic_ble_oad_dual_image",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_dual_image",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_dual_image/freertos/ticlang/basic_ble_oad_dual_image_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_dual_image/freertos/iar/basic_ble_oad_dual_image_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1196,17 +1578,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1225,15 +1604,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_offchip/freertos/ticlang/basic_ble_oad_offchip_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_offchip",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_offchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1241,10 +1619,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_offchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_offchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_offchip/freertos/ticlang/basic_ble_oad_offchip_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_offchip/freertos/iar/basic_ble_oad_offchip_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1264,17 +1663,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1293,14 +1689,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_offchip/freertos/ticlang/basic_ble_oad_offchip_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_offchip",
-        "description": "basic_ble_oad_offchip",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_oad_offchip",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_oad_offchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_offchip/freertos/ticlang/basic_ble_oad_offchip_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_offchip/freertos/iar/basic_ble_oad_offchip_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_onchip/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_oad_onchip",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -1309,14 +1748,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_offchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -1324,22 +1766,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_offchip/freertos/iar/basic_ble_oad_offchip_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_oad_offchip",
-        "description": "basic_ble_oad_offchip",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_oad_onchip",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_oad_onchip",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_onchip/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_oad_onchip",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -1348,14 +1833,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_offchip",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -1363,23 +1851,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R53"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R53"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2340R53"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_offchip/freertos/iar/basic_ble_oad_offchip_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_oad_offchip",
-        "description": "basic_ble_oad_offchip",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_oad_onchip",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_ble_oad_onchip",
         "mainCategories": [
             [
                 "Examples",
@@ -1387,10 +1874,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_offchip",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1410,17 +1918,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1439,15 +1944,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_onchip",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1455,10 +1959,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1478,17 +2003,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1507,15 +2029,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_onchip",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1523,10 +2044,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1546,17 +2088,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1575,15 +2114,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_onchip",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1591,10 +2129,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1614,17 +2173,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1643,14 +2199,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_oad_onchip",
-        "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_oad_onchip",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_oad_onchip"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_onchip/freertos/ticlang/basic_ble_oad_onchip_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_profiles/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_profiles",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -1659,14 +2258,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -1674,22 +2276,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_oad_onchip",
-        "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_profiles",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_profiles"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_profiles/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_ble_profiles",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -1698,14 +2343,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -1713,23 +2361,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_ble_oad_onchip",
-        "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
+        "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_ble_profiles",
         "mainCategories": [
             [
                 "Examples",
@@ -1737,88 +2384,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "basic_ble_profiles"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_ble_oad_onchip",
-        "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_oad_onchip/freertos/iar/basic_ble_oad_onchip_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_oad_onchip",
-        "description": "basic_ble_oad_onchip",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_oad_onchip",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1838,17 +2428,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1867,15 +2454,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1883,10 +2469,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_profiles"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1906,17 +2513,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -1935,15 +2539,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -1951,10 +2554,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_profiles"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -1974,17 +2598,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2003,15 +2624,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2019,10 +2639,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_profiles"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2042,17 +2683,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2071,15 +2709,14 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_profiles",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2087,166 +2724,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "TI Clang Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "basic_ble_profiles"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R5"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R5"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R5"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_profiles",
-        "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2755P10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2755P10"
-        ],
-        "devtools": [
-            "LP-EM-CC2755P10"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_ble_profiles",
-        "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_ble_profiles",
-        "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_profiles",
-        "description": "basic_ble_profiles",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_ble_profiles",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_profiles/freertos/ticlang/basic_ble_profiles_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_profiles/freertos/iar/basic_ble_profiles_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2266,17 +2768,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2295,15 +2794,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_ptm/freertos/ticlang/basic_ble_ptm_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_ble_ptm",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_ble_ptm",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2311,10 +2809,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_ptm",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_ble_ptm"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_ptm/freertos/ticlang/basic_ble_ptm_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_ptm/freertos/iar/basic_ble_ptm_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2334,17 +2853,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2363,14 +2879,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_ptm/freertos/ticlang/basic_ble_ptm_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_ble_ptm",
-        "description": "basic_ble_ptm",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_ble_ptm",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_ble_ptm"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_ptm/freertos/ticlang/basic_ble_ptm_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_ptm/freertos/iar/basic_ble_ptm_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_persistent/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_persistent",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -2379,14 +2938,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_ptm",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -2394,22 +2956,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_ble_ptm/freertos/iar/basic_ble_ptm_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_ble_ptm",
-        "description": "basic_ble_ptm",
-        "kernel": [
-            "freertos"
+        "name": "basic_persistent",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_persistent",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_persistent/README.html",
+        "resourceType": "categoryInfo",
+        "name": "basic_persistent",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -2418,14 +3023,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_ptm",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -2433,23 +3041,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R53"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R53"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2340R53"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_ble_ptm/freertos/iar/basic_ble_ptm_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_ble_ptm",
-        "description": "basic_ble_ptm",
-        "kernel": [
-            "freertos"
+        "name": "basic_persistent",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "basic_persistent",
         "mainCategories": [
             [
                 "Examples",
@@ -2457,10 +3064,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_ble_ptm",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2480,17 +3108,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2509,15 +3134,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "basic_persistent",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_persistent",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2525,10 +3149,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2548,17 +3193,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2577,15 +3219,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "basic_persistent",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_persistent",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2593,10 +3234,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2616,17 +3278,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2645,15 +3304,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "basic_persistent",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "basic_persistent",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2661,10 +3319,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2684,17 +3363,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2713,14 +3389,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "basic_persistent",
-        "description": "basic_persistent",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "basic_persistent",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "basic_persistent"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_persistent/freertos/ticlang/basic_persistent_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/ble_controller/README.html",
+        "resourceType": "categoryInfo",
+        "name": "ble_controller",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -2729,14 +3448,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -2744,22 +3466,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "basic_persistent",
-        "description": "basic_persistent",
-        "kernel": [
-            "freertos"
+        "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "ble_controller",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/ble_controller/README.html",
+        "resourceType": "categoryInfo",
+        "name": "ble_controller",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -2768,14 +3533,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -2783,23 +3551,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "basic_persistent",
-        "description": "basic_persistent",
-        "kernel": [
-            "freertos"
+        "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "ble_controller",
         "mainCategories": [
             [
                 "Examples",
@@ -2807,88 +3574,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "ble_controller"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "basic_persistent",
-        "description": "basic_persistent",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/basic_persistent/freertos/iar/basic_persistent_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "basic_persistent",
-        "description": "basic_persistent",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "basic_persistent",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2908,17 +3618,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -2937,15 +3644,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "ble_controller",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -2953,10 +3659,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -2976,17 +3703,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3005,15 +3729,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "ble_controller",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3021,10 +3744,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3044,17 +3788,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3073,15 +3814,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "ble_controller",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3089,10 +3829,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3112,17 +3873,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3141,14 +3899,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "ble_controller",
-        "description": "ble_controller",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "ble_controller",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/ble_controller/freertos/ticlang/ble_controller_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/car_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "car_node",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -3157,14 +3958,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3172,22 +3976,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "ble_controller",
-        "description": "ble_controller",
-        "kernel": [
-            "freertos"
+        "name": "car_node",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "automotive-body"
+        ],
+        "description": "car_node",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "car_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/car_node/freertos/iar/car_node_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/car_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "car_node",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -3196,14 +4043,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3211,23 +4061,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "ble_controller",
-        "description": "ble_controller",
-        "kernel": [
-            "freertos"
+        "name": "car_node",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "automotive-body"
         ],
+        "description": "car_node",
         "mainCategories": [
             [
                 "Examples",
@@ -3235,88 +4084,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "car_node"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "ble_controller",
-        "description": "ble_controller",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/ble_controller/freertos/iar/ble_controller_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "ble_controller",
-        "description": "ble_controller",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "ble_controller",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/car_node/freertos/iar/car_node_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3336,17 +4128,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3365,15 +4154,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "car_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
         "description": "car_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3381,10 +4169,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "car_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/car_node/freertos/iar/car_node_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3404,17 +4213,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3433,15 +4239,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "car_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
         "description": "car_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3449,10 +4254,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "car_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/freertos/iar/car_node_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3472,17 +4298,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3501,14 +4324,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "car_node",
-        "description": "car_node",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "automotive-body"
+        ],
+        "description": "car_node",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "car_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/iar/car_node_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/data_stream/README.html",
+        "resourceType": "categoryInfo",
+        "name": "data_stream",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -3517,14 +4383,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3532,22 +4401,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/car_node/freertos/iar/car_node_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "car_node",
-        "description": "car_node",
-        "kernel": [
-            "freertos"
+        "name": "data_stream",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "data_stream",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "data_stream"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/data_stream/README.html",
+        "resourceType": "categoryInfo",
+        "name": "data_stream",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -3556,14 +4468,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3571,23 +4486,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2745R10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2745R10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2745R10-Q1"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/freertos/iar/car_node_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "car_node",
-        "description": "car_node",
-        "kernel": [
-            "freertos"
+        "name": "data_stream",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "data_stream",
         "mainCategories": [
             [
                 "Examples",
@@ -3595,49 +4509,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "data_stream"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/iar/car_node_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "car_node",
-        "description": "car_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "car_node",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3657,17 +4553,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3686,15 +4579,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "data_stream",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "data_stream",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3702,10 +4594,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "data_stream"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3725,17 +4638,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3754,15 +4664,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "data_stream",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "data_stream",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3770,10 +4679,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "data_stream"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3793,17 +4723,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3822,15 +4749,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "data_stream",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "data_stream",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -3838,10 +4764,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "data_stream"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -3861,17 +4808,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -3890,14 +4834,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "data_stream",
-        "description": "data_stream",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "data_stream",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "data_stream"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/data_stream/freertos/ticlang/data_stream_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/host_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "host_test",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -3906,14 +4893,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3921,22 +4911,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "data_stream",
-        "description": "data_stream",
-        "kernel": [
-            "freertos"
+        "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "host_test",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/host_test/freertos/iar/host_test_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/host_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "host_test",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -3945,14 +4978,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -3960,23 +4996,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "data_stream",
-        "description": "data_stream",
-        "kernel": [
-            "freertos"
+        "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "general"
         ],
+        "description": "host_test",
         "mainCategories": [
             [
                 "Examples",
@@ -3984,88 +5019,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "host_test"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "data_stream",
-        "description": "data_stream",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/data_stream/freertos/iar/data_stream_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "data_stream",
-        "description": "data_stream",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "data_stream",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/host_test/freertos/iar/host_test_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4085,17 +5063,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4114,15 +5089,14 @@
         "devtools": [
             "LP-EM-CC2340R5"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2340R5_freertos_ticlang.projectspec",
         "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "host_test",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4130,10 +5104,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2340R5_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R5/ble/host_test/freertos/iar/host_test_LP_EM_CC2340R5_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4153,17 +5148,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4182,15 +5174,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "host_test",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4198,10 +5189,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/host_test/freertos/iar/host_test_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4221,17 +5233,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4250,15 +5259,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
         "description": "host_test",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4266,10 +5274,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/host_test/freertos/iar/host_test_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4289,17 +5318,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4318,14 +5344,57 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "host_test",
-        "description": "host_test",
-        "kernel": [
-            "freertos"
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "ticlang"
+        "endEquipment": [
+            "general"
+        ],
+        "description": "host_test",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/host_test/freertos/ticlang/host_test_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/host_test/freertos/iar/host_test_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/key_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "key_node",
+        "devtools": [
+            "LP-EM-CC2755R10-BG"
+        ],
+        "devices": [
+            "CC2755R10"
         ],
         "mainCategories": [
             [
@@ -4334,14 +5403,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -4349,22 +5421,65 @@
             "example.general"
         ],
         "devices": [
-            "CC2340R5"
+            "CC2755R10"
         ],
         "coreTypes": [
-            "Cortex M.CC2340R5"
+            "Cortex M.CC2755R10"
         ],
         "devtools": [
-            "LP-EM-CC2340R5"
+            "LP-EM-CC2755R10-BG"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R5/ble/host_test/freertos/iar/host_test_LP_EM_CC2340R5_freertos_iar.ipcf",
-        "name": "host_test",
-        "description": "host_test",
-        "kernel": [
-            "freertos"
+        "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "automotive-body"
+        ],
+        "description": "key_node",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "key_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2755R10_BG_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755R10_BG/ble/key_node/freertos/iar/key_node_LP_EM_CC2755R10_BG_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/LP_EM_CC2755P20/ble/key_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "key_node",
+        "devtools": [
+            "LP-EM-CC2755P20"
+        ],
+        "devices": [
+            "CC2755P20"
         ],
         "mainCategories": [
             [
@@ -4373,14 +5488,17 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "IAR Compiler"
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
         ]
     },
     {
-        "resourceType": "project.iar",
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
         "resourceClass": [
             "example"
         ],
@@ -4388,23 +5506,22 @@
             "example.general"
         ],
         "devices": [
-            "CC2755P10"
+            "CC2755P20"
         ],
         "coreTypes": [
-            "Cortex M.CC2755P10"
+            "Cortex M.CC2755P20"
         ],
         "devtools": [
-            "LP-EM-CC2755P10"
+            "LP-EM-CC2755P20"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/host_test/freertos/iar/host_test_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "host_test",
-        "description": "host_test",
-        "kernel": [
-            "freertos"
+        "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
         ],
-        "compiler": [
-            "iar"
+        "endEquipment": [
+            "automotive-body"
         ],
+        "description": "key_node",
         "mainCategories": [
             [
                 "Examples",
@@ -4412,88 +5529,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "key_node"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/host_test/freertos/iar/host_test_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "host_test",
-        "description": "host_test",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/host_test/freertos/iar/host_test_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "host_test",
-        "description": "host_test",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "host_test",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2755P20_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P20/ble/key_node/freertos/iar/key_node_LP_EM_CC2755P20_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4513,17 +5573,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4542,15 +5599,14 @@
         "devtools": [
             "LP-EM-CC2755P10"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2755P10_freertos_ticlang.projectspec",
         "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
         "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4558,10 +5614,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "key_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2755P10_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/freertos/iar/key_node_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4581,17 +5658,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4610,15 +5684,14 @@
         "devtools": [
             "LP-EM-CC2745R10-Q1"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
         "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
         "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4626,10 +5699,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
+            "TI Bluetooth",
+            "key_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2745R10_Q1_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/key_node/freertos/iar/key_node_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     },
     {
@@ -4649,17 +5743,14 @@
             ]
         ],
         "subCategories": [
-            "ble"
+            "TI Bluetooth"
         ],
         "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
+            "document"
         ]
     },
     {
-        "resourceType": "project.ccs",
+        "resourceType": "project.group",
         "advanced": {
             "overrideProjectSpecDeviceId": true
         },
@@ -4678,15 +5769,14 @@
         "devtools": [
             "LP-EM-CC2340R53"
         ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2340R53_freertos_ticlang.projectspec",
         "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
         "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
         "mainCategories": [
             [
                 "Examples",
@@ -4694,127 +5784,31 @@
             ]
         ],
         "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "TI Clang Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
+            "TI Bluetooth",
+            "key_node"
         ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2755P10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2755P10"
-        ],
-        "devtools": [
-            "LP-EM-CC2755P10"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/freertos/iar/key_node_LP_EM_CC2755P10_freertos_iar.ipcf",
-        "name": "key_node",
-        "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2745R10"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2745R10"
-        ],
-        "devtools": [
-            "LP-EM-CC2745R10-Q1"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/key_node/freertos/iar/key_node_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-        "name": "key_node",
-        "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "IAR Compiler"
-        ]
-    },
-    {
-        "resourceType": "project.iar",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/key_node/freertos/iar/key_node_LP_EM_CC2340R53_freertos_iar.ipcf",
-        "name": "key_node",
-        "description": "key_node",
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "iar"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "ble",
-            "key_node",
-            "FreeRTOS",
-            "IAR Compiler"
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/key_node/freertos/ticlang/key_node_LP_EM_CC2340R53_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/key_node/freertos/iar/key_node_LP_EM_CC2340R53_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
         ]
     }
 ]

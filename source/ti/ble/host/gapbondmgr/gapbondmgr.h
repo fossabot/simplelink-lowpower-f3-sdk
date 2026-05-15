@@ -96,30 +96,19 @@ extern "C"
  * @{
  */
 
-// This is a common file for the legacy and sysconfig examples,
-// the parameters under ifndef SYSCFG are defined in this file for
-// the legacy examples and generated using the sysconfig tool for
-// the sysconfig examples
-#ifndef SYSCFG
 #if !defined ( GAP_BONDINGS_MAX )
 /// Maximum number of bonds that can be saved in NV.
-#ifdef CC23X0
 #define GAP_BONDINGS_MAX    5
-#else
-#define GAP_BONDINGS_MAX    10
-#endif // CC23X0
 #endif
 
 #if GAP_BONDINGS_MAX < 1
 #error "GAP_BONDINGS_MAX must be greater than 0"
 #endif
 
-
 #if !defined ( GAP_CHAR_CFG_MAX )
 /// Maximum number of characteristic configuration that can be saved in NV.
 #define GAP_CHAR_CFG_MAX    4
 #endif
-#endif //SYSCFG
 
 /** @} End GAPBondMgr_Constants */
 

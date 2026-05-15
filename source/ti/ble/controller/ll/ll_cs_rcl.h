@@ -85,7 +85,7 @@
 
 /* Number of Buffers of step type (TX) */
 /* ------------------------------------*/
-#define CS_STEP_TX_BUFF_NUM                    2U
+#define CS_STEP_TX_BUFF_NUM                    3U
 
 /* Number of Buffers of result type (RX) */
 /* ------------------------------------*/
@@ -416,6 +416,23 @@ void llCsRclCallback(RCL_Command* cmd, LRF_Events lrfEvents,
  * @return      None
  */
 void llCsRclAbort(void);
+
+/*******************************************************************************
+ * @fn          llCsRclReset
+ *
+ * @brief       Reset the RCL module (halt any ongoing command).
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsRclReset(void);
 
 /*******************************************************************************
  * @fn          llCsClearRclBuffers

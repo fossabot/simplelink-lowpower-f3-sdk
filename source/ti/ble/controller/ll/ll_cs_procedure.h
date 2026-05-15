@@ -116,10 +116,8 @@
 /*******************************************************************************
  * @fn          llCsInit
  *
- * @brief       Initialize the CS feature
- * This function calls llCsInit Db which in turn allocates the
- * memory needed for CS, and initializes the structures and their
- * initial settings for usage
+ * @brief       Initialize the memory for the CS module.
+ * This allocates and initializes the memory for LL_CS_DB and the Buffers.
  *
  * input parameters
  *
@@ -133,7 +131,48 @@
  *              CS_INSUFFICIENT_MEMORY
  *              CS_SUCCESS
  */
-uint8 llCsInit(void);
+uint8_t llCsInit(void);
+
+/*******************************************************************************
+ * @fn          llCsInitPrecal
+ *
+ * @brief       Initialize the CS feature by triggering the Precalibration module which is a
+ * pre-requirement for the CS module.
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      Status
+ *              CS_INSUFFICIENT_MEMORY
+ *              CS_SUCCESS
+ */
+uint8 llCsInitPrecal(void);
+
+/*******************************************************************************
+ * @fn          llCsReset
+ *
+ * @brief       Reset the CS feature.
+ * Clear the CS module by aborting any ongoing radio activity, clearing the
+ * Clear data to default values.
+ *
+ * @note the CS data (llCs) is cleared per connection in LL_clearAllActiveConns
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ */
+void llCsReset(void);
 
 /*******************************************************************************
  * @fn          llCsNewSubEvent_getSubEventType
@@ -996,6 +1035,19 @@ uint16 llCsProcGetReportedConnId(void);
 bool llCsProcGetConnIdAndConfigId(uint16_t *pConnId, uint8_t *pConfigId);
 
 /*******************************************************************************
+ * @fn          llCsResetConnMaxTime
+ *
+ * @brief       Resets connection max time by clearing the external update flag.
+ *              The scheduler will recalculate connMaxTimeLength when it
+ *              schedules the next connection event.
+ *
+ * @param       connId - Connection ID
+ *
+ * @return      None
+ */
+void llCsResetConnMaxTime(uint16 connId);
+
+/*******************************************************************************
 * @fn          llCsIsSingleProcedure
 *
 * @brief       Determines if current procedure is a single procedure or repetitions
@@ -1015,18 +1067,5 @@ bool llCsProcGetConnIdAndConfigId(uint16_t *pConnId, uint8_t *pConfigId);
 *              FALSE in case repetitions
 */
 bool llCsIsSingleProcedure(uint16_t connId, uint8_t configId);
-
-/*******************************************************************************
- * @fn          llCsResetConnMaxTime
- *
- * @brief       Resets connection max time by clearing the external update flag.
- *              The scheduler will recalculate connMaxTimeLength when it
- *              schedules the next connection event.
- *
- * @param       connId - Connection ID
- *
- * @return      None
- */
-void llCsResetConnMaxTime(uint16 connId);
 
 #endif // LL_CS_PROCEDURE_H

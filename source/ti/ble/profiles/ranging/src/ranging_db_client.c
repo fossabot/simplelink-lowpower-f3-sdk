@@ -186,6 +186,21 @@ uint8_t RangingDBClient_procedureClose(uint8_t handle)
 /*******************************************************************************
  * Public function defined in ranging_db_client.h.
  */
+uint8_t RangingDBClient_isAvailableSlot(void)
+{
+    uint8_t status = FAILURE;
+
+    if ( rangingDBClient_getEmptyIndex() != RANGING_DB_CLIENT_INVALID_HANDLE )
+    {
+        status = SUCCESS;
+    }
+
+    return status;
+}
+
+/*******************************************************************************
+ * Public function defined in ranging_db_client.h.
+ */
 uint8_t RangingDBClient_addData(uint8_t handle, uint8_t segmentNum, uint16_t datalen, uint8_t *pData)
 {
     uint8_t status = SUCCESS;

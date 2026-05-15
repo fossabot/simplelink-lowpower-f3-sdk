@@ -486,8 +486,25 @@ function generateDisabledOptions(name)
     }
 }
 
+/*
+ *  ======== getOpts ========
+ */
+function getOpts(mod)
+{
+    const inst = mod.$static;
+    let result = [];
+
+    if(Common.getInstModes(inst).isScanning && inst.advReportChanNum)
+    {
+        result.push("-DADV_RPT_INC_CHANNEL=1");
+    }
+
+    return result;
+}
+
 // Exports to the top level BLE module
 exports = {
     config: config,
-    validate: validate
+    validate: validate,
+    getOpts: getOpts
 };

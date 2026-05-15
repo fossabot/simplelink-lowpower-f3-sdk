@@ -96,10 +96,6 @@
 // Stub headers
 #include "ti/ble/stack_util/lib_opt/host_stub_gap_bond_mgr.h"
 
-#ifdef SYSCFG
-#include "ti_ble_config.h"
-#endif //SYSCFG
-
 /*********************************************************************
  * MACROS
  */
@@ -1515,6 +1511,7 @@ uint8_t GAPBondMgr_ProcessGAPMsg(gapEventHdr_t *pMsg)
     break;
 
     case GAP_LINK_ESTABLISHED_EVENT:
+    case GAP_LINK_ESTABLISHED_EVENT_V2:
     {
       gapEstLinkReqEvent_t *pPkt = (gapEstLinkReqEvent_t *)pMsg;
 

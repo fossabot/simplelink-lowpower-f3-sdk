@@ -478,19 +478,19 @@ uint16 llCsMode3Duration(uint16_t connId, uint8_t configId, uint8 nPath, uint16 
 /*******************************************************************************
  * @fn          llCsClearStepBuffers
  *
- * @brief       Clear the internal buffers
+ * @brief       Clear the internal buffers lists
  *
  * input parameters
  *
- * @param       connId   - connection ID
+ * @param       None
  *
  * output parameters
  *
  * @param       None
  *
- * @return
+ * @return      None
  */
-void llCsClearStepBuffers();
+void llCsClearStepBuffers(void);
 
 /*******************************************************************************
  * @fn          llCsInitProcedure

@@ -376,6 +376,7 @@ def cs_proc_enable(
     extended_results=False,
     wait_for_raw_events=False,
     auto_config=False,
+    ras_profile=False,
 ):
     """
     Enables the procedure for the given car node and handles subsequent events.
@@ -425,7 +426,7 @@ def cs_proc_enable(
             for i in range(repeat):
                 if wait_for_raw_events:
                     # Expect raw results events
-                    wait_results_subevents(car_node, wait_for_remote)
+                    wait_results_subevents(car_node, wait_for_remote, ras_profile)
                     if wait_for_distance:
                         # Expect also distance results event
                         wait_distance(car_node, extended_results)
@@ -584,13 +585,16 @@ def wait_distance(car_node, extended_results=False):
         wait_distance_event(car_node)
 
 
-def wait_results_subevents(car_node, wait_for_remote):
+def wait_results_subevents(car_node, wait_for_remote, ras_profile=False):
     print("**** Waiting for Local Results ****")
     wait_results_subevents_data(car_node)
 
     if wait_for_remote:
         print("**** Waiting for Remote Results ****")
-        wait_results_subevents_data(car_node)
+        if ras_profile:
+            wait_ras_subevent_results_event(car_node)
+        else:
+            wait_results_subevents_data(car_node)
 
 
 def wait_results_subevents_data(car_node):
@@ -633,6 +637,61 @@ def wait_results_subevents_data(car_node):
                 return
 
 
+def wait_ras_subevent_results_event(car_node):
+    """
+    Wait for the NWP_CS_APP_RAS_SUBEVENT_RESULTS event and print the results.
+    Parse and print the event data (AppExtCtrlCsAppRASDistanceExtendedResultsEvent_t)
+    Repeats while: ranging_done_status=0x1, subevent_done_status not in (0x0, 0xF),
+    ranging_abort_reason=0x0, subevent_abort_reason=0x0.
+    """
+    print("Waiting for NWP_CS_APP_RAS_SUBEVENT_RESULTS")
+    decimal_fields = {
+        "status",
+        "conn_handle",
+        "start_acl_connection_event",
+        "frequency_compensation",
+        "ranging_done_status",
+        "subevent_done_status",
+        "ranging_abort_reason",
+        "subevent_abort_reason",
+        "reference_power_level",
+        "num_steps_reported",
+        "data_len",
+    }
+    all_results = []
+    keep_looping = True
+    while keep_looping:
+        ras_subevent_results = car_node.wait_for_event(
+            event_type=CsEventType.NWP_CS_APP_RAS_SUBEVENT_RESULTS, timeout=3)
+        if ras_subevent_results:
+            print("RAS Subevent Results")
+            print("----------------------------------------------------------------------")
+            for key, value in ras_subevent_results.items():
+                if key == "data":
+                    print(f"data: {value}")
+                elif key in decimal_fields:
+                    print(f"{key}: {value}")
+                elif isinstance(value, int):
+                    print(f"{key}: {hex(value)}")
+                else:
+                    print(f"{key}: {value}")
+            print("----------------------------------------------------------------------")
+            all_results.append(ras_subevent_results)
+            ranging_done_status = ras_subevent_results.get("ranging_done_status")
+
+            # For debugging purposes
+            # subevent_done_status = ras_subevent_results.get("subevent_done_status")
+            # ranging_abort_reason = ras_subevent_results.get("ranging_abort_reason")
+            # subevent_abort_reason = ras_subevent_results.get("subevent_abort_reason")
+
+            # Received partial results with more reports to follow for the CS procedure
+            keep_looping = (ranging_done_status == 0x1)
+        else:
+            print("Error: No NWP_CS_APP_RAS_SUBEVENT_RESULTS event received")
+            return None  
+    return all_results
+
+
 def main():
     logging_file = get_logging_file_path()
     print(f"Logging to file: {logging_file}")
@@ -654,12 +713,13 @@ def main():
 
         # CS Features
         # Change these parameters to configure which events to wait for.
-        # The events will be raised depneds on the embedded configuration of the car node example.
+        # The events will be raised depends on the embedded configuration of the car node example.
         cs_wait_for_distance = True  # Wait for distance results
         cs_extended_results = False  # While waiting for distance, expect for extended results event (need to enable cs_wait_for_distance)
         cs_wait_for_raw_events = False  # Wait for subevent results raw data
         cs_wait_for_remote = True  # While waiting for raw events - also wait for remote device results (need to enable cs_wait_for_raw_events)
         cs_auto_config = False  # Let the device do the CS procedures on its own without sending commands to it
+        cs_ras_profile = False # Whether the RAS subevent results are for the RAS profile (if False, will expect the proprietary profile extended distance results format)
 
         # Set default antenna for non-CS BLE communications
         car_node.cs.set_default_antenna(0)
@@ -711,6 +771,7 @@ def main():
                     extended_results=cs_extended_results,
                     wait_for_raw_events=cs_wait_for_raw_events,
                     auto_config=cs_auto_config,
+                    ras_profile=cs_ras_profile,
                 )
 
     car_node.done()

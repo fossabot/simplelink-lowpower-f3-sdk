@@ -940,7 +940,7 @@ uint8_t llCsDbGetSubEventDoneStatus(uint16 connId);
 void llCsDbSetSubEventDoneStatus(uint16 connId, uint8_t subeventDoneStatus);
 
 /*******************************************************************************
- * @fn          llCsDbGetProcedureDoneErrorCode
+ * @fn          llCsDbGetProcedureDoneReason
  *
  * @brief       Get the CS Procedure Done Error Reason
  *
@@ -954,17 +954,17 @@ void llCsDbSetSubEventDoneStatus(uint16 connId, uint8_t subeventDoneStatus);
  *
  * @return      The error code for the temrination reason
  */
-uint8 llCsDbGetProcedureDoneErrorCode(uint16 connId);
+uint8 llCsDbGetProcedureDoneReason(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbSetProcedureDoneErrorCode
+ * @fn          llCsDbSetProcedureDoneAborted
  *
- * @brief       Set the CS Procedure Done Error Reason
+ * @brief       Set the CS Procedure Done Error Status & Reason
  *
  * input parameters
  *
  * @param       connId - Connection Id
- * @param       procErrorCode - The error code for the temrination reason
+ * @param       reason - The reason code for the temrination reason
  *
  * output parameters
  *
@@ -972,12 +972,12 @@ uint8 llCsDbGetProcedureDoneErrorCode(uint16 connId);
  *
  * @return      None
  */
-void llCsDbSetProcedureDoneErrorCode(uint16 connId, uint8 procErrorCode);
+void llCsDbSetProcedureDoneAborted(uint16 connId, uint8 reason);
 
 /*******************************************************************************
- * @fn          llCsDbClearProcedureDoneErrorCode
+ * @fn          llCsDbClearSubEventDone
  *
- * @brief       Clear the CS Procedure Done Error Reason
+ * @brief       Clear the CS SubEvent Done Status and Reason
  *
  * input parameters
  *
@@ -989,10 +989,10 @@ void llCsDbSetProcedureDoneErrorCode(uint16 connId, uint8 procErrorCode);
  *
  * @return      None
  */
-void llCsDbClearProcedureDoneErrorCode(uint16 connId);
+void llCsDbClearSubEventDone(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbGetSubEventDoneErrorCode
+ * @fn          llCsDbGetSubEventDoneReason
  *
  * @brief       Get the CS SubEvent Terminate Reason
  *
@@ -1005,34 +1005,17 @@ void llCsDbClearProcedureDoneErrorCode(uint16 connId);
  *
  * @return      SubEvent Error Code (Termination Reason)
  */
-uint8 llCsDbGetSubEventDoneErrorCode(uint16 connId);
+uint8 llCsDbGetSubEventDoneReason(uint16 connId);
 
 /*******************************************************************************
- * @fn          llCsDbSetSubEventErrCode
- *
- * @brief       Set the CS SubEvent Terminate Reason
- *
- * input parameters
- *
- * @param       connId - Connection ID
- * @param       errCode - SubEvent Error Code (Termination Reason)
- * output parameters
- *
- * @param       None
- *
- * @return      SubEvent Error Code (Termination Reason)
- */
-void llCsDbSetSubEventErrCode(uint16_t connId, uint8_t errCode);
-
-/*******************************************************************************
- * @fn          llCsDbSetSubEventDoneErrorCode
+ * @fn          llCsDbSetSubEventDoneAborted
  *
  * @brief       Set the CS Sub Event Termination Reason
  *
  * input parameters
  *
  * @param       connId - Connection Id
- * @param       seErrorCode - The error code for the temrination reason
+ * @param       reason - The error code for the temrination reason
  *
  * output parameters
  *
@@ -1040,7 +1023,7 @@ void llCsDbSetSubEventErrCode(uint16_t connId, uint8_t errCode);
  *
  * @return      None
  */
-void llCsDbSetSubEventDoneErrorCode(uint16 connId, uint8 seErrorCode);
+void llCsDbSetSubEventDoneAborted(uint16 connId, uint8 reason);
 
 /*******************************************************************************
  * @fn          llCsDbGetEnableProcedureDuration
@@ -1243,9 +1226,11 @@ bool llCsDbIsCsProcedureParamsSet(uint16_t connId, uint8_t configId);
  *
  * @param       None
  *
- * @return      None
+ * @return      SUCCESS - if the channel map was updated successfully
+ *              ERROR_UNEXPECTED_PARAMETER - if the provided channel map is invalid
+ *              ERROR_INSUFFICIENT_MEMORY - no memory to allocate channel map
  */
-void llCsDbUpdateLocalChm(uint8_t *pNewChm);
+csStatus_e llCsDbUpdateLocalChm(uint8_t *pNewChm);
 
 /*******************************************************************************
  * @fn          llCsDbSetChannelClassificationReqTime
@@ -3758,6 +3743,46 @@ uint8_t llCsDbGetMModeRepetitionsChannelArray(uint16 connId, uint8_t index);
 void llCsDbClearMModeRepetitions(uint16 connId);
 
 /*******************************************************************************
+ * @fn          llCsDbResetLocalClassifiedChM
+ * @brief       Reset the local classified channel map to system initial values.
+ * This includes freeing the allocated memory for the Channel Map.
+ * Freeing is necessary because the functionality relies on NULL checks to determine
+ * when and when not to use the local classified channel map.
+ *
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ *
+ */
+void llCsDbResetLocalClassifiedChM(void);
+
+/*******************************************************************************
+ * @fn          llCsDbReset
+ * @brief       Reset the CS DB to system initial values.
+ *
+ *
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      None
+ *
+ */
+void llCsDbReset(void);
+
+/*******************************************************************************
  * @fn          llCsDbGetProcedureRepetitionsDoneStatus
  *
  * @brief       Get the completion status of CS procedure repetitions
@@ -3779,6 +3804,26 @@ void llCsDbClearMModeRepetitions(uint16 connId);
 uint8 llCsDbGetProcedureRepetitionsDoneStatus(uint16 connId);
 
 /*******************************************************************************
+ * @fn          llCsDbGetProcedureRepetitionsDoneReason
+ *
+ * @brief       Get the completion reason of CS procedure repetitions
+ *
+ * @details     Returns the code that indicates the reason for procedure
+ *              repetitions termination.
+ *
+ * input parameters
+ *
+ * @param       connId - connection Id
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Procedure repetitions completion status code
+ */
+uint8 llCsDbGetProcedureRepetitionsDoneReason(uint16 connId);
+
+/*******************************************************************************
  * @fn          llCsDbSetProcedureRepetitionsDoneStatus
  *
  * @brief       Set the completion status of CS procedure repetitions
@@ -3790,7 +3835,7 @@ uint8 llCsDbGetProcedureRepetitionsDoneStatus(uint16 connId);
  * input parameters
  *
  * @param       connId - connection Id
- * @param       procErrorCode - procedure completion status or error code
+ * @param       reason - procedure completion status or error code
  *
  * output parameters
  *
@@ -3798,7 +3843,7 @@ uint8 llCsDbGetProcedureRepetitionsDoneStatus(uint16 connId);
  *
  * @return      None
  */
-void llCsDbSetProcedureRepetitionsDoneStatus(uint16 connId, uint8 procErrorCode);
+void llCsDbSetProcedureRepetitionsDoneAborted(uint16 connId, uint8 reason);
 
 /*******************************************************************************
  * @fn          llCsProcedureRepetitionsCleanup

@@ -104,7 +104,7 @@ extern "C"
 ******************************************************************************/
 
 // Maximum margin time for periodic scanning in RAT ticks (2.576ms)
-#define PERIODIC_SCAN_MAX_MARGIN_TIME_RAT_TICKS             (PERIODIC_SCAN_MARGIN_TIME_RAT_TICKS + LL_JITTER_CORRECTION + LL_RX_RAMP_OVERHEAD + RAT_TICKS_FOR_PERIODIC_SCAN_WIN_SIZE + LL_RX_SYNCH_OVERHEAD)
+#define PERIODIC_SCAN_MAX_MARGIN_TIME_RAT_TICKS             (PERIODIC_SCAN_MARGIN_TIME_RAT_TICKS + LL_JITTER_CORRECTION + RAT_TICKS_FOR_PERIODIC_SCAN_WIN_SIZE)
 
 // Maximum number of events allowed for periodic syncing
 #define PERIODIC_SYNCING_LIMIT_NUM_EVENTS                   6
@@ -181,8 +181,8 @@ typedef struct llPeriodicScanSet_t
   uint8                             intPriority;           // internal priority: priority scale to use in periodic scan selection procedure
   uint8                             driftLearnCounter;     // counts number of valid events used for drift calculation (range 0 to PERIODIC_SCAN_DRIFT_LEARNING_MAX_NUM)
   uint8                             priority;              // priority as a secondary task.
+  uint8_t                           advAIsResolved;        // indicates if the advertiser's address is resolved
   uint8_t*                          pPAwRParams;           // pPAwR params (if supported).
-
 } llPeriodicScanSet_t;
 
 typedef struct llPeriodicAcceptListItem_t
@@ -457,7 +457,7 @@ bool LL_PadvA_CheckSyncInfoCriteria(llAdvPDUInfo *advPDUInfo);
 *
 * @return      None.
 */
-void LL_PadvS_ProcessPeriodicSyncInfo(llExtAdvPDUInfo *pExtAdvInfo, aeExtAdvRptEvt_t *advEvent, uint32_t timeStamp);
+void LL_PadvS_ProcessPeriodicSyncInfo(llAdvPDUInfo *pAdvInfo, aeExtAdvRptEvt_t *advEvent, uint32_t timeStamp);
 
 /*******************************************************************************
 * @fn          LL_PadvS_PostProcess

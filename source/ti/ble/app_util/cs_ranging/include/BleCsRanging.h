@@ -60,11 +60,11 @@
 /**
  * Type/Data structure definitions
  */
-#define PCT_LEN              75  /*!< Maximum length of PCT vector */
-#define MAX_NUM_ANTPATH      4   /*!< Maximum number of antenna path */
-#define MAX_RANGE            150 /*!< Maximum range can be estimated */
-#define MAX_MUSIC_SPECTRUM   256
-#define RANGINGLIB_HEAP_SIZE 1000 /*!< Size of heap of RangingLib in number of floats */
+#define PCT_LEN                         75   /*!< Maximum length of PCT vector */
+#define MAX_NUM_ANTPATH                 4    /*!< Maximum number of antenna path */
+#define BLECSRANGING_MAX_RANGE          150  /*!< Maximum range can be estimated */
+#define BLECSRANGING_MAX_MUSIC_SPECTRUM 320  /*!< Maximum music spectrum can be estimated */
+#define BLECSRANGING_HEAP_SIZE          1500 /*!< Size of heap of RangingLib in number of floats */
 
 typedef uint16_t BleCsRanging_Return_t; /*!< Function return code, see BleCsRanging_Status_e */
 
@@ -182,29 +182,29 @@ typedef enum
  */
 typedef struct BleCsRanging_Config_t
 {
-    uint16_t maxDistance;                           /*!< Maximum distance to measure in meter, must less than 150m */
-    uint16_t numAntPath;                            /*!< Number of antenna paths, max 4 */
-    uint16_t numChannels;                           /*!< Number of actual CS steps, up to 75 */
-    float distanceOffset;                           /*!< Distance offset from calibration, in meters */
-    float maxVelocity;                              /*!< Maximum velocity in meters per second for motion compensation */
-    BleCsRanging_MAP_e sumAntPath;                  /*!< Individual or Summation before estimating distance */
-    BleCsRanging_GapInterp_e gapInterp;             /*!< Interpolation method for gap */
-    BleCsRanging_Algorithm_e algorithm;             /*!< Enum to select the algorithm for distance */
-    BleCsRanging_DistanceFusion_e distFusion;       /*!< Combine Antenna Path Method */
-    BleCsRanging_FilterChain_e antFilter;           /*!< Antenna Path Filtering Method */
+    uint16_t maxDistance;                     /*!< Maximum distance to measure in meter, must less than 150m */
+    uint16_t numAntPath;                      /*!< Number of antenna paths, max 4 */
+    uint16_t numChannels;                     /*!< Number of actual CS steps, up to 75 */
+    float distanceOffset;                     /*!< Distance offset from calibration, in meters */
+    float maxVelocity;                        /*!< Maximum velocity in meters per second for motion compensation */
+    BleCsRanging_MAP_e sumAntPath;            /*!< Individual or Summation before estimating distance */
+    BleCsRanging_GapInterp_e gapInterp;       /*!< Interpolation method for gap */
+    BleCsRanging_Algorithm_e algorithm;       /*!< Enum to select the algorithm for distance */
+    BleCsRanging_DistanceFusion_e distFusion; /*!< Combine Antenna Path Method */
     BleCsRanging_AdaptiveProfile_e adaptiveProfile; /*!< NLOS adaptive profile */
     float tqiThresh;                                /*!< TQI threshold */
     float peakEnergyThresh;                         /*!< Peak energy threshold */
     uint16_t peakDiffThresh;                        /*!< Peak distance difference threshold */
     float dVarMax;                                  /*!< Max distance variance*/
     uint16_t resetHist;                             /*!< Reset history when disconnected for a long time*/
-    float iirCoeff;                                 /*!< IIR filter coefficient sets weight of current dataset vs history
-                                                         data buffer, in range [0, 1]. Higher value gives more weight to current dataset.*/
-    BleCsRanging_TimingParams_t timingParams;       /*!< Timing parameters */
-    uint8_t *pBuffer; /*!< For Adaptive algorithm: application needs to provide pointer to a history
-                          data buffer for BleCsRanging library to store the last datasets for smoother estimation.
-                          The application must use the function @ref BleCsRanging_getHeapSize to get the required buffer
-                         size. */
+    float iirCoeff;                           /*!< IIR filter coefficient sets weight of current dataset vs history
+                                                   data buffer, in range [0, 1]. Higher value gives more weight to current dataset.*/
+    BleCsRanging_TimingParams_t timingParams; /*!< Timing parameters */
+    uint8_t *pBuffer;    /*!< For Adaptive algorithm: application needs to provide pointer to a history
+                           data buffer for BleCsRanging library to store the last datasets for smoother estimation.
+                           The application must use the function @ref BleCsRanging_getHeapSize to get the required buffer
+                           size. */
+    uint8_t *pBufferPCT; /*!< Buffer to store PCT values for adaptive algorithm */
 } BleCsRanging_Config_t;
 
 /**
@@ -242,9 +242,9 @@ typedef struct
     uint16_t class[MAX_NUM_ANTPATH];       /*!< Debug information: Reserved for future use */
     float runtime_ms;                      /*!< Debug information: Reserved for future use */
     float runtimeProfile[10];              /*!< Debug information: Reserved for future use */
-    uint16_t peakBinIFFT;    /*!< Peak Bin IFFT*/
-    uint16_t peakCountIFFT;  /*!< Peak Count IFFT*/
-    uint16_t ifftValid;      /*!< IFFT Valid*/
+    uint16_t peakBinIFFT;                  /*!< Peak Bin IFFT*/
+    uint16_t peakCountIFFT;                /*!< Peak Count IFFT*/
+    uint16_t ifftValid;                    /*!< IFFT Valid*/
 } BleCsRanging_DebugResult_t;
 
 typedef struct
@@ -252,6 +252,7 @@ typedef struct
     float distance;                           /*!< Estimated distance, meters */
     float quality;                            /*!< Quality metric QQ3 of the estimated distance */
     float confidence;                         /*!< Confidence of the estimation */
+    float peakQuality;                        /*!< Peak quality metric of the estimated distance */
     uint16_t numMPC;                          /*!< Number of multipath-component (MPC) of the estimated distance */
     float velocity;                           /*!< Estimated velocity (meters/second) used in motion compensation */
     BleCsRanging_DebugResult_t *pDebugResult; /*!< Debug results (optional) */
@@ -322,5 +323,20 @@ extern BleCsRanging_Status_e __attribute__((weak)) BleCsRanging_initConfig(BleCs
  * @see BleCsRanging_Config_t::pBuffer
  */
 uint16_t BleCsRanging_getHeapSize(BleCsRanging_Config_t *pConfig);
+
+/**
+ * @brief Calculate the required heap buffer size for the PCT algorithm
+ *
+ * This function calculates the required buffer size (in bytes) if a history data buffer is
+ * to be used. The application must call this function to determine the buffer size
+ * needed for the pBufferPCT field in BleCsRanging_Config_t before calling BleCsRanging_estimatePbr.
+ *
+ * @param pConfig Pointer to the configuration structure
+ *
+ * @return Required buffer size in bytes. If pConfig is NULL or invalid, returns 0.
+ *
+ * @see BleCsRanging_Config_t::pBufferPCT
+ */
+uint16_t BleCsRanging_getHeapSizePCT(BleCsRanging_Config_t *pConfig);
 
 #endif //_BLECSRANGING_H_

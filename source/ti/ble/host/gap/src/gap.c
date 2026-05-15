@@ -82,6 +82,8 @@
 #include "ti/ble/stack_util/lib_opt/map_direct.h"
 // Stub headers
 #include "ti/ble/stack_util/lib_opt/host_stub_gap_bond_mgr.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_pawr_scan.h"
+#include "ti/ble/stack_util/lib_opt/ctrl_stub_pawr_advertiser.h"
 
 /*********************************************************************
  * MACROS
@@ -112,6 +114,19 @@ uint8 gapEndAppTaskID = INVALID_TASK_ID; // end application task ID to send even
 /*********************************************************************
  * LOCAL VARIABLES
  */
+uint8_t gapDefaultLeEvtMask[B_EVENT_MASK_LEN] = {
+  LE_EVT_MASK_BYTE0,  // byte 0
+  LE_EVT_MASK_BYTE1,  // byte 1
+  LE_EVT_MASK_BYTE2,  // byte 2
+  LE_EVT_MASK_NONE,   // byte 3
+  LE_EVT_MASK_BYTE4,  // byte 4
+  LE_EVT_MASK_NONE,   // byte 5
+  LE_EVT_MASK_NONE,   // byte 6
+  LE_EVT_MASK_NONE    // byte 7
+};
+
+#define BYTE_4        4
+#define BYTE_5        5
 
 /*********************************************************************
  * LOCAL FUNCTION PROTOTYPES
@@ -331,6 +346,26 @@ bStatus_t GAP_DeviceInit(uint8_t profileRole, uint8_t taskID,
 
       // Init GAP security, privacy, advertising and scan per role
       GAP_DeviceInit_per_role(profileRole);
+    }
+
+    // Enable controller events to be sent to the host according to enabled flags
+
+    if( OPT_LL_PAwRA_IsEnable() == TRUE )
+    {
+      // Enable PAwR advertiser events (subevent data request + response report)
+      gapDefaultLeEvtMask[BYTE_4] |= ( GAP_EVT_MASK_BYTE4_PADVA_SUBEVENT_DATA_REQ | GAP_EVT_MASK_BYTE4_PADVA_RESPONSE_REPORT );
+    }
+
+    if ( OPT_LL_PAwRS_IsEnable() == TRUE )
+    {
+      // Enable PAwR scanner events (sync established V2, report V2, enhanced connection complete V2) 
+      gapDefaultLeEvtMask[BYTE_4] |= ( GAP_EVT_MASK_BYTE4_PADV_SYNC_ESTABLISHED_V2 | GAP_EVT_MASK_BYTE4_PADV_REPORT_V2 );
+      gapDefaultLeEvtMask[BYTE_5] |=   GAP_EVT_MASK_BYTE5_ENH_CONN_COMPLETE_V2;
+    }
+
+    if ( OPT_LL_PAwRA_IsEnable() == TRUE || OPT_LL_PAwRS_IsEnable() == TRUE )
+    {
+      stat = HCI_LE_SetEventMaskCmd(gapDefaultLeEvtMask);
     }
   }
 

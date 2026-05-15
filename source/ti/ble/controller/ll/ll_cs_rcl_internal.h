@@ -388,11 +388,11 @@ uint16_t llCsSetupRclRxWidening(uint16 connId, uint32_t timerDrift);
  *
  * output parameters
  *
- * @param       None.
+ * @param       csRole - CS Initiator or CS Reflector.
  *
  * @return      TRUE if delay is allowed, FALSE otherwise
  */
-bool llCsSetupRclAllowDelay(void);
+bool llCsSetupRclAllowDelay(uint8_t csRole);
 
 /*******************************************************************************
  * @fn          llCsGetScaFactor
@@ -414,6 +414,48 @@ bool llCsSetupRclAllowDelay(void);
  * @return      SCA factor value used in timing calculations
  */
 uint16_t llCsGetScaFactor(uint16 connId);
+
+/*******************************************************************************
+ * @fn          llCsGetMaxSubEventsPerProcedure
+ *
+ * @brief       Get the maximum number of subevents per CS procedure
+ *
+ * @details     Returns CS_MAX_SUBEVENTS_PER_PROCEDURE, or the configured
+ *              subevents-per-event value when in test mode with a zero
+ *              subevent interval.
+ *
+ * input parameters
+ *
+ * @param       None.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      Maximum number of subevents per procedure
+ */
+uint8_t llCsGetMaxSubEventsPerProcedure(void);
+
+/*******************************************************************************
+ * @fn          llCsGetRclSubEventDoneStatus
+ *
+ * @brief       Get the subevent done status from an RCL result buffer
+ *
+ * @details     Reads the subeventDoneStatus field directly from the RCL-written
+ *              result buffer, allowing the subevent completion state to be
+ *              determined independently of the last-command-done event.
+ *
+ * input parameters
+ *
+ * @param       pBuffer - Buffer containing subevent results
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      CS_SUBEVENT_DONE or CS_SUBEVENT_CONTINUE
+ */
+uint8_t llCsGetRclSubEventDoneStatus(RCL_MultiBuffer* pBuffer);
 
 #endif //LL_CS_RCL_INTERNAL_H
 

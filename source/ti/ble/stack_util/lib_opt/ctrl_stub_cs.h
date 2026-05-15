@@ -103,9 +103,10 @@ extern csStatus_e LL_CS_SetProcedureParameters(uint16_t connId, uint8_t configId
 extern csStatus_e LL_CS_ProcedureEnable(uint16_t connId, uint8_t configId, uint8_t enable);
 extern csStatus_e llCsReceiveCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
 extern uint8_t llCsTransmitCsCtrlProcedure(llConnState_t* connPtr, uint8_t ctrlPkt);
-extern uint8_t llCsInit(void);
+extern uint8_t llCsInitPrecal(void);
+extern void llCsReset(void);
 extern bool llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
-extern uint8_t llCsInitDb(void);
+extern uint8_t llCsInit(void);
 extern void llCsClearConnProcedures(uint16_t connId);
 extern void llCsFreeAll(void);
 extern void llCsSetFeatureBit(void);
@@ -127,6 +128,7 @@ extern uint16 llConnGetMissCountMargin(void);
 extern bool LL_CS_isCsInProgress(uint16_t connId);
 extern bool llCsIsChannelClassificationAllowed(uint32_t currentTime);
 extern uint32_t LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
+extern void llCsPrecal_clear(void);
 extern uint8_t LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw);
 
 
@@ -148,9 +150,10 @@ csStatus_e OPT_LL_CS_SetProcedureParameters(uint16_t connId, uint8_t configId, c
 csStatus_e OPT_LL_CS_ProcedureEnable(uint16_t connId, uint8_t configId, uint8_t enable);
 csStatus_e OPT_llCsReceiveCsControlPacket(uint8_t ctrlType, llConnState_t* connPtr, uint8_t* pBuf);
 uint8_t OPT_llCsTransmitCsCtrlProcedure(llConnState_t* connPtr, uint8_t ctrlPkt);
-uint8_t OPT_llCsInit(void);
+uint8_t OPT_llCsInitPrecal(void);
+void OPT_llCsReset(void);
 bool OPT_llCsDbIsCsCtrlProcedureInProgress(uint16_t connId);
-uint8_t OPT_llCsInitDb(void);
+uint8_t OPT_llCsInit(void);
 void OPT_llCsClearConnProcedures(uint16_t connId);
 void OPT_llCsFreeAll(void);
 void OPT_llCsSetFeatureBit(void);
@@ -172,6 +175,7 @@ uint16 OPT_llConnGetMissCountMargin(void);
 bool OPT_LL_CS_isCsInProgress(uint16_t connId);
 bool OPT_llCsIsChannelClassificationAllowed(uint32_t currentTime);
 uint32_t OPT_LL_CS_Handover_SnGetSNDataSize(uint16 connHandle);
+void OPT_llCsPrecal_clear(void);
 uint8_t OPT_LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw);
 
 #endif /* CTRL_CS_H_ */

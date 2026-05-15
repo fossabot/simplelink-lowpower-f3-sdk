@@ -149,6 +149,7 @@ typedef struct
  * @return  SUCCESS or stack call status
  */
 uint8_t RangingDBClient_initDB(void);
+
 /*********************************************************************
  * @fn      RangingDBClient_procedureOpen
  *
@@ -166,6 +167,24 @@ uint8_t RangingDBClient_initDB(void);
  * @return  Handle of the opened procedure DB otherwise
  */
 uint8_t RangingDBClient_procedureOpen(void);
+
+/*********************************************************************
+ * @fn      RangingDBClient_isAvailableSlot
+ *
+ * @brief   This function check if there is available handle in the DB.
+ *
+ * input parameters
+ *
+ * @param   None
+ *
+ * output parameters
+ *
+ * @param   None
+ *
+ * @return  SUCCESS
+ * @return  FAILURE
+ */
+uint8_t RangingDBClient_isAvailableSlot(void);
 
 /*********************************************************************
  * @fn      RangingDBClient_procedureClose

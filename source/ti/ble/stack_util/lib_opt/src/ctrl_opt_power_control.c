@@ -150,6 +150,21 @@ llStatus_t OPT_LL_PwrCtrl_SetTransPwrRptEnableCmd(uint16_t connHandle, uint8_t l
     return LL_PwrCtrl_SetTransPwrRptEnableCmd(connHandle, localEnable, remoteEnable);
 }
 
+void OPT_LL_PwrCtrl_CheckAndSendPendingRequest(uint16_t connHandle)
+{
+    LL_PwrCtrl_CheckAndSendPendingRequest(connHandle);
+}
+
+bool OPT_LL_PwrCtrl_IsProcedureInProgress(uint16_t connHandle)
+{
+    return LL_PwrCtrl_IsProcedureInProgress(connHandle);
+}
+
+llStatus_t OPT_LL_PwrCtrl_IsPhyManaged(uint16_t connHandle, uint8_t phy)
+{
+    return LL_PwrCtrl_IsPhyManaged(connHandle, phy);
+}
+
 llStatus_t OPT_LL_EXT_PwrCtrl_SendPwrCtrlReqCmd(uint16_t connHandle, uint8_t txPhy, int8_t deltaPowerDb, uint8_t aprEnable)
 {
     return LL_EXT_PwrCtrl_SendPwrCtrlReqCmd(connHandle, txPhy, deltaPowerDb, aprEnable);

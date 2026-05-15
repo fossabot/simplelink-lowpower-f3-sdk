@@ -678,13 +678,8 @@ SPI_Handle SPILPF3DMA_open(SPI_Handle handle, SPI_Params *params)
 
     /*
      * IO configuration must occur before SPI IP is enabled
-     * for peripheral mode.
-     * For controller mode see enableSPI().
      */
-    if (object->mode == SPI_PERIPHERAL)
-    {
-        initIO(handle);
-    }
+    initIO(handle);
 
     HwiP_Params_init(&paramsUnion.hwiParams);
     paramsUnion.hwiParams.arg      = (uintptr_t)handle;
@@ -1340,20 +1335,14 @@ static void initIO(SPI_Handle handle)
 
     GPIO_setConfigAndMux(hwAttrs->sclkPin, GPIO_CFG_INPUT, hwAttrs->sclkPinMux);
     GPIO_setConfigAndMux(object->csnPin, GPIO_CFG_INPUT, hwAttrs->csnPinMux);
+    GPIO_setConfigAndMux(hwAttrs->picoPin, GPIO_CFG_INPUT, hwAttrs->picoPinMux);
+    GPIO_setConfigAndMux(hwAttrs->pociPin, GPIO_CFG_INPUT, hwAttrs->pociPinMux);
 
     if (object->mode == SPI_PERIPHERAL)
     {
-        GPIO_setConfigAndMux(hwAttrs->picoPin, GPIO_CFG_INPUT, hwAttrs->picoPinMux);
-        GPIO_setConfigAndMux(hwAttrs->pociPin, GPIO_CFG_NO_DIR, hwAttrs->pociPinMux);
-
         /* In peripheral mode, enable WU from STDBY on CSN */
         GPIO_setCallback(object->csnPin, csnCallback);
         GPIO_setUserArg(object->csnPin, handle);
-    }
-    else
-    {
-        GPIO_setConfigAndMux(hwAttrs->picoPin, GPIO_CFG_NO_DIR, hwAttrs->picoPinMux);
-        GPIO_setConfigAndMux(hwAttrs->pociPin, GPIO_CFG_INPUT, hwAttrs->pociPinMux);
     }
 }
 
@@ -1387,29 +1376,23 @@ static void setIOStandbyState(SPI_Handle handle)
     SPILPF3DMA_HWAttrs const *hwAttrs = handle->hwAttrs;
     bool sclkIsActiveHigh             = (HWREG(hwAttrs->baseAddr + SPI_O_CTL0) & SPI_CTL0_SPO_M) != 0;
 
-    /* CONFIG_GPIO_SPI_CONTROLLER_SCLK */
-    GPIO_PinConfig sclkPinConfig = GPIO_CFG_OUTPUT_INTERNAL | GPIO_CFG_OUT_STR_MED;
-
-    /* CONFIG_GPIO_SPI_CONTROLLER_CSN */
-    GPIO_PinConfig csnPinConfig = GPIO_CFG_OUTPUT_INTERNAL | GPIO_CFG_OUT_STR_MED | GPIO_CFG_OUT_HIGH;
-
-    /* CONFIG_GPIO_SPI_CONTROLLER_POCI */
-    GPIO_PinConfig picoPinConfig = GPIO_CFG_INPUT_INTERNAL | GPIO_CFG_IN_INT_NONE | GPIO_CFG_PULL_NONE_INTERNAL;
-
-    /* CONFIG_GPIO_SPI_CONTROLLER_PICO */
-    GPIO_PinConfig pociPinConfig = GPIO_CFG_OUTPUT_INTERNAL | GPIO_CFG_OUT_STR_MED | GPIO_CFG_OUT_LOW;
-
     if (object->mode == SPI_CONTROLLER)
     {
-        GPIO_setConfig(object->csnPin, csnPinConfig);
-        GPIO_setConfig(hwAttrs->picoPin, picoPinConfig);
+        GPIO_PinConfig sclkPinConfig = GPIO_CFG_OUTPUT;
+
+        GPIO_setConfig(object->csnPin, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH);
+        GPIO_setConfig(hwAttrs->picoPin, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_LOW);
+        GPIO_setConfig(hwAttrs->pociPin, GPIO_CFG_NO_DIR);
 
         sclkPinConfig |= sclkIsActiveHigh ? GPIO_CFG_OUT_HIGH : GPIO_CFG_OUT_LOW;
         GPIO_setConfig(hwAttrs->sclkPin, sclkPinConfig);
     }
     else
     {
-        GPIO_setConfig(hwAttrs->pociPin, pociPinConfig);
+        GPIO_setConfig(object->csnPin, GPIO_CFG_NO_DIR);
+        GPIO_setConfig(hwAttrs->picoPin, GPIO_CFG_NO_DIR);
+        GPIO_setConfig(hwAttrs->pociPin, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_LOW);
+        GPIO_setConfig(hwAttrs->sclkPin, GPIO_CFG_NO_DIR);
     }
 }
 
@@ -1625,8 +1608,7 @@ static inline void spiPollingTransfer(SPI_Handle handle, SPI_Transaction *transa
  */
 static int spiPostNotify(unsigned int eventType, uintptr_t eventArg, uintptr_t clientArg)
 {
-    SPI_Handle handle         = (SPI_Handle)clientArg;
-    SPILPF3DMA_Object *object = handle->object;
+    SPI_Handle handle = (SPI_Handle)clientArg;
 
     if (eventType == PowerLPF3_ENTERING_STANDBY)
     {
@@ -1636,10 +1618,7 @@ static int spiPostNotify(unsigned int eventType, uintptr_t eventArg, uintptr_t c
     else
     {
         initHw((SPI_Handle)clientArg);
-        if (object->mode == SPI_PERIPHERAL)
-        {
-            initIO(handle);
-        }
+        initIO(handle);
     }
 
     return (Power_NOTIFYDONE);
@@ -1678,21 +1657,12 @@ static inline void disableSPI(uint32_t baseAddr)
  */
 static inline void enableSPI(SPI_Handle handle)
 {
-    SPILPF3DMA_Object *object         = handle->object;
     SPILPF3DMA_HWAttrs const *hwAttrs = handle->hwAttrs;
     uint32_t baseAddr                 = hwAttrs->baseAddr;
 
     if (!isSPIEnabled(handle))
     {
         HWREG(baseAddr + SPI_O_CTL1) |= SPI_CTL1_EN_EN;
-        if (object->mode == SPI_CONTROLLER)
-        {
-            /*
-             * IO mux needs to occur after SPI IP is enabled
-             * to produce correct signal state.
-             */
-            initIO(handle);
-        }
     }
 }
 

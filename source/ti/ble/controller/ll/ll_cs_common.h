@@ -81,6 +81,7 @@
 
 #include <ti/drivers/rcl/commands/ble_cs.h>
 #include <ti/drivers/rcl/handlers/ble_cs.h>
+#include "ti/ble/controller/ll/ll_soc.h"
 /*******************************************************************************
  * CONSTANTS
  */
@@ -155,7 +156,7 @@
 // of this bitwise number.
 #define CS_T_IP1_IP2_CAP          0x0078 // supported: 40, 50, 60, 80us, (145us Mandatory)
 #define CS_T_FCS_CAP              0x01C0 // supported: 80us, 100us, 120us, (150us Mandatory)
-#define CS_T_PM_CAP               0x00   // supported: 40us Mandatory
+#define CS_T_PM_CAP               0x02   // supported: 20us, (40us Mandatory)
 
 #define CS_T_SW_CAP               0x0A   // antenna switch period
 #define CS_T_SW_DEFAULT           0U     // Default Value (when default num antennas (1) is used)
@@ -230,7 +231,7 @@
  * The start of the first CS subevent
  * The min value must be betwen 500us to 4s
  * The actual max value can be up to the connInterval*/
-#define CS_OWN_OFFSET_MIN                      1500    // this is the minimum offset value TI can handle
+#define CS_OWN_OFFSET_MIN                      SOC_CS_OWN_OFFSET_MIN  // SoC-dependent, see ll_soc.h
 #define CS_OWN_CODED_OFFSET_MIN                2500    /* NOTE: The coded PHY offset used here is hardcoded and doesn't account for
                                                         * the specific S2/S8 sub-coding scheme. While this value
                                                         * works for all cases, S2 coding could potentially use a smaller offset
@@ -281,7 +282,7 @@
 
 /* Number of max elements (steps) in a Tx buffer */
 /* ------------------------------------------*/
-#define CS_MAX_NUM_STEPS_IN_TX_BUFF            15U
+#define CS_MAX_NUM_STEPS_IN_TX_BUFF            10U
 
 /* Stable Phase Test */
 #define CS_STABLE_PHASE_TONE_DURATION_US       326
@@ -380,7 +381,7 @@ typedef enum csStepType
 #define CS_EVENTS_PER_PROCEDURE(procedureLen, eventInterval, connInterval) (procedureLen / (eventInterval * connInterval))
 
 /* The value shall be greater than or equal to the Offset_Min value and shall be less than the LE connection interval. */
-#define CS_CALC_OFFSET_MAX(offsetMax, offsetMin, connInterval) ((offsetMax < offsetMin) ? offsetMin : ((offsetMax > (T625MS2US(connInterval) - CS_MIN_SUBEVENT_LEN)) ? (T625MS2US(connInterval) - CS_MIN_SUBEVENT_LEN) : offsetMax))
+#define CS_CALC_OFFSET_MAX(offsetMax, offsetMin, connInterval) ((offsetMax < offsetMin) ? offsetMin : ((offsetMax > (T625MS2US(connInterval) - 1)) ? (T625MS2US(connInterval) - 1) : offsetMax))
 #define CS_CALC_OFFSET_MIN(phy) ((phy == LL_PHY_CODED) ? CS_OWN_CODED_OFFSET_MIN : CS_OWN_OFFSET_MIN)
 
 #define CS_CONNEVENT_OFFSET(taskId) ((taskId == LL_TASK_ID_CENTRAL) ? CS_CENT_CONNEVENT_OFFSET : CS_PERI_CONNEVENT_OFFSET)
@@ -591,8 +592,8 @@ typedef struct
 
 typedef struct csDoneInfo
 {
-    uint8 errorCode;      /* The reason the CS procedure will be terminated */
-    uint8 doneStatus;     /* The subEvent reason for the CS procedure will be terminated */
+    uint8 status;                           /* The status of CS procedure termination */
+    uint8 reason;                           /* The reason of CS procedure termination */
 } csDoneInfo_t;
 
 typedef struct
@@ -607,7 +608,7 @@ typedef struct
     uint16_t                repetitionsCounter;   /* procedure counter */
     uint16_t                peerTermProcCount;    /* The peer procedure counter received in the terminate indication */
     uint16_t                connEvent;            /* The connection event on which we need to start the repeated procedure */
-    csDoneInfo_t            procedure;            /* Marks the DoneInfo of the procedure */
+    csDoneInfo_t            repetitionsDone;        /* Marks the DoneInfo of the procedure repetitions */
     csRepetitionsFlags_t    flags;
 } csProcRepetitions_t;
 
@@ -659,8 +660,8 @@ typedef struct
     uint16_t                    mMStepsRemain;        /* Number of main mode steps remain to be done. When this reaches 0, the procedure ends. */
     uint32_t                    eventAnchorPoint;     /* The time from which consecutive subevents are anchored. */
     csFlags_t                   csFlags;              /* CS Flags Per Connection */
-    csDoneInfo_t                procedure;            /* Marks the DoneInfo of the procedure */
-    csDoneInfo_t                subEvent;             /* Marks the DoneInfo of the subEvent */
+    csDoneInfo_t                procedureDone;        /* Marks the DoneInfo of the procedure */
+    csDoneInfo_t                subEventDone;         /* Marks the DoneInfo of the subEvent */
 } csProcedureInfo_t;
 
 typedef struct
