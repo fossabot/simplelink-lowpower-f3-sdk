@@ -1927,6 +1927,9 @@ void                 llAlignToNextEvent( llConnState_t *connPtr );
 void                 llGetAdvChanPDU( uint8 *, uint8 *, uint8 *, uint8 *, uint8 *, int8 * );
 void                 llSecTaskInitiatorHandle( taskInfo_t* secTask, RCL_Command* secCmd, llConnState_t* nextConnPtr, uint32_t* timeGap, uint32_t curTime );
 void                 llUpdateTimeGapForInitiator( uint32_t* timeGap );
+uint8_t              llIsScanWindowActive( uint32_t time );
+void                 llScanSetTaskAnchorScanWindow( uint32_t absStartTime );
+void                 llScanSetRclScanWindow( uint32_t absStartTime );
 void                 llAdjustScanStartTimeForConnWindow( taskInfo_t* secTask, llConnState_t* nextConnPtr, RCL_Command* secCmd, uint32_t* timeGap, uint32_t curTime );
 void                 LL_GetConnTxUsageParams( llTxUsageParams_t *pConnTxParams );
 uint32_t             llConnCalculatePacketTime( uint16_t octets, uint8_t llPhy, uint8_t llPhyOpts );
@@ -2096,7 +2099,7 @@ uint8 llQueryTxQueue(uint32 addr);
 uint8 llValidateConnectIndPkt( uint8 * );
 
 // Check if there is a control procedure with instant active for a specific connection
-uint8 llCheckConnInstant(llConnState_t *connPtr);
+uint8 llConnIsInstantProcedurePending(llConnState_t *connPtr);
 
 // Removes the handover connection from activeConns list
 void llRemoveHandoverConn(uint8_t *activeConnsArray, uint8_t numActiveConns);
@@ -2131,6 +2134,9 @@ bool llCompareAddresses( uint8_t *pAddr1, uint8_t addrType1,
                          uint8_t *pAddr2, uint8_t addrType2 );
 
 uint32_t llEstimateConnMinTimeLength(uint16_t connId);
+
+// Update effective data length times when PHY changes and notify host if changed
+void llUpdateDataLengthOnPhyChange(llConnState_t *connPtr, uint8 phy);
 
 #ifdef __cplusplus
 }

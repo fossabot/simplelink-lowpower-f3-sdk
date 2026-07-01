@@ -87,9 +87,7 @@ The interval is specified in units of 1.25ms.
 **Range:** 6 to 65535 (7.5ms to ~82 seconds)
 
 **Common values:**
-- 160 = 200ms (default, good balance of power and responsiveness)
-- 80 = 100ms (faster sync, higher power)
-- 320 = 400ms (slower sync, lower power)
+- 1600 = 2s (default, good balance of power and responsiveness)
 
 **Note:** Both minimum and maximum should typically be set to the same value
 for consistent timing behavior.

@@ -129,6 +129,12 @@ uint8_t allowDebugKeys          =    `ble.allowDebugKeys`;
 uint8_t eraseBondWhileInConn    =    `ble.eraseBondWhileInConn`;
 uint8_t sameIrkAction           =    `ble.sameIrkOption`;
 
+% if(ble.padvTimeSync)
+%{
+// PADV Time Sync parameters assign
+uint8_t padvTimeSyncTsaName[GAP_DEVICE_NAME_LEN] = "`ble.padvTimeSyncTsaName`";
+%}
+
 void setBondManagerParameters()
 {
     GAPBondMgr_SetParameter(GAPBOND_PAIRING_MODE, sizeof(uint8_t), &pairMode);

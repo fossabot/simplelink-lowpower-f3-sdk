@@ -176,6 +176,7 @@ typedef struct llPeriodicScanSet_t
   uint8                             reportEnable;          // send scan report to host flag
   uint8                             terminate;             // flag hold the reason for the termination if there is
   uint8                             ownAddrType;           // periodic scanner address type (public or random)
+  uint8                             ownAddr[B_ADDR_LEN];   // periodic scanner own address bytes (used for PAwR CONN_RSP)
   uint8                             rxCount;               // number of received packets in current periodic event
   uint8                             cteRssiAntenna;        // first antenna which rssi was measured on while CTE sampling.
   uint8                             intPriority;           // internal priority: priority scale to use in periodic scan selection procedure
@@ -252,6 +253,7 @@ typedef struct
   uint8_t                           *pPAwRParams;          // Pointer of PAwR params (if supported).
   uint8_t                           phy;                   // Advertiser phy
   uint8_t                           ownAddrType;           // Periodic scanner address type (public or random)
+  uint8_t                           ownAddr[B_ADDR_LEN];   // Periodic scanner own address bytes (for PAwR CONN_RSP)
 } llPASTCreateSync_t;
 
 /*

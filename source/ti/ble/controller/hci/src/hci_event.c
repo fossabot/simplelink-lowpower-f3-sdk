@@ -85,8 +85,6 @@
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_ble_health.h"
 #include "ti/ble/stack_util/lib_opt/ctrl_stub_pawr_scan.h"
 
-#include "ti/ble/controller/ll/ll_cs_common.h"
-#include "ti/ble/controller/ll/ll_cs_procedure.h"
 #include "ti/ble/controller/ll/ll_cs_db.h"
 #include "ti/ble/host/cs/cs.h"
 #include <ti/log/Log.h>
@@ -457,7 +455,7 @@ void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8 configId, uint8 status)
       pMsg->chSel              = csConfig->chSel;
       pMsg->ch3cShape          = csConfig->ch3cShape;
       pMsg->ch3CJump           = csConfig->ch3CJump;
-      pMsg->rfu0               = csConfig->rfu0;
+      pMsg->rfu0               = 0;
 
       if (status == CS_STATUS_SUCCESS)
       {
@@ -474,7 +472,7 @@ void HCI_CS_ConfigCompleteCback(uint16 connHandle, uint8 configId, uint8 status)
         pMsg->tPM              = llCsDbGetTpm(0);
       }
 
-      pMsg->rfu1               = csConfig->rfu1;
+      pMsg->rfu1               = 0;
       osal_memcpy(&pMsg->channelMap, &csConfig->channelMap, CS_CHM_SIZE);
     }
     /* We are directly addressing the CS host module via HCI. This is done
@@ -578,10 +576,10 @@ void HCI_CS_SecurityEnableCompleteCback(uint8 status, uint16 connHandle)
  *
  * @return      None
  */
-void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
-                                         uint16 connHandle,
+void HCI_CS_ProcedureEnableCompleteCback(uint16 connHandle,
+                                         uint8_t configId,
                                          uint8 enable,
-                                         csProcedureEnable_t* enableData)
+                                         uint8 status)
 {
   uint16_t dataLen = sizeof(CS_procEnableCompleteEvt_t);
 
@@ -592,20 +590,24 @@ void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
 
   if (pMsg != NULL)
   {
+    memset(pMsg, 0, dataLen);
+
+    const csEnableProcedureCtrlData_t *pEnable = llCsDbGetProcedureData();
+
     // Fill message
     pMsg->csEvtOpcode          = CS_PROCEDURE_ENABLE_COMPLETE_EVENT;
     pMsg->connHandle           = connHandle;
     pMsg->csStatus             = status;
     pMsg->enable               = enable;
-    pMsg->configId             = enableData->configId;
-    pMsg->ACI                  = enableData->ACI;
+    pMsg->configId             = configId;
+    pMsg->ACI                  = pEnable->ACI;
     pMsg->selectedTxPower      = llCsGetSelectedTxPower(connHandle); // Get the selected Tx Power for this connection
-    pMsg->subEventLen          = enableData->subEventLen;
-    pMsg->subEventsPerEvent    = enableData->subEventsPerEvent;
-    pMsg->eventInterval        = enableData->eventInterval;
-    pMsg->subEventInterval     = enableData->subEventInterval;
-    pMsg->procedureInterval    = enableData->procedureInterval;
-    pMsg->procedureCount       = enableData->procedureCount;
+    pMsg->subEventLen          = pEnable->subEventLen;
+    pMsg->subEventsPerEvent    = pEnable->subEventsPerEvent;
+    pMsg->eventInterval        = pEnable->eventInterval;
+    pMsg->subEventInterval     = pEnable->subEventInterval;
+    pMsg->procedureInterval    = pEnable->procedureInterval;
+    pMsg->procedureCount       = pEnable->procedureCount;
 
     /* We are directly addressing the CS host module via HCI. This is done
     because the CS controller module directly calls HCI callbacks, otherwise,

@@ -853,10 +853,6 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                 RCL_Handler_BLE5_updateAdvScanInitStats(advCmd->stats, rclSchedulerState.actualStartTime);
             }
         }
-        if (rclEventsIn.timerStart != 0U)
-        {
-            rclEvents.cmdStarted = 1;
-        }
 
         if (COEX_GRANT_GLOBAL_ENABLE(lrfCoexConfiguration) && lrfEvents.rfesoft1 != 0U)
         {
@@ -865,12 +861,29 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
             ble5HandlerState.common.coexNoGrant = true;
         }
 
+        if (rclEventsIn.timerStart != 0U)
+        {
+            rclEvents.cmdStarted = 1;
+            /* If operation is already done, we need to handle this first and opDone after */
+            if (lrfEvents.opDone != 0U && lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant)
+            {
+                /* Post a new event. Make sure RCL input events are retained, except timerStart */
+                RCL_Events newEvents = rclEventsIn;
+                newEvents.timerStart = 0;
+                /* Inform about the late handling of opDone */
+                newEvents.cmdStepDone = 1;
+                RCL_Scheduler_postEvent(cmd, newEvents);
+                /* Return to ISR and let the next event handle the rest */
+                return rclEvents;
+            }
+        }
+
         if (rclEventsIn.gracefulStop != 0U)
         {
             ble5HandlerState.adv.gracefulStopObserved = true;
         }
 
-        if (lrfEvents.opDone != 0U && rclEventsIn.handlerCmdUpdate == 0U)
+        if ((lrfEvents.opDone != 0U || rclEventsIn.cmdStepDone != 0U) && rclEventsIn.handlerCmdUpdate == 0U && !ble5HandlerState.common.coexNoGrant)
         {
             uint16_t endCause = HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE);
             if (endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_CONNECT)
@@ -972,14 +985,17 @@ RCL_Events RCL_Handler_BLE5_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_Even
                 RCL_Profiling_eventHook(RCL_ProfilingEvent_PostprocStart);
             }
         }
+        else if (ble5HandlerState.common.coexNoGrant && (lrfEvents.opError != 0U || lrfEvents.opDone != 0U))
+        {
+            cmd->status  = RCL_CommandStatus_CoexNoGrant;
+            rclEvents.lastCmdDone = 1;
+            runAdv = false;
+            runExtAdv = false;
+        }
         else if (lrfEvents.opError != 0U)
         {
             RCL_CommandStatus endStatus = ble5HandlerState.common.endStatus;
-            if (ble5HandlerState.common.coexNoGrant)
-            {
-                cmd->status = RCL_CommandStatus_CoexNoGrant;
-            }
-            else if (endStatus == RCL_CommandStatus_Finished)
+            if (endStatus == RCL_CommandStatus_Finished)
             {
                 cmd->status = RCL_Handler_BLE5_findPbeErrorEndStatus(HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE));
             }
@@ -1854,22 +1870,34 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
                 RCL_Handler_BLE5_updateAdvScanInitStats(auxAdvCmd->stats, rclSchedulerState.actualStartTime);
             }
         }
-        if (rclEventsIn.timerStart != 0U)
-        {
-            rclEvents.cmdStarted = 1;
-        }
         if (COEX_GRANT_GLOBAL_ENABLE(lrfCoexConfiguration) && lrfEvents.rfesoft1 != 0U)
         {
             /* Send abort and set flag */
             LRF_sendHardStop();
             ble5HandlerState.common.coexNoGrant = true;
         }
+        if (rclEventsIn.timerStart != 0U)
+        {
+            rclEvents.cmdStarted = 1;
+            /* If operation is already done, we need to handle this first and opDone after */
+            if (lrfEvents.opDone != 0U && lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant)
+            {
+                /* Post a new event. Make sure RCL input events are retained, except timerStart */
+                RCL_Events newEvents = rclEventsIn;
+                newEvents.timerStart = 0;
+                /* Inform about the late handling of opDone */
+                newEvents.cmdStepDone = 1;
+                RCL_Scheduler_postEvent(cmd, newEvents);
+                /* Return to ISR and let the next event handle the rest */
+                return rclEvents;
+            }
+        }
         if (rclEventsIn.gracefulStop != 0U)
         {
             ble5HandlerState.auxAdv.gracefulStopObserved = true;
         }
 
-        if (lrfEvents.opDone != 0U)
+        if ((lrfEvents.opDone != 0U || rclEventsIn.cmdStepDone != 0U) && !ble5HandlerState.common.coexNoGrant)
         {
             uint16_t endCause = HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE);
 
@@ -1936,14 +1964,17 @@ RCL_Events RCL_Handler_BLE5_aux_adv(RCL_Command *cmd, LRF_Events lrfEvents, RCL_
                 runAuxChain = false;
             }
         }
+        else if (ble5HandlerState.common.coexNoGrant && (lrfEvents.opError != 0U || lrfEvents.opDone != 0U))
+        {
+            cmd->status  = RCL_CommandStatus_CoexNoGrant;
+            rclEvents.lastCmdDone = 1;
+            runAuxAdv = false;
+            runAuxChain = false;
+        }
         else if (lrfEvents.opError != 0U)
         {
             RCL_CommandStatus endStatus = ble5HandlerState.common.endStatus;
-            if (ble5HandlerState.common.coexNoGrant)
-            {
-                cmd->status  = RCL_CommandStatus_CoexNoGrant;
-            }
-            else if (endStatus == RCL_CommandStatus_Finished)
+            if (endStatus == RCL_CommandStatus_Finished)
             {
                 cmd->status = RCL_Handler_BLE5_findPbeErrorEndStatus(HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE));
             }
@@ -2558,11 +2589,6 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
             LRF_sendHardStop();
         }
 
-        if (rclEventsIn.timerStart != 0U)
-        {
-            rclEvents.cmdStarted = 1U;
-        }
-
         if (COEX_GRANT_GLOBAL_ENABLE(lrfCoexConfiguration) && lrfEvents.rfesoft1 != 0U)
         {
             /* Send abort and set flag */
@@ -2570,12 +2596,29 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
             ble5HandlerState.common.coexNoGrant = true;
         }
 
+        if (rclEventsIn.timerStart != 0U)
+        {
+            rclEvents.cmdStarted = 1;
+            /* If operation is already done, we need to handle this first and opDone after */
+            if (lrfEvents.opDone != 0U && lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant)
+            {
+                /* Post a new event. Make sure RCL input events are retained, except timerStart */
+                RCL_Events newEvents = rclEventsIn;
+                newEvents.timerStart = 0;
+                /* Inform about the late handling of opDone */
+                newEvents.cmdStepDone = 1;
+                RCL_Scheduler_postEvent(cmd, newEvents);
+                /* Return to ISR and let the next event handle the rest */
+                return rclEvents;
+            }
+        }
+
         if (rclEventsIn.gracefulStop != 0U)
         {
             ble5HandlerState.perAdv.gracefulStopObserved = true;
         }
 
-        if (lrfEvents.opDone != 0U)
+        if ((lrfEvents.opDone != 0U || rclEventsIn.cmdStepDone != 0U) && !ble5HandlerState.common.coexNoGrant)
         {
             uint16_t endCause = HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE);
             if (rclEventsIn.hardStop != 0U)
@@ -2671,14 +2714,18 @@ RCL_Events RCL_Handler_BLE5_periodicAdv(RCL_Command *cmd, LRF_Events lrfEvents, 
                 runRx = false;
             }
         }
+        else if (ble5HandlerState.common.coexNoGrant && (lrfEvents.opError != 0U || lrfEvents.opDone != 0U))
+        {
+            cmd->status  = RCL_CommandStatus_CoexNoGrant;
+            rclEvents.lastCmdDone = 1U;
+            runPerAdvSync = false;
+            runAuxChain = false;
+            runRx = false;
+        }
         else if (lrfEvents.opError != 0U)
         {
             RCL_CommandStatus endStatus = ble5HandlerState.common.endStatus;
-            if (ble5HandlerState.common.coexNoGrant)
-            {
-                cmd->status = RCL_CommandStatus_CoexNoGrant;
-            }
-            else if (endStatus == RCL_CommandStatus_Finished)
+            if (endStatus == RCL_CommandStatus_Finished)
             {
                 /* For a PADVB or PAwR (mode 1 and 2) advertiser, find the LRF error end status.
                  * For a PAwR advertiser in mode 0, sending a stop API to the LRF after receiving the
@@ -3629,21 +3676,34 @@ RCL_Events RCL_Handler_BLE5_scan_init(RCL_Command *cmd, LRF_Events lrfEvents, RC
                 updateStats = true;
             }
         }
-        if (rclEventsIn.timerStart != 0U)
-        {
-            rclEvents.cmdStarted = 1;
-        }
         if (COEX_GRANT_GLOBAL_ENABLE(lrfCoexConfiguration) && lrfEvents.rfesoft1 != 0U)
         {
             /* Send abort and set flag */
             LRF_sendHardStop();
             ble5HandlerState.common.coexNoGrant = true;
         }
+        if (rclEventsIn.timerStart != 0U)
+        {
+            rclEvents.cmdStarted = 1;
+            /* If operation is already done, we need to handle this first and opDone after */
+            if (lrfEvents.opDone != 0U && lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant)
+            {
+                /* Post a new event. Make sure RCL input events are retained, except timerStart */
+                RCL_Events newEvents = rclEventsIn;
+                newEvents.timerStart = 0;
+                /* Inform about the late handling of opDone */
+                newEvents.cmdStepDone = 1;
+                RCL_Scheduler_postEvent(cmd, newEvents);
+                /* Return to ISR and let the next event handle the rest */
+                return rclEvents;
+            }
+        }
 
-        if (lrfEvents.opDone != 0U || lrfEvents.opError != 0U)
+        if (lrfEvents.opDone != 0U || lrfEvents.opError != 0U || rclEventsIn.cmdStepDone != 0U)
         {
             uint16_t endCause = HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE);
-            if (lrfEvents.opError == 0U && (endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_CONNECT ||
+            if (lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant &&
+                                           (endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_CONNECT ||
                                             endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_ENDOK ||
                                             endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_RXERR ||
                                             endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_NOSYNC))
@@ -4577,10 +4637,6 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
                 updateStats = true;
             }
         }
-        if (rclEventsIn.timerStart != 0U)
-        {
-            rclEvents.cmdStarted = 1;
-        }
 
         if (COEX_GRANT_GLOBAL_ENABLE(lrfCoexConfiguration) && lrfEvents.rfesoft1 != 0U)
         {
@@ -4589,10 +4645,28 @@ RCL_Events RCL_Handler_BLE5_periodicScan(RCL_Command *cmd, LRF_Events lrfEvents,
             ble5HandlerState.common.coexNoGrant = true;
         }
 
-        if (lrfEvents.opDone != 0U || lrfEvents.opError != 0U)
+        if (rclEventsIn.timerStart != 0U)
+        {
+            rclEvents.cmdStarted = 1;
+            /* If operation is already done, we need to handle this first and opDone after */
+            if (lrfEvents.opDone != 0U && lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant)
+            {
+                /* Post a new event. Make sure RCL input events are retained, except timerStart */
+                RCL_Events newEvents = rclEventsIn;
+                newEvents.timerStart = 0;
+                /* Inform about the late handling of opDone */
+                newEvents.cmdStepDone = 1;
+                RCL_Scheduler_postEvent(cmd, newEvents);
+                /* Return to ISR and let the next event handle the rest */
+                return rclEvents;
+            }
+        }
+
+        if (lrfEvents.opDone != 0U || lrfEvents.opError != 0U || rclEventsIn.cmdStepDone != 0U)
         {
             uint16_t endCause = HWREGH_READ_LRF(LRFD_BUFRAM_BASE + PBE_COMMON_RAM_O_ENDCAUSE);
-            if (lrfEvents.opError == 0U && (endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_ENDOK  ||
+            if (lrfEvents.opError == 0U && !ble5HandlerState.common.coexNoGrant &&
+                                           (endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_ENDOK  ||
                                             endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_RXERR  ||
                                             endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_NOSYNC ||
                                            (perScanCmd->perAdvType && endCause == PBE_COMMON_RAM_ENDCAUSE_STAT_CONNECT)))

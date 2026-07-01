@@ -160,7 +160,7 @@ uint8 llCsInitPrecal(void);
  * Clear the CS module by aborting any ongoing radio activity, clearing the
  * Clear data to default values.
  *
- * @note the CS data (llCs) is cleared per connection in LL_clearAllActiveConns
+ * @note the CS data (llCsConn) is cleared per connection in LL_clearAllActiveConns
  *
  * input parameters
  *
@@ -439,7 +439,6 @@ csSubeventType_e llCsNewSubEvent_getSubEventType(void);
  * input parameters
  *
  * @param       connId - Connection Identifier
- * @param       configId - Configuration Identifier
  * @param       status - Status of the procedure
  *
  * output parameters
@@ -448,7 +447,7 @@ csSubeventType_e llCsNewSubEvent_getSubEventType(void);
  *
  * @return      None
  */
-void llCsDisableProcedure(uint16 connId, uint8 configId, uint8 status);
+void llCsDisableProcedure(uint16 connId, uint8 status);
 
 /*******************************************************************************
  * @fn          llCsSelectStepChannel
@@ -708,7 +707,6 @@ void llCsInitStepAndResultBuffers(void);
  * input parameters
  *
  * @param       connId  - Connection ID
- * @param       configId - Configuration ID
  *
  * output parameters
  *
@@ -716,7 +714,7 @@ void llCsInitStepAndResultBuffers(void);
  *
  * @return      None
  */
-void llCs_finishAndResetProcedure(uint16_t connId, uint8_t configId);
+void llCs_finishAndResetProcedure(uint16_t connId);
 
 
 /*******************************************************************************
@@ -730,7 +728,6 @@ void llCs_finishAndResetProcedure(uint16_t connId, uint8_t configId);
  * input parameters
  *
  * @param       connId  - Connection ID
- * @param       configId - Configuration ID
  *
  * output parameters
  *
@@ -738,7 +735,7 @@ void llCs_finishAndResetProcedure(uint16_t connId, uint8_t configId);
  *
  * @return      None
  */
-void llCs_finishAndIncrementProcedure(uint16_t connId, uint8_t configId);
+void llCs_finishAndIncrementProcedure(uint16_t connId);
 
 /*******************************************************************************
  * @fn          llCsProcedureCleanup
@@ -946,57 +943,14 @@ bool llCsHandleProcedureDesync(uint16_t connId, uint8_t configId);
 bool llCsProcIsTestModeEnabled(void);
 
 /*******************************************************************************
- * @fn          llCsProcGetActiveConnId
- *
- * @brief      Get active connection ID
- *
- * @design      BLE_LOKI-506
- *
- * input parameters
- *
- * @param       none
- *
- * output parameters
- *
- * @param       ConnId.
- *
- * @return      None
- */
-uint16 llCsProcGetActiveConnId(void);
-
-/*******************************************************************************
-* @fn          llCsProcSetActiveConnId
-*
-* @brief       Set active connection ID
-*
-* @details     Stores the connection ID for the currently active CS procedure.
-*              This parameter should be used instead of llConns.currentConn
-*              as in case of multiple connections, another connection might be
-*              scheduled between the CS events and results processing time, which
-*              would lead to an irrelevant connId when accessing the DB and
-*              reporting this invalid connId to the application.
-*
-* input parameters
-*
-* @param       connId - connection Id
-*
-* output parameters
-*
-* @param       None.
-*
-* @return      None
-*/
-void llCsProcSetActiveConnId(uint16 connId);
-
-/*******************************************************************************
  * @fn          llCsProcGetReportedConnId
  *
  * @brief       Get Reported Connection ID
  * This function is needed because in test mode we assume a connId = 0
  * However, the spec specifies connID = 0xFFFF
- * We can't use this value in the rest of the code because the llCs DB
+ * We can't use this value in the rest of the code because the llCsConn DB
  * is based on the maxNumConns (1-8). 0xFFFF would create an attempt to
- * access beyond the boundaries of the llCs
+ * access beyond the boundaries of the llCsConn
  * So only when it comes to reporting the connId, it will be reported as 0xFFFF
  *
  * input parameters
@@ -1056,8 +1010,7 @@ void llCsResetConnMaxTime(uint16 connId);
 *
 * input parameters
 *
-* @param       connId - connection Id
-* @param       configId - configuration Id
+* @param       None
 *
 * output parameters
 *
@@ -1066,6 +1019,6 @@ void llCsResetConnMaxTime(uint16 connId);
 * @return      TRUE in case of single procedure
 *              FALSE in case repetitions
 */
-bool llCsIsSingleProcedure(uint16_t connId, uint8_t configId);
+bool llCsIsSingleProcedure(void);
 
 #endif // LL_CS_PROCEDURE_H

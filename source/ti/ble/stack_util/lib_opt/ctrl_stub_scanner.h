@@ -107,6 +107,9 @@ extern void llCmdScanStartedEventHandle(void);
 extern void HCI_InitScanCallbacks(void);
 extern hciStatus_t hciCmdParserLegacyScanner(uint8_t* pData, uint16_t cmdOpCode);
 extern hciStatus_t hciCmdParserScanner(uint8_t* pData, uint16_t cmdOpCode);
+extern uint8_t llIsScanWindowActive(uint32_t time);
+extern void llScanSetTaskAnchorScanWindow(uint32_t absStartTime);
+extern void llScanSetRclScanWindow(uint32_t absStartTime);
 
 
 // Wrapper functions for the feature implementations
@@ -131,5 +134,8 @@ void OPT_llCmdScanStartedEventHandle(void);
 void OPT_HCI_InitScanCallbacks(void);
 hciStatus_t OPT_hciCmdParserLegacyScanner(uint8_t* pData, uint16_t cmdOpCode);
 hciStatus_t OPT_hciCmdParserScanner(uint8_t* pData, uint16_t cmdOpCode);
+uint8_t OPT_llIsScanWindowActive(uint32_t time);
+void OPT_llScanSetTaskAnchorScanWindow(uint32_t absStartTime);
+void OPT_llScanSetRclScanWindow(uint32_t absStartTime);
 
 #endif /* CTRL_SCANNER_H_ */

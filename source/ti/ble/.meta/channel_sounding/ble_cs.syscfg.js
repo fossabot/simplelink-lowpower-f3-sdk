@@ -249,7 +249,11 @@ function validate(inst, validation)
 {
     if(inst.channelSounding && inst.numAntennas > 1)
     {
-        validation.logWarning("In order to enable multiple antennas, please make sure to enable PBEGPO2 and PBEGPO3 inside TI Drivers -> RCL Observables -> signals", inst, "numAntennas");
+        // CS EVM has PBEGPO2/PBEGPO3 pre-configured; no user action needed
+        if(Common.getLaunchPadName() !== "CC2745R10_CS_EVM")
+        {
+            validation.logWarning("In order to enable multiple antennas, please make sure to enable PBEGPO2 and PBEGPO3 inside TI Drivers -> RCL Observables -> signals", inst, "numAntennas");
+        }
 
         // Throw an error if antennas muxing values has been set to 0xFF (0xFF means no configuration)
         if(inst.antennasMuxValues < 0x0 || inst.antennasMuxValues >= 0xFF)

@@ -617,7 +617,10 @@ function validate(inst, validation)
         validation.logWarning("Health Toolkit preview", inst, "healthToolkit");
     }
 
-
+    if(inst.connectionHandover)
+    {
+        validation.logWarning("Connection Handover preview", inst, "connectionHandover");
+    }
 
     adaptivityScript.validate(inst, validation);
 }

@@ -1,8 +1,8 @@
 {
   "boards": {
-    "LP_EM_CC2340R5": {
-      "description": "8 dBm output power internal balun for 2.4GHz.",
-      "rf_design": "LP-EM-CC2340R5-RKP-5x5-IS24",
+    "LP_EM_CC2340R5MODA": {
+      "description": "8 dBm output power integrated antenna module for 2.4 GHz.",
+      "rf_design": "LP-EM-CC2340R5MODA",
       "rf_port": [
         {
           "name": "tx_rx_2p4_ghz",
@@ -108,9 +108,9 @@
       "fb24g": "fb2400",
       "fe24g": "IS"
     },
-    "LP_EM_CC2340R5MODA": {
-      "description": "8 dBm output power integrated antenna module for 2.4 GHz.",
-      "rf_design": "LP-EM-CC2340R5MODA",
+    "LP_EM_CC2340R5": {
+      "description": "8 dBm output power internal balun for 2.4GHz.",
+      "rf_design": "LP-EM-CC2340R5-RKP-5x5-IS24",
       "rf_port": [
         {
           "name": "tx_rx_2p4_ghz",
@@ -332,19 +332,19 @@
       "description": "Select which RF design to use as template.",
       "options": [
         {
-          "name": "LP_EM_CC2340R5",
-          "description": "8 dBm output power internal balun for 2.4GHz."
-        },
-        {
           "name": "LP_EM_CC2340R5MODA",
           "description": "8 dBm output power integrated antenna module for 2.4 GHz."
+        },
+        {
+          "name": "LP_EM_CC2340R5",
+          "description": "8 dBm output power internal balun for 2.4GHz."
         },
         {
           "name": "LP_EM_CC2340R53_WCSP",
           "description": "8 dBm output power internal balun for 2.4GHz."
         }
       ],
-      "default": "LP_EM_CC2340R5"
+      "default": "LP_EM_CC2340R5MODA"
     },
     {
       "name": "fb24g",

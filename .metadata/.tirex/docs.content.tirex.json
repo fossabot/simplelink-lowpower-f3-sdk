@@ -2,7 +2,7 @@
     {
         "name": "Release Notes",
         "resourceType": "file",
-        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_20_00_81.html",
+        "location": "../../release_notes_simplelink_lowpower_f3_sdk_9_20_01_21.html",
         "devices": [
             "CC2340R5"
         ],
@@ -386,7 +386,7 @@
     {
         "name": "Core SDK Release Notes",
         "resourceType": "file",
-        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_21_00_28.html",
+        "location": "../../docs/simplelink_mcu_sdk/release_notes_coresdk_lpf3_9_21_01_13.html",
         "devices": [
             "CC2340R5"
         ],
@@ -428,6 +428,28 @@
         ]
     },
     {
+        "name": "TI DMM Release Notes",
+        "resourceType": "file",
+        "location": "../../docs/dmm/release_notes_dmm_1_00_00.html",
+        "devices": [
+            "CC2340R5"
+        ],
+        "devtools": [
+            "LP-EM-CC2340R5"
+        ],
+        "mainCategories": [
+            [
+                "Documents"
+            ]
+        ],
+        "subCategories": [
+            "TI DMM"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
         "name": "Zigbee Release Notes",
         "resourceType": "file",
         "location": "../../docs/zigbee/release_notes_zigbee_1_00_00.html",
@@ -452,7 +474,7 @@
     {
         "name": "TI BLE Stack Release Notes",
         "resourceType": "file",
-        "location": "../../docs/ble5stack/release_notes_blecsranging_9_20_00.html",
+        "location": "../../docs/ble5stack/release_notes_ble_9_20_01.html",
         "devices": [
             "CC2340R5"
         ],
@@ -474,7 +496,7 @@
     {
         "name": "TI BLE Stack Release Notes",
         "resourceType": "file",
-        "location": "../../docs/ble5stack/release_notes_ble_9_20_00.html",
+        "location": "../../docs/ble5stack/release_notes_blecsranging_9_20_01.html",
         "devices": [
             "CC2340R5"
         ],
@@ -496,7 +518,7 @@
     {
         "name": "TI Proprietary RF Release Notes",
         "resourceType": "file",
-        "location": "../../docs/proprietary-rf/release_notes_proprietary-rf_9_20_00.html",
+        "location": "../../docs/proprietary-rf/release_notes_proprietary-rf_9_20_01.html",
         "devices": [
             "CC2340R5"
         ],

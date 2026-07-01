@@ -214,17 +214,18 @@ int_fast16_t KeyStore_PSA_init(void)
 #if ((DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) || (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX))
         int_fast16_t hsmStatus;
 
+        /* HSMXXF3_init (via HSMXXF3_getEngineSystemInfo) and psa_crypto_init
+         * both acquire the HSM lock, so the semaphore must be constructed
+         * first.
+         */
+        HSMXXF3_constructRTOSObjects();
+
         hsmStatus = HSMXXF3_init();
 
         if (hsmStatus != HSMXXF3_STATUS_SUCCESS)
         {
             return status;
         }
-
-        /* CC27XX and CC35XX require the HSM lock before calling psa_crypto_init() because
-         * that function call requires a token submission.
-         */
-        HSMXXF3_constructRTOSObjects();
 
         if (!HSMXXF3_acquireLock(SemaphoreP_NO_WAIT, (uintptr_t)NULL))
         {

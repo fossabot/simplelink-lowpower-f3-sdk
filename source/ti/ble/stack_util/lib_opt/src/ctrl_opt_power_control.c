@@ -195,4 +195,14 @@ hciStatus_t OPT_hci_le_ReadRemoteTransmitPowerLevelCmd(uint16_t connHandle, uint
     return hci_le_ReadRemoteTransmitPowerLevelCmd(connHandle, txPhy);
 }
 
+hciStatus_t OPT_hci_ext_SetPowerCtrlRangeCmd(int8_t minTxPower, int8_t maxTxPower)
+{
+    return hci_ext_SetPowerCtrlRangeCmd(minTxPower, maxTxPower);
+}
+
+hciStatus_t OPT_hci_ext_GetPowerCtrlRangeCmd(int8_t* minTxPower, int8_t* maxTxPower)
+{
+    return hci_ext_GetPowerCtrlRangeCmd(minTxPower, maxTxPower);
+}
+
 #endif /* defined(POWER_CONTROL) */

@@ -4094,6 +4094,176 @@ static uint8_t processExtMsgGAP(uint8_t cmdID, hciExtCmd_t *pCmd, uint8_t *pRspD
       break;
     }
 
+    case HCI_EXT_GAP_BOND_WRITE_BY_INDEX:
+    {
+      gapBondRec_t bondRec;
+      gapBondLTK_t localLtk, devLtk;
+      gapBondCharCfg_t charCfg[GAP_CHAR_CFG_MAX] = {0};
+      uint8_t charCfgCount;
+      uint8_t *irk;
+      uint8_t *srk;
+      uint32_t signCounter;
+
+      // Populate bondRec (bytes 2-9)
+      bondRec.addr[0] = pBuf[2];
+      bondRec.addr[1] = pBuf[3];
+      bondRec.addr[2] = pBuf[4];
+      bondRec.addr[3] = pBuf[5];
+      bondRec.addr[4] = pBuf[6];
+      bondRec.addr[5] = pBuf[7];
+      bondRec.addrType = (GAP_Peer_Addr_Types_t)pBuf[8];
+      bondRec.stateFlags = pBuf[9];
+
+      // Populate localLtk (bytes 10-36)
+      memcpy(localLtk.LTK, &pBuf[10], KEYLEN);
+      localLtk.div = BUILD_UINT16(pBuf[26], pBuf[27]);
+      memcpy(localLtk.rand, &pBuf[28], B_RANDOM_NUM_SIZE);
+      localLtk.keySize = pBuf[36];
+
+      // Populate devLtk (bytes 37-63)
+      memcpy(devLtk.LTK, &pBuf[37], KEYLEN);
+      devLtk.div = BUILD_UINT16(pBuf[53], pBuf[54]);
+      memcpy(devLtk.rand, &pBuf[55], B_RANDOM_NUM_SIZE);
+      devLtk.keySize = pBuf[63];
+
+      // IRK, SRK, signCounter (bytes 64-99)
+      irk = &pBuf[64];
+      srk = &pBuf[80];
+      signCounter = BUILD_UINT32(pBuf[96], pBuf[97], pBuf[98], pBuf[99]);
+
+      // Populate charCfg (bytes 100-112)
+      charCfgCount = pBuf[100];
+      if (charCfgCount > GAP_CHAR_CFG_MAX)
+      {
+        charCfgCount = GAP_CHAR_CFG_MAX;
+      }
+      memcpy(charCfg, &pBuf[101], sizeof(gapBondCharCfg_t) * charCfgCount);
+
+      stat = GapBondMgr_writeBondToNvByIndex(pBuf[0],        // mode
+                                              pBuf[1],        // bondIdx
+                                              &bondRec,
+                                              &localLtk,
+                                              &devLtk,
+                                              irk,
+                                              srk,
+                                              signCounter,
+                                              charCfg);
+
+      // Send response with status
+      if (stat == SUCCESS)
+      {
+        rspBuf[RSP_PAYLOAD_IDX] = stat;
+        *pRspDataLen = 1;
+      }
+      else
+      {
+        *pRspDataLen = 0;
+      }
+    }
+    break;
+
+    case HCI_EXT_GAP_BOND_READ_FROM_NV:
+    {
+      uint8_t mode = pBuf[0];
+      uint8_t idx = 0;
+      uint8_t pIdentifier[B_ADDR_LEN] = {0};
+      GAP_Peer_Addr_Types_t addrType = PEER_ADDRTYPE_PUBLIC_OR_PUBLIC_ID;
+      gapBondRec_t bondRec = {0};
+      gapBondLTK_t localLtk = {0};
+      gapBondLTK_t devLtk = {0};
+      uint8_t irk[KEYLEN] = {0};
+      uint8_t srk[KEYLEN] = {0};
+      uint32_t signCounter = 0;
+      gapBondNvRecord_t nvRecord = {0};
+      uint8_t offset = RSP_PAYLOAD_IDX;
+
+      // Parse input based on mode
+      if (mode == GAPBOND_READ_BY_ADDR)
+      {
+        MAP_osal_memcpy(pIdentifier, &pBuf[1], B_ADDR_LEN);
+        addrType = (GAP_Peer_Addr_Types_t)pBuf[B_ADDR_LEN + 1];
+      }
+      else if (mode == GAPBOND_READ_BY_IDX)
+      {
+        idx = pBuf[1];
+        pIdentifier[0] = idx;
+        addrType = (GAP_Peer_Addr_Types_t)pBuf[2];
+      }
+      else
+      {
+        stat = bleIncorrectMode;
+        *pRspDataLen = 0;
+        break;
+      }
+
+      // Initialize NV record with all output buffers (no charCfg to avoid buffer overflow)
+      nvRecord.pBondRec = &bondRec;
+      nvRecord.pLocalLtk = &localLtk;
+      nvRecord.pDevLtk = &devLtk;
+      nvRecord.pIRK = irk;
+      nvRecord.pSRK = srk;
+      nvRecord.pSignCount = &signCounter;
+      nvRecord.pCharCfg = NULL;  // Skip charCfg to keep response within MAX_RSP_BUF
+
+      // Call stack function
+      stat = GapBondMgr_readBondFromNV(mode, pIdentifier, addrType, &nvRecord);
+
+      if (stat == SUCCESS)
+      {
+        // Serialize response
+        rspBuf[offset++] = stat;
+        rspBuf[offset++] = idx;
+
+        // Main bond record (8 bytes)
+        MAP_osal_memcpy(&rspBuf[offset], bondRec.addr, B_ADDR_LEN);
+        offset += B_ADDR_LEN;
+        rspBuf[offset++] = bondRec.addrType;
+        rspBuf[offset++] = bondRec.stateFlags;
+
+        // Local LTK (23 bytes)
+        MAP_osal_memcpy(&rspBuf[offset], localLtk.LTK, KEYLEN);
+        offset += KEYLEN;
+        rspBuf[offset] = LO_UINT16(localLtk.div);
+        rspBuf[offset + 1] = HI_UINT16(localLtk.div);
+        offset += 2;
+        MAP_osal_memcpy(&rspBuf[offset], localLtk.rand, B_RANDOM_NUM_SIZE);
+        offset += B_RANDOM_NUM_SIZE;
+        rspBuf[offset++] = localLtk.keySize;
+
+        // Device LTK (23 bytes)
+        MAP_osal_memcpy(&rspBuf[offset], devLtk.LTK, KEYLEN);
+        offset += KEYLEN;
+        rspBuf[offset] = LO_UINT16(devLtk.div);
+        rspBuf[offset + 1] = HI_UINT16(devLtk.div);
+        offset += 2;
+        MAP_osal_memcpy(&rspBuf[offset], devLtk.rand, B_RANDOM_NUM_SIZE);
+        offset += B_RANDOM_NUM_SIZE;
+        rspBuf[offset++] = devLtk.keySize;
+
+        // IRK (16 bytes)
+        MAP_osal_memcpy(&rspBuf[offset], irk, KEYLEN);
+        offset += KEYLEN;
+
+        // SRK (16 bytes)
+        MAP_osal_memcpy(&rspBuf[offset], srk, KEYLEN);
+        offset += KEYLEN;
+
+        // Sign Counter (4 bytes)
+        rspBuf[offset] = BREAK_UINT32(signCounter, 0);
+        rspBuf[offset + 1] = BREAK_UINT32(signCounter, 1);
+        rspBuf[offset + 2] = BREAK_UINT32(signCounter, 2);
+        rspBuf[offset + 3] = BREAK_UINT32(signCounter, 3);
+        offset += 4;
+
+        *pRspDataLen = (offset - RSP_PAYLOAD_IDX);
+      }
+      else
+      {
+        *pRspDataLen = 0;
+      }
+    }
+    break;
+
     case HCI_EXT_GAP_BOND_PAIR:
     {
       stat = GAPBondMgr_Pair(BUILD_UINT16(pBuf[0], pBuf[1]));
@@ -6252,59 +6422,39 @@ static uint8_t *processEventsGAP(gapEventHdr_t *pMsg, uint8_t *pOutMsg, uint16_t
         pOutMsg[4] = pPkt->subevent;
         pOutMsg[5] = pPkt->txStatus;
         pOutMsg[6] = pPkt->numResponses;
-        pBuf = pOutMsg;
-        msgLen = 7;
 
-        // Sending each response seperatly
-        // Pointer of packed responses
+        // All events are  send directly here because of order matters, header needs to arrive before the responses
+        HCI_TL_SendVSEvent(pOutMsg, 7);
+
         uint8_t *pRsp = pPkt->responses;
-        uint8_t *pTemp = pRsp;
-        uint8_t  lenResponse = 0;
 
+        // Send each response
         for (uint8_t i = 0; i < pPkt->numResponses; i++)
         {
-          // Forward the pointer by the size of the fields:
-          // TxPower, rssi, cteType, responseSlot, dataStatus, dataLen
-          pTemp += PAWR_RSP_HDR_SIZE-1; // Without dataLen field
-          uint8_t dataLen = *pTemp++;
-          lenResponse += PAWR_RSP_HDR_SIZE + dataLen;
-          pTemp += dataLen;
+          uint8_t dataLen = pRsp[PAWR_RSP_HDR_SIZE - 1];
+          uint16_t rspMsgLen = 8 + dataLen;
 
-          GapAdv_PeriodicAdvResponse_t *pEvtRsp =
-              (GapAdv_PeriodicAdvResponse_t *)osal_msg_allocate
-              (sizeof(GapAdv_PeriodicAdvResponse_t) + dataLen);
+          uint8_t *rspBuf = ICall_mallocLimited(rspMsgLen);
+          if (rspBuf != NULL)
+          {
+            rspBuf[0] = LO_UINT16(HCI_EXT_GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT);
+            rspBuf[1] = HI_UINT16(HCI_EXT_GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT);
+            rspBuf[2] = pRsp[0];  // txPower
+            rspBuf[3] = pRsp[1];  // rssi
+            rspBuf[4] = pRsp[2];  // cteType
+            rspBuf[5] = pRsp[3];  // responseSlot
+            rspBuf[6] = pRsp[4];  // dataStatus
+            rspBuf[7] = pRsp[5];  // dataLen
+            osal_memcpy(&rspBuf[8], pRsp + PAWR_RSP_HDR_SIZE, dataLen);
+            HCI_TL_SendVSEvent(rspBuf, rspMsgLen);
+            ICall_free(rspBuf);
+          }
 
-          pEvtRsp->hdr.event    = GAP_MSG_EVENT;
-          pEvtRsp->hdr.status   = pPkt->hdr.status;
-          pEvtRsp->opcode       = GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT;
-
-          // Copy response headers and data
-          osal_memcpy(pEvtRsp, pRsp, lenResponse);
-          // Forward to next reponse
-          pRsp += lenResponse;
-          // Send each response as if sent by the GAP layer
-          VOID osal_msg_send(gapAppTaskID, (uint8 *)pEvtRsp);
+          pRsp += PAWR_RSP_HDR_SIZE + dataLen;
         }
-        break;
-      }
 
-      case GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT:
-      {
-        GapAdv_PeriodicAdvResponse_t *pPkt =
-            (GapAdv_PeriodicAdvResponse_t *)pMsg;
-
-        // Sending first the header information as event
-        pOutMsg[0] = LO_UINT16(HCI_EXT_GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT);
-        pOutMsg[1] = HI_UINT16(HCI_EXT_GAP_ADV_PERIODIC_ADV_RSP_REPORT_EVENT);
-        pOutMsg[2] = pPkt->txPower;
-        pOutMsg[3] = pPkt->rssi;
-        pOutMsg[4] = pPkt->cteType;
-        pOutMsg[5] = pPkt->responseSlot;
-        pOutMsg[6] = pPkt->dataStatus;
-        pOutMsg[7] = pPkt->dataLen;
-        osal_memcpy(&(pOutMsg[8]), pPkt->data, pPkt->dataLen);
-        pBuf = pOutMsg;
-        msgLen = 8 + pPkt->dataLen;
+        // Header and Responses already sent above - processEvents won't send again.
+        msgLen = 0;
         break;
       }
 

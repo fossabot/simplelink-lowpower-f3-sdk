@@ -84,9 +84,7 @@
 #include "ti/ble/stack_util/icall/app/icall_hci_tl.h"
 #include "ti/ble/stack_util/lib_opt/map_direct.h"
 
-#include "ti/ble/controller/ll/ll_cs_mgr.h"
 #include "ti/ble/controller/ll/ll_cs_db.h"
-#include "ti/ble/controller/ll/ll_cs_common.h"
 #include "ti/ble/controller/ll/ll_pawr_advertiser.h"
 #include <ti/drivers/utils/Math.h>
 // Stub headers
@@ -1259,10 +1257,10 @@ WEAK_FUNC void HCI_CS_SecurityEnableCompleteCback(uint8 status, uint16 connHandl
  *
  * @return      None
  */
-WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
-                                                   uint16 connHandle,
+WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint16 connHandle,
+                                                   uint8_t configId,
                                                    uint8 enable,
-                                                   csProcedureEnable_t* enableData)
+                                                   uint8 status)
 {
   uint8* pEvt;
   // Pointer to data inside pEvt, that pointer point next slot to be filled
@@ -1274,30 +1272,29 @@ WEAK_FUNC void HCI_CS_ProcedureEnableCompleteCback(uint8 status,
 
   if (NULL != pEvt)
   {
+    const csEnableProcedureCtrlData_t *pEnable = llCsDbGetProcedureData();
+
     *pData++ = status;
     *pData++ = LO_UINT16(connHandle); // connection handle (LSB)
     *pData++ = HI_UINT16(connHandle); // connection handle (MSB)
-    if (enableData != NULL)
-    {
-      *pData++ = enableData->configId;  // config Id
-      *pData++ = enable;                // State
-      *pData++ = enableData->ACI;       // Tone_Anetenna_Config_Selection
-      *pData++ = enableData->pwrDelta;  // Selected_TX_Power
-      *pData++ = BREAK_UINT32(enableData->subEventLen, 0);
-      *pData++ = BREAK_UINT32(enableData->subEventLen, 1);
-      *pData++ = BREAK_UINT32(enableData->subEventLen, 2);
-      *pData++ = enableData->subEventsPerEvent;
-      *pData++ = LO_UINT16(enableData->subEventInterval);
-      *pData++ = HI_UINT16(enableData->subEventInterval);
-      *pData++ = LO_UINT16(enableData->eventInterval);
-      *pData++ = HI_UINT16(enableData->eventInterval);
-      *pData++ = LO_UINT16(enableData->procedureInterval);
-      *pData++ = HI_UINT16(enableData->procedureInterval);
-      *pData++ = LO_UINT16(enableData->procedureCount);
-      *pData++ = HI_UINT16(enableData->procedureCount);
-      *pData++ = LO_UINT16(enableData->maxProcedureDur);
-      *pData = HI_UINT16(enableData->maxProcedureDur);
-    }
+    *pData++ = configId;                               // config Id
+    *pData++ = enable;                                 // State
+    *pData++ = pEnable->ACI;                           // Tone_Antenna_Config_Selection
+    *pData++ = (uint8_t)pEnable->pwrDelta;             // Selected_TX_Power
+    *pData++ = BREAK_UINT32(pEnable->subEventLen, 0);
+    *pData++ = BREAK_UINT32(pEnable->subEventLen, 1);
+    *pData++ = BREAK_UINT32(pEnable->subEventLen, 2);
+    *pData++ = pEnable->subEventsPerEvent;
+    *pData++ = LO_UINT16(pEnable->subEventInterval);
+    *pData++ = HI_UINT16(pEnable->subEventInterval);
+    *pData++ = LO_UINT16(pEnable->eventInterval);
+    *pData++ = HI_UINT16(pEnable->eventInterval);
+    *pData++ = LO_UINT16(pEnable->procedureInterval);
+    *pData++ = HI_UINT16(pEnable->procedureInterval);
+    *pData++ = LO_UINT16(pEnable->procedureCount);
+    *pData++ = HI_UINT16(pEnable->procedureCount);
+    *pData++ = LO_UINT16(pEnable->maxProcedureDur);
+    *pData = HI_UINT16(pEnable->maxProcedureDur);
 
     // send the message
     HCI_SendEventToHost(pEvt);

@@ -368,6 +368,15 @@ function validate(inst, validation)
     {
         validation.logError("Scan Duration shall be greater than Scan Interval", inst, ["scanDuration","scanInt"]);
     }
+    if(inst.dupFilter == "SCAN_FLT_DUP_RESET" &&
+       (inst.scanPeriod == 0 || inst.scanDuration == 0))
+    {
+        // Spec 7.8.65: Filter_Duplicates=0x02 is only valid when both Period and Duration are non-zero
+        validation.logError(
+            "Duplicate filter 'Reset each scan period' requires both Scan Period and Scan Duration to be non-zero",
+            inst, ["dupFilter", "scanPeriod", "scanDuration"]
+        );
+    }
     if(inst.maxNumAdvReport < 0 || inst.maxNumAdvReport > 255)
     {
         validation.logError("Maximum number of advertising reports range is 0 to 255", inst, "maxNumAdvReport");

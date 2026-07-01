@@ -1673,6 +1673,16 @@ hciStatus_t hciCmdParserExtVendorSpecificCommon( uint8 *pData, uint16 cmdOpCode 
         status = HCI_EXT_EnhancedModemHopTestTxCmd( pData[0], pData[1], pData[2] );
         break;
     }
+    case HCI_EXT_SET_POWER_CTRL_RANGE:
+    {
+      status = HCI_EXT_SetPowerCtrlRangeCmd( (int8_t)pData[0], (int8_t)pData[1] );
+      break;
+    }
+    case HCI_EXT_GET_POWER_CTRL_RANGE:
+    {
+      status = HCI_EXT_GetPowerCtrlRangeCmd( (int8_t *)&pData[0], (int8_t *)&pData[1] );
+      break;
+    }
     case HCI_EXT_SET_DEFAULT_ANTENNA:
     {
         status = HCI_EXT_SetDefaultAntenna( *pData );

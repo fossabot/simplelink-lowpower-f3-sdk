@@ -172,12 +172,14 @@ bStatus_t GAP_DeviceInit_validate_params(uint8_t profileRole, uint8_t taskID,
      // If all bits excluding the 2 MSBs are all 0's...
      ((MAP_osal_isbufset(pRandomAddr, 0x00, B_ADDR_LEN - 1) &&
       ((pRandomAddr[B_ADDR_LEN - 1] & 0x3F) == 0)) ||
-      // Or all bites are 1's
+      // Or all bytes are 1's
       MAP_osal_isbufset(pRandomAddr, 0xFF, B_ADDR_LEN) ||
-      // Or the 2 MSBs are not 11b
-      !(GAP_IS_ADDR_RS(pRandomAddr))))
+      // Address must be random static, or NRPA when using ADDRMODE_RP_WITH_RANDOM_ID
+      // (PTS GAP/BROB/BCST tests configure NRPA via addrMode=ADDRMODE_RP_WITH_RANDOM_ID)
+      !(GAP_IS_ADDR_RS(pRandomAddr) ||
+        (addrMode == ADDRMODE_RP_WITH_RANDOM_ID && GAP_IS_ADDR_RPN(pRandomAddr)))))
   {
-    // This is an invalid ramdom static address
+    // This is an invalid random address
     return( INVALIDPARAMETER );
   }
 
@@ -274,23 +276,49 @@ bStatus_t GAP_DeviceInit(uint8_t profileRole, uint8_t taskID,
 
   if (stat == SUCCESS)
   {
+    // ADDRMODE_RP_WITH_RANDOM_ID + NRPA input: treat as ADDRMODE_RANDOM and
+    // generate a fresh NRPA so every power-up starts with a new address.
+    // Subsequent rotations are driven by the TGAP(private_addr_int) timer.
+    uint8 isNrpaBootstrap = (addrMode == ADDRMODE_RP_WITH_RANDOM_ID) &&
+                            (pRandomAddr != NULL) && GAP_IS_ADDR_RPN(pRandomAddr);
+    GAP_Addr_Modes_t effectiveMode = isNrpaBootstrap ? ADDRMODE_RANDOM : addrMode;
+    uint8 freshNrpa[B_ADDR_LEN];
+    uint8 *pAddrToUse = pRandomAddr;
+    if (isNrpaBootstrap)
+    {
+      gapGenerateNRPA(freshNrpa);
+      pAddrToUse = freshNrpa;
+    }
 
-    stat = OPT_GAPBondMgr_UpdateRandomAddr( addrMode, pRandomAddr );
+    stat = OPT_GAPBondMgr_UpdateRandomAddr( effectiveMode, pAddrToUse );
     if(stat != SUCCESS)
     {
       return (bleInternalError);
     }
 
     // Set the internal GAP address mode
-    gapDeviceAddrMode = addrMode;
+    gapDeviceAddrMode = effectiveMode;
+
+    if (isNrpaBootstrap)
+    {
+      // Arm NRPA rotation timer - device-wide per TGAP(private_addr_int).
+      uint16 intervalMin = MAP_GAP_GetParamValue(GAP_PARAM_PRIVATE_ADDR_INT);
+      (void)MAP_osal_stop_timerEx(gapTaskID, GAP_CHANGE_NON_RESOLVABLE_PRIVATE_ADDR_EVT);
+      if (intervalMin > 0)
+      {
+        (void)MAP_osal_start_timerEx(gapTaskID,
+                                     GAP_CHANGE_NON_RESOLVABLE_PRIVATE_ADDR_EVT,
+                                     (uint32)intervalMin * GAP_PRIVATE_ADDR_CHANGE_RESOLUTION);
+      }
+    }
 
     // If own address type is random static or RPA with random static...
     if(gapDeviceAddrMode == ADDRMODE_RANDOM
        || gapDeviceAddrMode == ADDRMODE_RP_WITH_RANDOM_ID
       )
     {
-      // If valid random static address, put it to the controller
-      MAP_LL_SetRandomAddress(pRandomAddr);
+      // Put the random address to the controller
+      MAP_LL_SetRandomAddress(pAddrToUse);
     }
 
     // Set the task ID to receive GAP events.

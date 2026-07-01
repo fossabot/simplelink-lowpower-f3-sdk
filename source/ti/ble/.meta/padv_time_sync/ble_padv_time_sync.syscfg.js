@@ -85,7 +85,7 @@ const config = {
         {
             name: "padvTimeSyncPeriodicAdvIntervalMin",
             displayName: "Periodic Adv Interval Min",
-            default: 160,
+            default: 1600,
             hidden: true,
             description: "Minimum periodic advertising interval (units of 1.25ms)",
             longDescription: Docs.padvTimeSyncPeriodicAdvIntervalLongDescription
@@ -93,7 +93,7 @@ const config = {
         {
             name: "padvTimeSyncPeriodicAdvIntervalMax",
             displayName: "Periodic Adv Interval Max",
-            default: 160,
+            default: 1600,
             hidden: true,
             description: "Maximum periodic advertising interval (units of 1.25ms)",
             longDescription: Docs.padvTimeSyncPeriodicAdvIntervalLongDescription

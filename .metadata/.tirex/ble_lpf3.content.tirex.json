@@ -3772,6 +3772,91 @@
         ]
     },
     {
+        "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/ble_controller/README.html",
+        "resourceType": "categoryInfo",
+        "name": "ble_controller",
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2745R10"
+        ],
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "name": "ble_controller",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "ble_controller",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "ble_controller"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/ble_controller/freertos/ticlang/ble_controller_CC2745R10_CS_EVM_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/ble_controller/freertos/iar/ble_controller_CC2745R10_CS_EVM_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
         "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/ble_controller/README.html",
         "resourceType": "categoryInfo",
         "name": "ble_controller",
@@ -4197,6 +4282,91 @@
         ]
     },
     {
+        "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/car_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "car_node",
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2745R10"
+        ],
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "name": "car_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
+        "description": "car_node",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "car_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/car_node/freertos/ticlang/car_node_CC2745R10_CS_EVM_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/car_node/freertos/iar/car_node_CC2745R10_CS_EVM_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
         "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/README.html",
         "resourceType": "categoryInfo",
         "name": "car_node",
@@ -4276,91 +4446,6 @@
                 "dependencies": [],
                 "ide": "iar",
                 "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/car_node/freertos/iar/car_node_LP_EM_CC2745R10_Q1_freertos_iar.ipcf",
-                "kernel": "freertos",
-                "compiler": "iar"
-            }
-        ]
-    },
-    {
-        "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/README.html",
-        "resourceType": "categoryInfo",
-        "name": "car_node",
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "TI Bluetooth"
-        ],
-        "resourceClass": [
-            "document"
-        ]
-    },
-    {
-        "resourceType": "project.group",
-        "advanced": {
-            "overrideProjectSpecDeviceId": true
-        },
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "devices": [
-            "CC2340R53"
-        ],
-        "coreTypes": [
-            "Cortex M.CC2340R53"
-        ],
-        "devtools": [
-            "LP-EM-CC2340R53"
-        ],
-        "name": "car_node",
-        "technologies": [
-            "bluetooth-low-energy"
-        ],
-        "endEquipment": [
-            "automotive-body"
-        ],
-        "description": "car_node",
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ],
-        "subCategories": [
-            "TI Bluetooth",
-            "car_node"
-        ],
-        "variants": [
-            {
-                "dependencies": [
-                    {
-                        "packageId": "ti_cgt_tiarmclang"
-                    },
-                    {
-                        "packageId": "sysconfig"
-                    }
-                ],
-                "ide": "ccs",
-                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/ticlang/car_node_LP_EM_CC2340R53_freertos_ticlang.projectspec",
-                "kernel": "freertos",
-                "compiler": "ticlang"
-            },
-            {
-                "dependencies": [],
-                "ide": "iar",
-                "location": "../../examples/rtos/LP_EM_CC2340R53/ble/car_node/freertos/iar/car_node_LP_EM_CC2340R53_freertos_iar.ipcf",
                 "kernel": "freertos",
                 "compiler": "iar"
             }
@@ -5217,6 +5302,91 @@
         ]
     },
     {
+        "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/host_test/README.html",
+        "resourceType": "categoryInfo",
+        "name": "host_test",
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2745R10"
+        ],
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "name": "host_test",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "general"
+        ],
+        "description": "host_test",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "host_test"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/host_test/freertos/ticlang/host_test_CC2745R10_CS_EVM_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/host_test/freertos/iar/host_test_CC2745R10_CS_EVM_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
         "location": "../../examples/rtos/LP_EM_CC2745R10_Q1/ble/host_test/README.html",
         "resourceType": "categoryInfo",
         "name": "host_test",
@@ -5636,6 +5806,91 @@
                 "dependencies": [],
                 "ide": "iar",
                 "location": "../../examples/rtos/LP_EM_CC2755P10/ble/key_node/freertos/iar/key_node_LP_EM_CC2755P10_freertos_iar.ipcf",
+                "kernel": "freertos",
+                "compiler": "iar"
+            }
+        ]
+    },
+    {
+        "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/key_node/README.html",
+        "resourceType": "categoryInfo",
+        "name": "key_node",
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth"
+        ],
+        "resourceClass": [
+            "document"
+        ]
+    },
+    {
+        "resourceType": "project.group",
+        "advanced": {
+            "overrideProjectSpecDeviceId": true
+        },
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "devices": [
+            "CC2745R10-Q1"
+        ],
+        "coreTypes": [
+            "Cortex M.CC2745R10"
+        ],
+        "devtools": [
+            "CC2745R10-CS-EVM"
+        ],
+        "name": "key_node",
+        "technologies": [
+            "bluetooth-low-energy"
+        ],
+        "endEquipment": [
+            "automotive-body"
+        ],
+        "description": "key_node",
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ],
+        "subCategories": [
+            "TI Bluetooth",
+            "key_node"
+        ],
+        "variants": [
+            {
+                "dependencies": [
+                    {
+                        "packageId": "ti_cgt_tiarmclang"
+                    },
+                    {
+                        "packageId": "sysconfig"
+                    }
+                ],
+                "ide": "ccs",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/key_node/freertos/ticlang/key_node_CC2745R10_CS_EVM_freertos_ticlang.projectspec",
+                "kernel": "freertos",
+                "compiler": "ticlang"
+            },
+            {
+                "dependencies": [],
+                "ide": "iar",
+                "location": "../../examples/rtos/CC2745R10_CS_EVM/ble/key_node/freertos/iar/key_node_CC2745R10_CS_EVM_freertos_iar.ipcf",
                 "kernel": "freertos",
                 "compiler": "iar"
             }

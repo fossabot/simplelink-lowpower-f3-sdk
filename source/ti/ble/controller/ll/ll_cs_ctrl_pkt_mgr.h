@@ -200,20 +200,21 @@ void llCsSetupCapabilities(uint8* data);
  * @fn          llCsCalcSubEventParams
  *
  * @brief       Calculate the parameters related to subEventLen and update in
- *              the csProcedureEnable_t parameter.
+ *              the csEnableProcedureCtrlData_t parameter.
  *
  * input parameters
  *
  * @param       connPtr      - Pointer to connection
- * @param       pCsReq       - Pointer to ProcedureEnable parameter.
+ * @param       configId     - Configuration ID
+ * @param       pEnable    - Pointer to procedure data.
  *
  * output parameters
  *
- * @param       pCsReq       - Pointer to ProcedureEnable parameter.
+ * @param       pEnable    - Pointer to procedure data.
  *
  * @return      None
  */
-void llCsCalcSubEventParams(const llConnState_t* connPtr, csProcedureEnable_t *pCsReq);
+void llCsCalcSubEventParams(const llConnState_t *connPtr, uint8_t configId, csEnableProcedureCtrlData_t *pEnable);
 
 /*******************************************************************************
 * @fn          llCsCalcEventIntervalMin

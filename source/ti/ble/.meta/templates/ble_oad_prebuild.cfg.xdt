@@ -46,6 +46,6 @@ if (bleMod) {
 %   } else if (isIAR) {
 "{{SDK_DIR}}/tools/ble/oad/msoad_prebuild" --compiler iar --ewp "{{EWP_DIR}}" --config "{{CONFIG}}" --iarbuild "{{IAR_BUILD_DIR}}" --sysconfig "{{SYSCONFIG_CLI_DIR}}" --sdk "{{SDK_DIR}}"
 %   } else {
-{{SDK_DIR}}/tools/ble/oad/msoad_prebuild --compiler ticlang --build-dir "{{BUILD_DIR}}" --gmake "{{GMAKE_DIR}}"
+"{{SDK_DIR}}/tools/ble/oad/msoad_prebuild" --compiler ticlang --build-dir "{{BUILD_DIR}}" --gmake "{{GMAKE_DIR}}"
 %   }
 % }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025, Texas Instruments Incorporated
+ * Copyright (c) 2024-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,10 @@
  *  By default, the HSM HW is configured and initialized to be in CRNG mode. To switch to TRNG,
  *  the user must call TRNGXXF3HSM_switchNrbgMode() API and specify TRNG_MODE_TRNG as the
  *  NRBG Mode.
+ *
+ *  @warning It is not currently possible to switch NRBG mode manually. For more
+ *           details see description in #TRNGXXF3HSM_switchNrbgMode().
+ *
  *
  *  # Samples Per Cycle Vs. Mix Cycles
  *
@@ -181,6 +185,10 @@ typedef struct
  *
  *  This API can only be called in polling and blocking modes only.
  *
+ *  @warning This function is currently not supported. The function will
+ *           unconditionally return an error, and the DRBG engine will not be
+ *           reseeded.
+ *
  *  @retval #TRNG_STATUS_SUCCESS              Reseeding was successful.
  *  @retval #TRNG_STATUS_ERROR                Reseeding was not successful.
  *  @retval #TRNG_STATUS_RESOURCE_UNAVAILABLE The required hardware was unavailable.
@@ -201,6 +209,10 @@ extern int_fast16_t TRNGXXF3HSM_reseedHSM(TRNG_Handle handle);
  *  Whilst the operation is running, the underlying HSM access semaphore is taken and no other operations or threads
  *  can leverage the HSM IP. The XXXXX_STATUS_RESOURCE_UNAVAILABLE error code will be returned.
  *
+ *  @warning This function is currently not supported. The function will
+ *           unconditionally return an error, and the DRBG engine will not be
+ *           reseeded.
+ *
  *  @retval #TRNG_STATUS_SUCCESS              Reseeding was successful.
  *  @retval #TRNG_STATUS_ERROR                Reseeding was not successful.
  *  @retval #TRNG_STATUS_RESOURCE_UNAVAILABLE The required hardware was unavailable.
@@ -211,6 +223,10 @@ extern int_fast16_t TRNGXXF3HSM_reseedHSMAsync();
  *  @brief  Switches the TRNG driver NRBG Mode between CRNG-based or TRNG-based
  *
  *  This operation will always run in polling or blocking modes only.
+ *
+ *  @warning This function is currently not supported. The function will
+ *           unconditionally return an error, and the NRBG mode will not be
+ *           switched.
  *
  *  @pre    TRNG_open() has to be called first successfully
  *

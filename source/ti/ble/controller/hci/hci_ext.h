@@ -191,6 +191,8 @@ extern "C"
 //GAP OOB
 #define HCI_EXT_GAP_BOND_GET_OOB_PARAMS			0x4C
 #define HCI_EXT_GAP_BOND_SET_OOB_PARAMS			0x4D
+#define HCI_EXT_GAP_BOND_WRITE_BY_INDEX         0x4E
+#define HCI_EXT_GAP_BOND_READ_FROM_NV           0x4F
 
 // GAP SM sub-procedures
 #define HCI_EXT_SM_REGISTER_TASK                0x39

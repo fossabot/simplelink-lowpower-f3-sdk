@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, Texas Instruments Incorporated
+ * Copyright (c) 2021-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,6 +135,7 @@ static int_fast16_t AESCBCXXF3HSM_oneStepOperation(AESCBC_Handle handle,
 static int_fast16_t AESCBCXXF3HSM_processData(AESCBC_Handle handle);
 int_fast16_t AESCBCXXF3HSM_addData(AESCBC_Handle handle, AESCBC_SegmentedOperation *operation);
 int_fast16_t AESCBCXXF3HSM_finalize(AESCBC_Handle handle, AESCBC_SegmentedOperation *operation);
+static int_fast16_t AESCBCXXF3HSM_freeAllAssets(AESCBC_Handle handle);
 #endif
 
 /*
@@ -969,6 +970,12 @@ int_fast16_t AESCBC_cancelOperation(AESCBC_Handle handle)
         (void)HSMXXF3_cancelOperation();
 
         object->segmentedOperationInProgress = false;
+
+        /* Attempt to free all the assets the driver created. Whether or not
+         * this is successful, we should continue on to attempt cancellation of
+         * the operation.
+         */
+        (void)AESCBCXXF3HSM_freeAllAssets(handle);
     }
 #endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) || (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX) \
         */
@@ -1044,6 +1051,39 @@ static int_fast16_t AESCBCXXF3HSM_oneStepOperation(AESCBC_Handle handle,
 }
 
 /*
+ *  ======== AESCBCXXF3HSM_freeAllAssets ========
+ */
+static int_fast16_t AESCBCXXF3HSM_freeAllAssets(AESCBC_Handle handle)
+{
+    AESCBCXXF3_Object *object = (AESCBCXXF3_Object *)handle->object;
+    int_fast16_t status       = AESCBC_STATUS_SUCCESS;
+    KeyStore_PSA_KeyFileId keyID;
+
+    if ((object->common.key.encoding == CryptoKey_KEYSTORE_HSM) &&
+        (object->keyLocation == KEYSTORE_PSA_KEY_LOCATION_HSM_ASSET_STORE))
+    {
+        GET_KEY_ID(keyID, object->common.key.u.keyStore.keyID);
+
+        /* For keys with a persistence that does not designate them to remain in
+         * asset store, the following function will remove them. Otherwise, the
+         * key will remain in asset store for future usage.
+         */
+        status = KeyStore_PSA_assetPostProcessing(keyID);
+
+        if (status != KEYSTORE_PSA_STATUS_SUCCESS)
+        {
+            status = AESCBC_STATUS_ERROR;
+        }
+        else
+        {
+            status = AESCBC_STATUS_SUCCESS;
+        }
+    }
+
+    return status;
+}
+
+/*
  *  ======== AESCBCXXF3HSM_OneStepPostProcessing ========
  */
 static inline void AESCBCXXF3HSM_OneStepPostProcessing(uintptr_t arg0)
@@ -1063,6 +1103,14 @@ static inline void AESCBCXXF3HSM_OneStepPostProcessing(uintptr_t arg0)
 
     /* Release the CommonResource semaphore. */
     CommonResourceXXF3_releaseLock();
+
+    /* Free all assets. This includes key-related asset and state-related asset
+     * (temporary asset).
+     */
+    if (AESCBCXXF3HSM_freeAllAssets(handle) != AESCBC_STATUS_SUCCESS)
+    {
+        status = AESCBC_STATUS_ERROR;
+    }
 
     object->common.returnStatus = status;
 

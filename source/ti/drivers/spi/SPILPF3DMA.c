@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, Texas Instruments Incorporated
+ * Copyright (c) 2022-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,13 @@
 #define SPI_DATASIZE_16     (16)
 #define PARAMS_DATASIZE_MIN SPI_DATASIZE_8
 #define PARAMS_DATASIZE_MAX SPI_DATASIZE_16
+
+/*
+ * Number of clock cycles before after which the receive timeout flag RTOUT is set.
+ * The value has been set the maximum value (63) so that a false receive timeout
+ * event is not triggered and sufficient time is available for the next SCLK pulse.
+ */
+#define SPI_RTOUT_VALUE (63)
 
 /* API Function Prototypes */
 void SPILPF3DMA_close(SPI_Handle handle);
@@ -375,6 +382,7 @@ int_fast16_t SPILPF3DMA_control(SPI_Handle handle, uint_fast16_t cmd, void *arg)
 /*
  *  ======== SPILPF3DMA_hwiFxn ========
  */
+
 static void SPILPF3DMA_hwiFxn(uintptr_t arg)
 {
     uint32_t freeChannel;
@@ -391,12 +399,12 @@ static void SPILPF3DMA_hwiFxn(uintptr_t arg)
     intStatus = getInterruptStatus(hwAttrs->baseAddr, true);
     clearInterrupt(hwAttrs->baseAddr, intStatus);
 
-    if (intStatus & SPI_MIS_RXOVF_SET)
+    if ((intStatus & SPI_MIS_RXOVF_SET) || (intStatus & SPI_MIS_RTOUT_SET))
     {
         if (object->headPtr != NULL)
         {
             /*
-             * RX overrun during a transfer; mark the current transfer
+             * RX overrun or RX timeout during a transfer; mark the current transfer
              * as failed & cancel all remaining transfers.
              */
             object->headPtr->status = SPI_TRANSFER_FAILED;
@@ -867,6 +875,14 @@ bool SPILPF3DMA_transfer(SPI_Handle handle, SPI_Transaction *transaction)
         enableInterrupt(hwAttrs->baseAddr, SPI_MIS_DMATX_SET | SPI_MIS_DMARX_SET);
 
         primeTransfer(handle);
+
+        if (object->mode == SPI_PERIPHERAL)
+        {
+            HWREG(hwAttrs->baseAddr + SPI_O_CTL1) |= (SPI_RTOUT_VALUE << SPI_CTL1_RTOUT_S);
+
+            /* Enable the RX timeout interrupt in the SPI module */
+            enableInterrupt(hwAttrs->baseAddr, SPI_MIS_RTOUT_SET);
+        }
 
         /* Enable the RX overrun interrupt in the SPI module */
         enableInterrupt(hwAttrs->baseAddr, SPI_MIS_RXOVF_SET);
@@ -1764,6 +1780,12 @@ static bool configSPI(uint32_t baseAddr,
 
     /* Set controller/peripheral mode, MSB first */
     HWREG(baseAddr + SPI_O_CTL1) = mode | SPI_CTL1_MSB_MSB;
+
+    /* If in peripheral mode, configure receive timeout */
+    if (mode == SPI_CTL1_MS_PERIPHERAL)
+    {
+        HWREG(baseAddr + SPI_O_CTL1) |= (SPI_RTOUT_VALUE << SPI_CTL1_RTOUT_S);
+    }
 
     /* Get existing settings */
     reg = HWREG(baseAddr + SPI_O_CLKCFG1);

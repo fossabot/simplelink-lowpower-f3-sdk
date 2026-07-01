@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, Texas Instruments Incorporated
+ * Copyright (c) 2023-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,9 @@
  *
  *  @note This implementation treats RNG_RETURN_BEHAVIOR_POLLING as
  *        RNG_RETURN_BEHAVIOR_BLOCKING.
+ *
+ *  @warning For this implementation for CC27XX, the maximum number of bits that
+ *           may be requested in a single call is 524287 bits (512 Kib - 1b)
  */
 
 #ifndef ti_drivers_rng_RNGXXF3HSM__include

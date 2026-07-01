@@ -538,15 +538,35 @@ static void AESCCMXXF3_processCBCMACFinalBlock(const uint8_t *input, size_t byte
     /* Must wait until engine is idle before clearing BUF */
     while (AESGetStatus() != (uint32_t)AES_STA_STATE_IDLE) {}
 
+    /* When the CPU pushes data in a cipher mode that has the WRBUF3
+     * configuration set during initialization code, the engine shows IDLE state
+     * for one clock cycle before starting the next operation. If the state is
+     * sampled at this exact moment and then issue clear, the engine is already
+     * processing - so the clear operation gets ignored. To prevent this race,
+     * poll idle twice in a row to confirm the engine truly halted before
+     * proceeding with the clear.
+     */
+    while (AESGetStatus() != (uint32_t)AES_STA_STATE_IDLE) {}
+
+    /* Clear the WRBUF3 configuration and do a manual trigger instead since it
+     * is unknown how many bytes will be copied to the BUF register.
+     * Store the current configuration to restore it later.
+     */
+    uint32_t autoCfg = HWREG(AES_BASE + AES_O_AUTOCFG);
+    AESSetAUTOCFG(autoCfg & ~AES_AUTOCFG_TRGAES_M);
+
     /* Zero out the BUF registers */
     AESClearBUF();
 
-    /* Copy directly to BUF registers. (void)memcpy is safe to use here since the
-     * order of the writes is not important when writing a partial block.
+    /* Copy directly to BUF registers. (void)memcpy is safe to use here since
+     * the order of the writes is not important when writing a partial block.
      */
     (void)memcpy((void *)(AES_BASE + AES_O_BUF0), input, bytesRemaining);
 
     AESSetTrigger((uint32_t)AES_TRG_AESOP_TXTXBUF);
+
+    /* Restore the configuration */
+    AESSetAUTOCFG(autoCfg);
 }
 
     #define M_PRIME_OFFSET 3

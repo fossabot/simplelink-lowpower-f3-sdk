@@ -439,7 +439,8 @@ def run_test_build_ticlang(build_dir: Path, syscfg_file: Optional[Path],
 def run_test_build_iar(ewp_path: Path, config: str, iarbuild_path: str,
                        syscfg_file: Optional[Path],
                        sysconfig_cli: Optional[str] = None,
-                       sdk_path: Optional[Path] = None) -> int:
+                       sdk_path: Optional[Path] = None,
+                       varfile: Optional[Path] = None) -> int:
     """
     Run the test build using IarBuild (IAR).
 
@@ -474,11 +475,29 @@ def run_test_build_iar(ewp_path: Path, config: str, iarbuild_path: str,
     env = os.environ.copy()
     env[MSOAD_PREBUILD_ENV] = "1"
 
+    # Build IarBuild command. Pass -varfile so the nested build resolves
+    # $SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$ etc. without relying on
+    # per-user IAR config (which doesn't exist in CI).
+    # Explicit --varfile takes priority; fall back to the SDK-shipped file.
+    iarbuild_cmd = [iarbuild_path, str(ewp_path), "-build", config]
+    resolved_varfile = varfile or (
+        sdk_path / "tools" / "iar" / "SIMPLELINK_LOWPOWER_F3_SDK.custom_argvars"
+        if sdk_path else None
+    )
+    if resolved_varfile is None:
+        log(f"[{context}] ERROR: No -varfile provided and no --sdk path to derive one from")
+        return 1
+    if not resolved_varfile.exists():
+        log(f"[{context}] ERROR: varfile not found: {resolved_varfile}")
+        return 1
+    iarbuild_cmd.extend(["-varfile", str(resolved_varfile)])
+    log(f"[{context}] Using -varfile {resolved_varfile}")
+
     try:
         # Run iarbuild to build the project
-        # Syntax: IarBuild.exe <project.ewp> -build <configuration>
+        # Syntax: IarBuild.exe <project.ewp> -build <configuration> [-varfile <path>]
         result = subprocess.run(
-            [iarbuild_path, str(ewp_path), "-build", config],
+            iarbuild_cmd,
             cwd=ewp_dir,
             env=env,
             # Don't capture output - let it flow to console
@@ -600,6 +619,12 @@ Examples:
         type=Path,
         help="(IAR) Path to SDK root directory (for SysConfig product.json)"
     )
+    parser.add_argument(
+        "--varfile",
+        type=Path,
+        help="(IAR) Path to .custom_argvars file for IarBuild. "
+             "If omitted, defaults to <sdk>/tools/iar/SIMPLELINK_LOWPOWER_F3_SDK.custom_argvars"
+    )
 
     # Backward-compatible positional args for TI-Clang
     parser.add_argument(
@@ -710,6 +735,8 @@ def main():
             log(f"SysConfig CLI: {args.sysconfig}")
         if args.sdk:
             log(f"SDK path: {args.sdk}")
+        if args.varfile:
+            log(f"Varfile: {args.varfile}")
 
         # Find the syscfg file (same directory as .ewp for IAR)
         syscfg_file = find_syscfg_file(ewp_dir)
@@ -732,6 +759,7 @@ def main():
             ewp_path, args.config, args.iarbuild, syscfg_file,
             sysconfig_cli=args.sysconfig,
             sdk_path=args.sdk,
+            varfile=args.varfile,
         )
 
     log("")

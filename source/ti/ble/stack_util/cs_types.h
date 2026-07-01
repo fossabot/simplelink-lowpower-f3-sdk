@@ -309,7 +309,7 @@ typedef struct
   uint32_t maxSubEventLen;             //!< Max SubEvent Len in microseconds, range 1250us to 4s
   csACI_e  aci;                        //!< Antenna Config Index
   uint8_t  phy;                        //!< PHY
-  uint8_t  txPwrDelta;                 //!< Tx Power Delta, in signed dB
+  int8_t   txPwrDelta;                 //!< Tx Power Delta, in signed dB
   uint8_t  preferredPeerAntenna;       //!< Preferred peer Antenna
   uint8_t  snrCtrlI;                   //!< SNR Control Initiator
   uint8_t  snrCtrlR;                   //!< SNR Control Reflector

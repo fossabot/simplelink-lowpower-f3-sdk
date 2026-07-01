@@ -252,6 +252,37 @@ void BLEAppUtil_processStackEvents(BLEAppUtil_msgHdr_t *pMsg ,BLEAppUtil_eventAn
                                     pMsg,
                                     bleAppUtilEventAndHandle.handlerType);
 
+        // Free the data of periodic advertising events if exist
+        if(pMsg->event == GAP_MSG_EVENT)
+        {
+            gapEventHdr_t *pGapHdr = (gapEventHdr_t *)pMsg;
+
+            // Check if this is a periodic advertising report event
+            switch(pGapHdr->opcode)
+            {
+                case GAP_SCAN_PERIODIC_ADV_REPORT_EVENT_V1:
+                {
+                    GapScan_Evt_PeriodicAdvRptV1_t *pEvt = (GapScan_Evt_PeriodicAdvRptV1_t *)pMsg;
+                    if(pEvt->pData != NULL)
+                    {
+                        BLEAppUtil_free(pEvt->pData);
+                    }
+                    break;
+                }
+                case GAP_SCAN_PERIODIC_ADV_REPORT_EVENT_V2:
+                {
+                    GapScan_Evt_PeriodicAdvRptV2_t *pEvt = (GapScan_Evt_PeriodicAdvRptV2_t *)pMsg;
+                    if(pEvt->pData != NULL)
+                    {
+                        BLEAppUtil_free(pEvt->pData);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
         // If this is a GATT_MSG_EVENT free the data
         if(pMsg->event == GATT_MSG_EVENT)
         {

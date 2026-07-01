@@ -876,8 +876,8 @@ typedef enum
 #define RANDOM_ADDR_HDR_MASK          0xC0
 /// Random Static Address (b11)
 #define STATIC_ADDR_HDR               0xC0
-/// Random Private Non-Resolvable Address (b10)
-#define PRIVATE_NON_RESOLVE_ADDR_HDR  0x80
+/// Random Private Non-Resolvable Address (b00)
+#define PRIVATE_NON_RESOLVE_ADDR_HDR  0x00
 /// Random Private Resolvable Address (b01)
 #define PRIVATE_RESOLVE_ADDR_HDR      0x40
 /** @} End Random_Addr_Bitfields */

@@ -190,4 +190,19 @@ hciStatus_t OPT_hciCmdParserScanner(uint8_t* pData, uint16_t cmdOpCode)
     return hciCmdParserScanner(pData, cmdOpCode);
 }
 
+uint8_t OPT_llIsScanWindowActive(uint32_t time)
+{
+    return llIsScanWindowActive(time);
+}
+
+void OPT_llScanSetTaskAnchorScanWindow(uint32_t absStartTime)
+{
+    llScanSetTaskAnchorScanWindow(absStartTime);
+}
+
+void OPT_llScanSetRclScanWindow(uint32_t absStartTime)
+{
+    llScanSetRclScanWindow(absStartTime);
+}
+
 #endif /* defined(CTRL_SCANNER_CFG) */

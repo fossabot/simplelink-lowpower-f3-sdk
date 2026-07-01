@@ -5908,8 +5908,6 @@ hciStatus_t HCI_LE_CS_CreateConfig( uint16 connHandle,
   csConfig.chSel = pBufConfig->chSel;
   csConfig.ch3cShape = pBufConfig->ch3cShape;
   csConfig.ch3CJump = pBufConfig->ch3CJump;
-  csConfig.rfu0 = CS_RFU;
-  csConfig.rfu1 = CS_RFU;
 
   status = (hciStatus_t)OPT_LL_CS_CreateConfig(connHandle, &csConfig, createContext);
 
@@ -5977,7 +5975,7 @@ hciStatus_t HCI_LE_CS_SetProcedureParameters( uint16 connHandle,
 
   csProcedureParams.aci = (csACI_e)pParams[14];                      /* Antenna Config Index */
   csProcedureParams.phy = pParams[15];                        /* PHY */
-  csProcedureParams.txPwrDelta = pParams[16];                 /* Tx Power Delta, in signed dB */
+  csProcedureParams.txPwrDelta = (int8_t)pParams[16];         /* Tx Power Delta, in signed dB */
   csProcedureParams.preferredPeerAntenna = pParams[17];       /* Preferred peer Antenna */
   csProcedureParams.snrCtrlI = pParams[18];                   /* SNR Control Initiator */
   csProcedureParams.snrCtrlR = pParams[19];                   /* SNR Control Reflector */
@@ -6370,6 +6368,80 @@ hciStatus_t hci_ext_SendPowerControlRequestCmd( uint16_t connHandle,
   MAP_HCI_CommandStatusEvent(status, HCI_EXT_SEND_POWER_CONTROL_REQUEST);
 
   return(status);
+}
+
+hciStatus_t HCI_EXT_SetPowerCtrlRangeCmd( int8_t minTxPower, int8_t maxTxPower )
+{
+  return ( OPT_hci_ext_SetPowerCtrlRangeCmd( minTxPower, maxTxPower ) );
+}
+
+hciStatus_t HCI_EXT_GetPowerCtrlRangeCmd( int8_t *minTxPower, int8_t *maxTxPower )
+{
+  return ( OPT_hci_ext_GetPowerCtrlRangeCmd( minTxPower, maxTxPower ) );
+}
+
+/*******************************************************************************
+ * This internal function sets the user TX power range limits used by the
+ * power control procedures and emits a Vendor Specific Command Complete event
+ * carrying the resulting status.
+ *
+ * This function is used to opt in or out the HCI command.
+ */
+hciStatus_t hci_ext_SetPowerCtrlRangeCmd( int8_t minTxPower, int8_t maxTxPower )
+{
+  // 0-1: Event opcode
+  // 2:   Status
+  uint8_t rtnParam[3];
+  hciStatus_t status = LL_EXT_PwrCtrl_SetRange( minTxPower, maxTxPower );
+
+  rtnParam[0] = LO_UINT16( HCI_EXT_SET_POWER_CTRL_RANGE_EVENT );
+  rtnParam[1] = HI_UINT16( HCI_EXT_SET_POWER_CTRL_RANGE_EVENT );
+  rtnParam[2] = status;
+
+  HCI_VendorSpecifcCommandCompleteEvent( HCI_EXT_SET_POWER_CTRL_RANGE,
+                                         sizeof(rtnParam),
+                                         rtnParam );
+  return status;
+}
+
+/*******************************************************************************
+ * This internal function reads the current user TX power range limits and
+ * emits a Vendor Specific Command Complete event carrying the values.
+ * The values are also written through the caller's pointers so direct callers
+ * can read them synchronously.
+ *
+ * This function is used to opt in or out the HCI command.
+ */
+hciStatus_t hci_ext_GetPowerCtrlRangeCmd( int8_t *minTxPower, int8_t *maxTxPower )
+{
+  // 0-1: Event opcode
+  // 2:   Status
+  // 3:   Min TX power (dBm)
+  // 4:   Max TX power (dBm)
+  uint8_t rtnParam[5];
+  int8_t  tempMin = 0;
+  int8_t  tempMax = 0;
+  hciStatus_t status = LL_EXT_PwrCtrl_GetRange( &tempMin, &tempMax );
+
+  if ( minTxPower != NULL )
+  {
+    *minTxPower = tempMin;
+  }
+  if ( maxTxPower != NULL )
+  {
+    *maxTxPower = tempMax;
+  }
+
+  rtnParam[0] = LO_UINT16( HCI_EXT_GET_POWER_CTRL_RANGE_EVENT );
+  rtnParam[1] = HI_UINT16( HCI_EXT_GET_POWER_CTRL_RANGE_EVENT );
+  rtnParam[2] = status;
+  rtnParam[3] = (uint8_t)tempMin;
+  rtnParam[4] = (uint8_t)tempMax;
+
+  HCI_VendorSpecifcCommandCompleteEvent( HCI_EXT_GET_POWER_CTRL_RANGE,
+                                         sizeof(rtnParam),
+                                         rtnParam );
+  return status;
 }
 
 /*******************************************************************************

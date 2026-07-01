@@ -4702,6 +4702,51 @@ hciStatus_t HCI_EXT_SendPowerControlRequestCmd( uint16_t connHandle,
                                                 uint8_t  aprEnalbe );
 
 /*******************************************************************************
+ * @fn          HCI_EXT_SetPowerCtrlRangeCmd
+ *
+ * @brief       Set the TX power range used during power control procedures.
+ *              Pass 0x80 for to leave either bound unchanged.
+ *
+ * @Design      BLE_LOKI-4240
+ *
+ * input parameters
+ *
+ * @param       minTxPower - Minimum TX power in dBm. Must be within hardware range.
+ *                           Pass 0x80 to leave unchanged.
+ * @param       maxTxPower - Maximum TX power in dBm. Must be within hardware range.
+ *                           Pass 0x80 to leave unchanged.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+* @return      HCI_SUCCESS
+*              HCI_STATUS_ERROR_BAD_PARAMETER - the requested range is out of hardware limits, or min > max
+*              HCI_STATUS_ERROR_UNACCEPTABLE_CONN_PARAMETERS - An active connection TX power violates the new range.
+ */
+hciStatus_t HCI_EXT_SetPowerCtrlRangeCmd( int8_t minTxPower, int8_t maxTxPower );
+
+/*******************************************************************************
+ * @fn          HCI_EXT_GetPowerCtrlRangeCmd
+ *
+ * @brief       Get the current user-configured TX power range limits.
+ *
+ * @Design      BLE_LOKI-4240
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       minTxPower - Pointer to receive current min limit.
+ * @param       maxTxPower - Pointer to receive current max limit.
+ *
+ * @return      @ref HCI_SUCCESS or @ref HCI_STATUS_ERROR_BAD_PARAMETER - minTxPower or maxTxPower is NULL.
+ */
+hciStatus_t HCI_EXT_GetPowerCtrlRangeCmd( int8_t *minTxPower, int8_t *maxTxPower );
+
+/*******************************************************************************
  * @fn          HCI_EXT_SetDefaultAntenna
  *
  * @brief       This API is to be called by the host to set a default antenna

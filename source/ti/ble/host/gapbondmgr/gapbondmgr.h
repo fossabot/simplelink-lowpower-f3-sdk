@@ -743,6 +743,19 @@ extern "C"
 #define GAPBOND_READ_BY_IDX                          1
 /** @} End GAPBondMgr_Read_Mode */
 
+/**
+ * @defgroup GAPBondMgr_Write_Mode GAP Bond Manager Bond write mode
+ *
+ * @{
+ */
+/// Write by index with overwrite (erase existing if present)
+#define GAPBOND_WRITE_BY_IDX_OVERWRITE               0
+/// Write by index without overwrite (fail if occupied)
+#define GAPBOND_WRITE_BY_IDX_NO_OVERWRITE            1
+/// Write by address (find existing or allocate empty)
+#define GAPBOND_WRITE_BY_ADDR                        2
+/** @} End GAPBondMgr_Write_Mode */
+
 /** @} End GAPBondMgr_Constants */
 
 /*-------------------------------------------------------------------
@@ -1155,7 +1168,7 @@ uint8_t GapBondMgr_readBondFromNV(uint8_t mode,
  * @param   charCfg - GATT characteristic configuration
  *
  * @return  SUCCESS if bond was imported
- * @        bleNoResources if there are no empty slots
+ * @return  bleNoResources if there are no empty slots
  */
 extern uint8_t GapBondMgr_writeBondToNv(gapBondRec_t *pBondRec,
                                         gapBondLTK_t *pLocalLtk,
@@ -1164,6 +1177,38 @@ extern uint8_t GapBondMgr_writeBondToNv(gapBondRec_t *pBondRec,
                                         uint8_t *pSRK,
                                         uint32_t signCount,
                                         gapBondCharCfg_t *charCfg);
+
+
+
+ /**
+ * @brief   Write bond record to NV with mode-based operation (Vendor Specific)
+ *
+ * @param   mode - write mode: GAPBOND_WRITE_BY_IDX_OVERWRITE, GAPBOND_WRITE_BY_IDX_NO_OVERWRITE, or GAPBOND_WRITE_BY_ADDR
+ * @param   bondIdx - bond index (0 to GAP_BONDINGS_MAX-1), used for OVERWRITE and NO_OVERWRITE modes
+ * @param   pBondRec - basic bond record
+ * @param   pLocalLTK - LTK used by the device that has the same public address as current device
+ * @param   pDevLTK - LTK used by the peer device during pairing
+ * @param   pIRK - IRK used by the peer device during pairing
+ * @param   pSRK - SRK used by the peer device during pairing
+ * @param   signCounter - Sign counter used by the peer device during pairing
+ * @param   charCfg - GATT characteristic configuration
+ *
+ * @return  SUCCESS if bond was written
+ * @return  bleInvalidRange if bondIdx is out of range (for index modes)
+ * @return  bleNoResources if there are no empty slots or slot is occupied (NO_OVERWRITE mode)
+ *
+ * @note This is a vendor-specific extension that allows mode-based bond writing.
+ *       Use GAPBOND_WRITE_BY_ADDR mode to replicate the behavior of GapBondMgr_writeBondToNv().
+ */
+extern uint8_t GapBondMgr_writeBondToNvByIndex( uint8_t mode,
+                                                  uint8_t bondIdx,
+                                                  gapBondRec_t *pBondRec,
+                                                  gapBondLTK_t *pLocalLtk,
+                                                  gapBondLTK_t *pDevLtk,
+                                                  uint8_t *pIRK,
+                                                  uint8_t *pSRK,
+                                                  uint32_t signCount,
+                                                  gapBondCharCfg_t *charCfg);
 
 /**
  * @fn          GapBondMgr_GetPrevAuth

@@ -183,16 +183,20 @@ SECTIONS
 
     .slot1: UNORDERED()
     {
+% // Use */"name" to anchor the suffix match to a path separator, so that e.g.
+% // */"drivers_cc23x0r5.a" matches /path/drivers_cc23x0r5.a but NOT
+% // /path/secure_drivers_cc23x0r5.a. All inputs in the map's MODULE SUMMARY
+% // have at least one '/' in their path, so this matches every loaded file.
 % // Place entire libraries first
 % for (let lib of slot1Libraries) {
 %     for (let pattern of INPUT_SECTION_PATTERNS) {
-        *"`lib`"(`pattern`)
+        */"`lib`"(`pattern`)
 %     }
 % }
 % // Then place standalone objects
 % for (let obj of slot1Objects) {
 %     for (let pattern of INPUT_SECTION_PATTERNS) {
-        *"`obj`"(`pattern`)
+        */"`obj`"(`pattern`)
 %     }
 % }
     } > APP_1_SLOT

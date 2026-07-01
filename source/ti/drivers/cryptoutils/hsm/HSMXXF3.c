@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, Texas Instruments Incorporated
+ * Copyright (c) 2023-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,6 +79,7 @@
 #include <third_party/hsmddk/include/Kit/EIP130/TokenHelper/incl/eip130_token_pk.h>
 #include <third_party/hsmddk/include/Kit/EIP130/TokenHelper/incl/eip130_token_publicdata.h>
 #include <third_party/hsmddk/include/Kit/EIP130/TokenHelper/incl/eip130_token_random.h>
+#include <third_party/hsmddk/include/Kit/EIP130/TokenHelper/incl/eip130_token_result.h>
 #include <third_party/hsmddk/include/Integration/Adapter_VEX/incl/c_adapter_vex.h>
 #include <third_party/hsmddk/include/Kit/EIP201/incl/eip201.h>
 #include <third_party/hsmddk/include/Kit/DriverFramework/Device_API/incl/device_mgmt.h>
@@ -122,19 +123,12 @@
 /* Defines and enumerations */
 typedef struct
 {
-    uint8_t patch;
-    uint8_t minor;
-    uint8_t major;
-} HSMXXF3_systemInfoVersion_t;
-
-typedef struct
-{
     /* Word 0 is omitted */
     /* Word 1 */
-    HSMXXF3_systemInfoVersion_t rambusFwVersion;
+    HSMXXF3_SystemInfoVersion rambusFwVersion;
     uint8_t rollbackID;
     /* Word 2 */
-    HSMXXF3_systemInfoVersion_t rambusHwVersion;
+    HSMXXF3_SystemInfoVersion rambusHwVersion;
     uint8_t res0;
     /* Word 3 */
     uint16_t memorySize;
@@ -150,18 +144,80 @@ typedef struct
     uint16_t otpAnomaly:4;
     uint16_t selfTestActive:16;
     /* Word 6 */
-    HSMXXF3_systemInfoVersion_t rambusBootFwVersion;
+    HSMXXF3_SystemInfoVersion rambusBootFwVersion;
     uint8_t res3;
     /* Word 7 */
-    HSMXXF3_systemInfoVersion_t customBootFwVersion;
+    HSMXXF3_SystemInfoVersion customBootFwVersion;
     uint8_t res4;
     /* Word 8 */
-    HSMXXF3_systemInfoVersion_t customFwVersion;
+    HSMXXF3_SystemInfoVersion customFwVersion;
     uint8_t res5;
     /* Word 9 */
-    HSMXXF3_systemInfoVersion_t customHwVersion;
+    HSMXXF3_SystemInfoVersion customHwVersion;
     uint8_t res6;
 } HSMXXF3_SystemInfo_t;
+
+/* Sleep state for the HSM
+ *
+ * The device may only enter standby in HSMXXF3_SLEEP_STATE_ASLEEP.
+ * The HSM may only be used in HSMXXF3_SLEEP_STATE_AWAKE.
+ *
+ * State transitions are performed by HSMXXF3_wakeUp() and HSMXXF3_sleep().
+ * HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED is normally only a transient state
+ * within HSMXXF3_wakeUp(), which advances from HSMXXF3_SLEEP_STATE_ASLEEP
+ * through it to HSMXXF3_SLEEP_STATE_AWAKE in a single call. If the wake up
+ * token fails the state remains at HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED,
+ * leaving the HSM clocks and mailbox enabled but the HSM not ready for use. A
+ * subsequent HSMXXF3_sleep() call will still submit the sleep token and disable
+ * the clocks before the device enters standby.
+ *
+ * ┌──────────────────────────────────────────┐
+ * │  HSMXXF3_SLEEP_STATE_ASLEEP              │◄─────────────────────────────┐
+ * └──────────────────────────────────────────┘                              │
+ *              │                                                            │
+ *              │  1. Enable HSM clocks                                      │
+ *              │  2. Enable HSM mailbox (initMbox)                          │
+ *              │  3. Initialize AIC                                         │
+ *              ▼                                                            │
+ * ┌──────────────────────────────────────────┐    HSMXXF3_sleep():          │
+ * │ HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED ├─── 1. Submit sleep token ────┤
+ * └──────────────────────────────────────────┘    2. Disable HSM clocks     │
+ *              │ ▲                                                          │
+ *              │ └── [wake up token failed]                                 │
+ *              │  1. Submit wake up token                                   │
+ *              │     [success: TRNG ok, or CRNG ok /                        │
+ *              │      CRNG repetition count fail /                          │
+ *              │      CRNG adaptive proportion fail]                        │
+ *              ▼                                                            │
+ * ┌──────────────────────────────────────────┐    HSMXXF3_sleep():          │
+ * │ HSMXXF3_SLEEP_STATE_AWAKE                ├─── 1. Submit sleep token ────┘
+ * └──────────────────────────────────────────┘    2. Disable HSM clocks
+ *
+ */
+typedef enum
+{
+    /* The HSM is asleep.
+     * The HSM must be in this state before the device enters standby.
+     * The HSM cannot be used in this state.
+     */
+    HSMXXF3_SLEEP_STATE_ASLEEP = 0,
+
+    /* The HSM clocks are enabled, the mailbox is initialized and the AIC is
+     * configured, but a wake up token has not yet been submitted. This state is
+     * normally only seen transiently during HSMXXF3_wakeUp(), which submits the
+     * wake up token immediately after entering it. If the wake up token fails,
+     * the state persists here with clocks and mailbox enabled but the HSM not
+     * ready for use. HSMXXF3_sleep() will still submit the sleep token and
+     * disable the clocks in this state, allowing the device to enter standby.
+     * The HSM cannot be used in this state.
+     */
+    HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED = 1,
+
+    /* The HSM is fully awake. The HSM can be used in this state and the device
+     * should not enter standby in this state.
+     */
+    HSMXXF3_SLEEP_STATE_AWAKE = 2,
+} HSMXXF3_SleepState_t;
 
 #define BOOT_DELAY 0xFFFFF
 
@@ -184,7 +240,51 @@ typedef struct
 
 #define CRYPTO_OFFICER_ID 0x4F5A3647
 
-#define OUTPUT_TOKEN_ERROR 0x80000000
+/* ======== HSM Input Token bit fields ======== */
+/* Field: [27:24] OpCode */
+#define INPUT_TOKEN_OPCODE_M  (0x0F000000U)
+/* Field: [27:24] SubCode */
+#define INPUT_TOKEN_SUBCODE_M (0xF0000000U)
+
+/* ======== HSM Output Token bit fields ======== */
+/* Field: [31:31] Error
+ *
+ * Enums:
+ * - SUCCESS: No error occurred, operation completed successfully.
+ * - ERROR: Error occurred.
+ */
+#define OUTPUT_TOKEN_ERROR_M       (0x80000000U)
+#define OUTPUT_TOKEN_ERROR_SUCCESS (0x00000000U)
+#define OUTPUT_TOKEN_ERROR_ERROR   (0x80000000U)
+
+/* Field: [30:29] ResultSrc */
+#define OUTPUT_TOKEN_RESULT_SRC_M (0x60000000U)
+
+/* Field: [28:24] Result */
+#define OUTPUT_TOKEN_RESULT_M (0x1F000000U)
+
+/* Field: [31:24] Combined Result
+ *
+ * This is an aggregated field consisting of the Error, ResultSrc and Result
+ * fields.
+ *
+ * Enums:
+ * - SUCCESS: No error occurred, operation completed successfully.
+ * - CRNG_REPETITION_COUNT_FAIL: CRNG 'Repetition Count' test failure.
+ * - CRNG_ADAPTIVE_PROPORTION_FAIL: CRNG 'Adaptive Proportion' test failure.
+ */
+#define OUTPUT_TOKEN_COMBINED_RESULT_M                             (OUTPUT_TOKEN_ERROR_M | OUTPUT_TOKEN_RESULT_SRC_M | OUTPUT_TOKEN_RESULT_M)
+#define OUTPUT_TOKEN_COMBINED_RESULT_SUCCESS                       (0x00000000U)
+#define OUTPUT_TOKEN_COMBINED_RESULT_CRNG_REPETITION_COUNT_FAIL    (0xCA000000U)
+#define OUTPUT_TOKEN_COMBINED_RESULT_CRNG_ADAPTIVE_PROPORTION_FAIL (0xCC000000U)
+
+/* Field: [17:17] RNG Warning
+ *
+ * If the bit in this field is set in the output token it indicates that the RNG
+ * is in a warning state. Meaning a reseed is needed within the next 64KB of
+ * random data generation.
+ */
+#define OUTPUT_TOKEN_RNG_WARNING_M (0x00020000U)
 
 #define AESGCM_IV_LAST_WORD 0x01000000
 
@@ -194,9 +294,11 @@ typedef struct
 
 #define HSM_TOKEN_WORD1_OFFSET 0x4
 
-#define HSM_HUK_ALREADY_PROVISIONED 0x87
+#define HSM_HUK_ASSET_NUMBER 0x61
 
 #define HUK_PROVISION_TOKEN_WORD0 0x97000000
+
+#define HSM_SEARCH_TOKEN_WORD0 0x07000000
 
 /* bit 17 has to be high to indicate a 256bit HUK asset size. */
 #define HUK_PROVISION_TOKEN_WORD2_256BIT 0x00020000
@@ -229,6 +331,11 @@ typedef struct
     #define HSMCRYPTO_MBCTL_MB1OUT_EMTY HSM_MBXCTL_OUTEMP1
 #endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX) */
 
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
+    /* RNG Configuration retry limit (CC27XX only) */
+    #define HSMXXF3_RNG_CONFIG_MAX_RETRIES 100
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) */
+
 /* Used by crypto drivers in blocking mode to wait on a result */
 static SemaphoreP_Struct HSMXXF3_operationSemaphore;
 
@@ -244,7 +351,7 @@ static int_fast16_t HSMXXF3_hsmReturnStatus;
 
 static bool HSMXXF3_operationInProgress = false;
 
-static bool HSMXXF3_isHSMInSleepMode = false;
+static HSMXXF3_SleepState_t HSMXXF3_sleepState = HSMXXF3_SLEEP_STATE_AWAKE;
 
 static Power_NotifyObj postNotify;
 
@@ -262,7 +369,12 @@ static int_fast16_t HSMXXF3_getEngineSystemInfo();
 
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
 static int_fast16_t HSMXXF3_submitResetToken(void);
+static int_fast16_t HSMXXF3_searchStaticAsset(uint32_t assetNumber, uint32_t *assetID);
 static int_fast16_t HSMXXF3_isHSMfirmwareImgAccepted(void);
+static int_fast16_t HSMXXF3_handleRngWarning(void);
+static int_fast16_t HSMXXF3_initializeRng(void);
+static uint32_t HSMXXF3_configureRng(void);
+static int_fast16_t HSMXXF3_provisionHukInternal(HSMXXF3_NRBGMode nrbgMode);
 
 /*
  *  ======== HSMXXF3_isHSMfirmwareImgAccepted ========
@@ -385,7 +497,7 @@ static int_fast16_t HSMXXF3_boot(void)
                     HSMCRYPTO_MBSTA_MB1OUT_FULL)
             {}
 
-            if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) != 0)
+            if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) != OUTPUT_TOKEN_ERROR_SUCCESS)
             {
                 /* Notify the HSM that the mailbox has been read */
                 HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
@@ -404,6 +516,14 @@ static int_fast16_t HSMXXF3_boot(void)
 
                         break;
                     }
+                }
+
+                /* Initialize RNG to ensure the DRBG has a valid seed before
+                 * any operation that might need random numbers from the DRBG.
+                 */
+                if (result == HSMXXF3_STATUS_SUCCESS)
+                {
+                    result = HSMXXF3_initializeRng();
                 }
             }
         }
@@ -428,7 +548,7 @@ static int_fast16_t HSMXXF3_boot(void)
             /* Wait for result in mbx1_out */
             while ((HWREG(HSMCRYPTO_BASE + HSM_O_MBXSTA) & HSM_MBXSTA_OUTFULL1) != HSM_MBXSTA_OUTFULL1) {}
 
-            if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) != 0)
+            if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) != OUTPUT_TOKEN_ERROR_SUCCESS)
             {
                 /* Notify the HSM that the mailbox has been read */
                 HWREG(HSMCRYPTO_BASE + HSM_O_MBXCTL) = HSM_MBXCTL_OUTEMP1;
@@ -446,6 +566,110 @@ static int_fast16_t HSMXXF3_boot(void)
 
     return result;
 }
+
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
+/*
+ *  ======== HSMXXF3_handleRngWarning ========
+ * The HSM will indicate in all output tokens if a DRBG re-seed is needed within
+ * 64KiB of random data. If the HSM is within the 64KiB limit, we will trigger
+ * a re-seed from software to be able to retry the re-seed if it is failing.
+ * The retry logic is implemented in HSMXXF3_initializeRng() which is called
+ * from this function if the HSM is within the 64KiB limit.
+ */
+static int_fast16_t HSMXXF3_handleRngWarning(void)
+{
+    int_fast16_t status    = HSMXXF3_STATUS_ERROR;
+    uint32_t resTokenWord0 = operation.resultToken.W[0];
+
+    if ((resTokenWord0 & OUTPUT_TOKEN_RNG_WARNING_M) != 0U)
+    {
+        status = HSMXXF3_initializeRng();
+    }
+    else
+    {
+        status = HSMXXF3_STATUS_SUCCESS;
+    }
+
+    return status;
+}
+
+/*
+ *  ======== HSMXXF3_configureRng ========
+ * This function configures the HSM RNG engine to operate in either CRNG or TRNG
+ * mode based on the current setting of HSMXXF3_nrbgMode. And return the first
+ * word of the HSM output token masked by OUTPUT_TOKEN_COMBINED_RESULT_M.
+ */
+static uint32_t HSMXXF3_configureRng(void)
+{
+    uint32_t result;
+    uint32_t token[4] = {
+        RNG_CONFIG_TOKEN_WORD0,                                                                           /* Word 0 */
+        CRYPTO_OFFICER_ID,                                                                                /* Word 1 */
+        (RNG_CONFIG_TOKEN_WORD2 | ((HSMXXF3_nrbgMode == HSMXXF3_MODE_CRNG) ? RNG_CONFIG_TOKEN_CRNG : 0)), /* Word 2 */
+        0                                                                                                 /* Word 3 */
+    };
+
+    /* Submit token */
+    HSMXXF3_writeToken(token, sizeof(token) / sizeof(uint32_t));
+
+    /* Poll for result */
+    while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
+
+    /* Read result token */
+    result = HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT);
+
+    /* Clear mailbox */
+    HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
+
+    /* Extract and return error code */
+    return (result & OUTPUT_TOKEN_COMBINED_RESULT_M);
+}
+
+/*
+ *  ======== HSMXXF3_initializeRng ========
+ * This function attempts to initialize the HSM RNG engine in the currently
+ * selected NRBG mode (CRNG or TRNG) with a retry mechanism in case of failure.
+ * If the initialization fails after the maximum number of retries, it switches
+ * to TRNG mode and tries one final time before returning an error status.
+ */
+static int_fast16_t HSMXXF3_initializeRng(void)
+{
+    uint32_t errorCode;
+    uint16_t retry;
+
+    /* Retry loop up to HSMXXF3_RNG_CONFIG_MAX_RETRIES times */
+    for (retry = 0; retry < HSMXXF3_RNG_CONFIG_MAX_RETRIES; retry++)
+    {
+        /* Attempt RNG configuration (with NRBG mode selected by
+         * HSMXXF3_nrbgMode)
+         */
+        errorCode = HSMXXF3_configureRng();
+
+        /* Check if successful */
+        if (errorCode == OUTPUT_TOKEN_COMBINED_RESULT_SUCCESS)
+        {
+            return HSMXXF3_STATUS_SUCCESS;
+        }
+    }
+
+    /* If all the retry attempts failed, switch to TRNG and try one more time.
+     */
+    HSMXXF3_nrbgMode = HSMXXF3_MODE_TRNG;
+
+    /* Configure RNG using TRNG as the selected NRBG mode. */
+    errorCode = HSMXXF3_configureRng();
+
+    /* Check if successful */
+    if (errorCode == OUTPUT_TOKEN_COMBINED_RESULT_SUCCESS)
+    {
+        return HSMXXF3_STATUS_SUCCESS;
+    }
+    else
+    {
+        return HSMXXF3_STATUS_ERROR;
+    }
+}
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) */
 
 /*
  *  ======== HSMXXF3_initMbox ========
@@ -583,7 +807,10 @@ int_fast16_t HSMXXF3_sleep(void)
     int_fast16_t result = HSMXXF3_STATUS_ERROR;
     uint32_t token[2];
 
-    if (!HSMXXF3_isHSMInSleepMode)
+    /* If the HSM is not currently asleep, submit sleep token and disable HSM
+     * clocks.
+     */
+    if (HSMXXF3_sleepState != HSMXXF3_SLEEP_STATE_ASLEEP)
     {
         token[0] = SLEEP_TOKEN_WORD0;
         token[1] = CRYPTO_OFFICER_ID;
@@ -593,7 +820,8 @@ int_fast16_t HSMXXF3_sleep(void)
         /* Wait for result in mbx1_out */
         while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
 
-        if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) == 0)
+        /* Check if output token indicates success. */
+        if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) == OUTPUT_TOKEN_ERROR_SUCCESS)
         {
             result = HSMXXF3_STATUS_SUCCESS;
 
@@ -602,7 +830,7 @@ int_fast16_t HSMXXF3_sleep(void)
 
             HSMXXF3_disableClock();
 
-            HSMXXF3_isHSMInSleepMode = true;
+            HSMXXF3_sleepState = HSMXXF3_SLEEP_STATE_ASLEEP;
         }
     }
     else
@@ -619,15 +847,24 @@ int_fast16_t HSMXXF3_sleep(void)
 int_fast16_t HSMXXF3_wakeUp(void)
 {
     int_fast16_t result = HSMXXF3_STATUS_ERROR;
+    uint32_t resTokenCode;
     uint32_t token[2];
 
-    if (HSMXXF3_isHSMInSleepMode)
+    /* Enable clocks, mailbox and AIC if in sleep state. */
+    if (HSMXXF3_sleepState == HSMXXF3_SLEEP_STATE_ASLEEP)
     {
         HSMXXF3_enableClock();
 
         HSMXXF3_initMbox();
 
         HSMXXF3_initAIC();
+
+        HSMXXF3_sleepState = HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED;
+    }
+
+    /* Submit wakeup token if in "WakeUp token needed" state. */
+    if (HSMXXF3_sleepState == HSMXXF3_SLEEP_STATE_WAKE_UP_TOKEN_NEEDED)
+    {
 
         token[0] = WAKEUP_TOKEN_WORD0;
         token[1] = CRYPTO_OFFICER_ID;
@@ -637,17 +874,36 @@ int_fast16_t HSMXXF3_wakeUp(void)
         /* Wait for result in mbx1_out */
         while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
 
-        if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) == 0)
-        {
-            result = HSMXXF3_STATUS_SUCCESS;
+        resTokenCode = (HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_COMBINED_RESULT_M);
 
-            HSMXXF3_isHSMInSleepMode = false;
+        if (HSMXXF3_nrbgMode == HSMXXF3_MODE_TRNG)
+        {
+            if (resTokenCode == OUTPUT_TOKEN_COMBINED_RESULT_SUCCESS)
+            {
+                HSMXXF3_sleepState = HSMXXF3_SLEEP_STATE_AWAKE;
+            }
+        }
+        else if (HSMXXF3_nrbgMode == HSMXXF3_MODE_CRNG)
+        {
+            /* Treat CRNG 'Repetition Count' and 'Adaptive Proportion' test
+             * failures as successful. These tests are HW driven and cannot be
+             * bypassed, but it is not necessary since any subsequent (re)seeds
+             * will take care of these test failures.
+             */
+            if ((resTokenCode == OUTPUT_TOKEN_COMBINED_RESULT_SUCCESS) ||
+                (resTokenCode == OUTPUT_TOKEN_COMBINED_RESULT_CRNG_REPETITION_COUNT_FAIL) ||
+                (resTokenCode == OUTPUT_TOKEN_COMBINED_RESULT_CRNG_ADAPTIVE_PROPORTION_FAIL))
+            {
+                HSMXXF3_sleepState = HSMXXF3_SLEEP_STATE_AWAKE;
+            }
         }
 
         /* Mark mbx1_out as empty */
         HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
     }
-    else
+
+    /* Return success if in Awake state. */
+    if (HSMXXF3_sleepState == HSMXXF3_SLEEP_STATE_AWAKE)
     {
         result = HSMXXF3_STATUS_SUCCESS;
     }
@@ -679,7 +935,7 @@ static int_fast16_t HSMXXF3_getEngineSystemInfo(void)
     /* Wait for result in mbx1_out */
     while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
 
-    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR) == 0)
+    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) == OUTPUT_TOKEN_ERROR_SUCCESS)
     {
         status = HSMXXF3_STATUS_SUCCESS;
 
@@ -713,6 +969,21 @@ bool HSMXXF3_isStandaloneDMASupportEnabled(void)
 #endif
 
     return retval;
+}
+
+/*
+ *  ======== HSMXXF3_getFwVersion ========
+ */
+int_fast16_t HSMXXF3_getFwVersion(HSMXXF3_SystemInfoVersion *version)
+{
+    if (!HSMXXF3_isInitialized)
+    {
+        return HSMXXF3_STATUS_ERROR;
+    }
+
+    *version = HSMXXF3_engineSystemInfo.customFwVersion;
+
+    return HSMXXF3_STATUS_SUCCESS;
 }
 
 /*
@@ -771,6 +1042,105 @@ int_fast16_t HSMXXF3_init(void)
     return HSMXXF3_hsmReturnStatus;
 }
 
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
+/*
+ *  ======== HSMXXF3_searchStaticAsset ========
+ */
+static int_fast16_t HSMXXF3_searchStaticAsset(uint32_t assetNumber, uint32_t *assetID)
+{
+    int_fast16_t status = HSMXXF3_STATUS_ERROR;
+    uint32_t token[5]   = {
+        HSM_SEARCH_TOKEN_WORD0, /* Word 0*/
+        CRYPTO_OFFICER_ID,      /* Word 1 */
+        0,                      /* Word 2 */
+        0,                      /* Word 3 */
+        (assetNumber << 16)     /* Word 4 */
+    };
+
+    /* Try and obtain access to the crypto module */
+    HSMXXF3_acquireLock(SemaphoreP_WAIT_FOREVER, (uintptr_t)0U);
+
+    /* Acquire HSM semaphore to prevent AHB bus master transactions. There is no
+     * protection against I2S bus master so I2S cannot be used at the same
+     * time as CAN.
+     */
+    CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
+
+    /* Write the token to the HSM */
+    HSMXXF3_writeToken(&token[0], sizeof(token) / sizeof(uint32_t));
+
+    /* Wait for result in mbx1_out */
+    while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL) {}
+
+    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) == OUTPUT_TOKEN_ERROR_SUCCESS)
+    {
+        *assetID = HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT + HSM_TOKEN_WORD1_OFFSET);
+
+        status = HSMXXF3_STATUS_SUCCESS;
+    }
+
+    /* Mark mbx1_out as empty */
+    HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
+
+    CommonResourceXXF3_releaseLock();
+
+    /* Release the access semaphore */
+    HSMXXF3_releaseLock();
+
+    return status;
+}
+
+/*
+ *  ======== HSMXXF3_provisionHukInternal ========
+ * Provisions the HUK using the NRBG mode specified by the caller. This function
+ * is intended to be called internally by HSMXXF3_provisionHUK after acquiring
+ * the HSM lock and the CommonResourceXXF3 lock, and it assumes that the caller
+ * has already checked that the HUK is not provisioned before calling this
+ * function.
+ */
+static int_fast16_t HSMXXF3_provisionHukInternal(HSMXXF3_NRBGMode nrbgMode)
+{
+    int_fast16_t status = HSMXXF3_STATUS_ERROR;
+    uint32_t token[3]   = {
+        HUK_PROVISION_TOKEN_WORD0,                                                                  /* Word 0 */
+        CRYPTO_OFFICER_ID,                                                                          /* Word 1 */
+        (HUK_PROVISION_TOKEN_WORD2 | ((nrbgMode == HSMXXF3_MODE_CRNG) ? RNG_CONFIG_TOKEN_CRNG : 0)) /* Word 2 */
+    };
+
+    /* Enable the OTP interrupt event */
+    HWREG(HSM_BASE + HSM_O_CTL) |= HSM_CTL_OTPEVTEN_EN;
+
+    /* Write the token to the HSM */
+    HSMXXF3_writeToken(&token[0], sizeof(token) / sizeof(uint32_t));
+
+    /* Wait until the the HSM has processed the token and returned a token
+     * back.
+     */
+    while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL)
+    {
+        HWREG(HSM_BASE + HSM_O_CTL) |= HSM_CTL_OTPEVTCLR_CLR;
+    }
+
+    /* Check the result */
+    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) == OUTPUT_TOKEN_ERROR_SUCCESS)
+    {
+        status = HSMXXF3_STATUS_SUCCESS;
+    }
+    else
+    {
+        /* Do nothing - error status already set */
+    }
+
+    /* Clear the mailbox */
+    HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
+
+    /* Disable the OTP interrupt event */
+    HWREG(HSM_BASE + HSM_O_CTL) &= ~HSM_CTL_OTPEVTEN_EN;
+
+    return status;
+}
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) */
+
 /*
  *  ======== HSMXXF3_provisionHUK ========
  */
@@ -784,16 +1154,38 @@ int_fast16_t HSMXXF3_provisionHUK(void)
     }
 
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
-    uint32_t token[3];
+    uint32_t hukAssetID = 0U;
+    uint16_t retry;
 
     /* #HSMXXF3_init() retrieves the HSM engine info.
-     * - If the .co field in the returned data is high, it means a previous run of the application called this API.
-     * - If the .co filed is low, it means this is the first time this API is called.
+     * - If the .co field in the returned data is high, it means a previous run
+     *   of the application called this API.
+     * - If the .co filed is low, it means this is the first time this API is
+     *   called.
      */
     if (HSMXXF3_engineSystemInfo.co)
     {
         /* A previous call to #HSMXXF3_provisionHUK() API already provisioned the HUK. */
         return HSMXXF3_STATUS_SUCCESS;
+    }
+
+    /* Perform static asset search first to determine if the HUK has already
+     * been provisioned.
+     */
+    status = HSMXXF3_searchStaticAsset(HSM_HUK_ASSET_NUMBER, &hukAssetID);
+
+    if ((status == HSMXXF3_STATUS_SUCCESS) && (hukAssetID != 0U))
+    {
+        /* HUK already provisioned, return success */
+        return HSMXXF3_STATUS_SUCCESS;
+    }
+    else
+    {
+        /* HUK asset not found, continue with provisioning. It is possible
+         * that the static asset search returned an error other than
+         * 'Invalid Asset', but that shouldn't prevent our attempt
+         * to provision the HUK.
+         */
     }
 
     /* Try and obtain access to the crypto module */
@@ -805,49 +1197,24 @@ int_fast16_t HSMXXF3_provisionHUK(void)
      */
     CommonResourceXXF3_acquireLock(SemaphoreP_WAIT_FOREVER);
 
-    /* Set the token for HUK provisioning */
-    token[0] = HUK_PROVISION_TOKEN_WORD0;
-    token[1] = CRYPTO_OFFICER_ID;
-    token[2] = HUK_PROVISION_TOKEN_WORD2;
+    /* Retry loop up to HSMXXF3_RNG_CONFIG_MAX_RETRIES times */
+    for (retry = 0; retry < HSMXXF3_RNG_CONFIG_MAX_RETRIES; retry++)
+    {
+        /* Attempt to provision HUK. */
+        status = HSMXXF3_provisionHukInternal(HSMXXF3_nrbgMode);
 
-    if (HSMXXF3_nrbgMode == HSMXXF3_MODE_CRNG)
-    {
-        /* For CRNG mode, Bit 4 has to be high */
-        token[2] |= RNG_CONFIG_TOKEN_CRNG;
-    }
-    else
-    {
-        /* When request is TRNG, do nothing. */
+        /* Check if successful */
+        if (HSMXXF3_STATUS_SUCCESS == status)
+        {
+            break;
+        }
     }
 
-    /* Enable the OTP interrupt event */
-    HWREG(HSM_BASE + HSM_O_CTL) |= HSM_CTL_OTPEVTEN_EN;
-
-    /* Write the token to the HSM */
-    HSMXXF3_writeToken(&token[0], sizeof(token) / sizeof(uint32_t));
-
-    /* The HSM has processed the token and returned a token back */
-    while ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBSTA) & HSMCRYPTO_MBSTA_MB1OUT_M) != HSMCRYPTO_MBSTA_MB1OUT_FULL)
+    /* If all attempts to provision HUK failed, try one last time using TRNG. */
+    if (HSMXXF3_STATUS_SUCCESS != status)
     {
-        HWREG(HSM_BASE + HSM_O_CTL) |= HSM_CTL_OTPEVTCLR_CLR;
+        status = HSMXXF3_provisionHukInternal(HSMXXF3_MODE_TRNG);
     }
-
-    /* Check the result to see if we have an error or if the HUK was provisioned already */
-    if (((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & HSMXXF3_RETVAL_MASK) == 0) ||
-         ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & HSMXXF3_RETVAL_MASK) == HSM_HUK_ALREADY_PROVISIONED))
-    {
-        status = HSMXXF3_STATUS_SUCCESS;
-    }
-    else
-    {
-        /* Do nothing */
-    }
-
-    /* Clear the mailbox */
-    HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MBCTL) = HSMCRYPTO_MBCTL_MB1OUT_EMTY;
-
-    /* Disable the OTP interrupt event */
-    HWREG(HSM_BASE + HSM_O_CTL) &= ~HSM_CTL_OTPEVTEN_EN;
 
     CommonResourceXXF3_releaseLock();
 
@@ -858,6 +1225,32 @@ int_fast16_t HSMXXF3_provisionHUK(void)
     if (HSMXXF3_STATUS_SUCCESS == status)
     {
         status = HSMXXF3_submitResetToken();
+    }
+
+    /* If the reset was successful, then we need to re-initialize the RNG,
+     * to make sure future operations requiring random numbers have a valid
+     * seed. This will be done using the NRBG mode that was selected before
+     * HSMXXF3_provisionHUK was called.
+     */
+    if (HSMXXF3_STATUS_SUCCESS == status)
+    {
+        status = HSMXXF3_initializeRng();
+    }
+
+    /* Perform static asset search again to verify that the HUK has now been
+     * provisioned.
+     */
+    if (HSMXXF3_STATUS_SUCCESS == status)
+    {
+        status = HSMXXF3_searchStaticAsset(HSM_HUK_ASSET_NUMBER, &hukAssetID);
+    }
+
+    if ((HSMXXF3_STATUS_SUCCESS == status) && (hukAssetID == 0U))
+    {
+        /* Treat a HUK asset id of 0 as an error, even if the asset search
+         * itself was successful.
+         */
+        status = HSMXXF3_STATUS_ERROR;
     }
 #elif (DeviceFamily_PARENT == DeviceFamily_PARENT_CC35XX)
     /* HUK is provisioned on CC35XX at boot time by TI Device
@@ -875,7 +1268,8 @@ int_fast16_t HSMXXF3_provisionHUK(void)
  */
 bool HSMXXF3_acquireLock(uint32_t timeout, uintptr_t driverHandle)
 {
-    bool status = false;
+    bool status         = false;
+    int_fast16_t retval = HSMXXF3_STATUS_ERROR;
     bool isResourceAcquired;
 
     /* Try and obtain access to the crypto module */
@@ -888,14 +1282,23 @@ bool HSMXXF3_acquireLock(uint32_t timeout, uintptr_t driverHandle)
         (void)memset(&operation.commandToken, 0, sizeof(Eip130Token_Command_t));
         (void)memset(&operation.resultToken, 0, sizeof(Eip130Token_Result_t));
 
-        if (HSMXXF3_isHSMInSleepMode)
+        /* Wakeup HSM. The HSMXXF3_wakeUp() function will just return success
+         * if HSM is already awake.
+         */
+        retval = HSMXXF3_wakeUp();
+
+        if (retval == HSMXXF3_STATUS_SUCCESS)
         {
-            HSMXXF3_wakeUp();
+            Power_setConstraint(PowerLPF3_DISALLOW_STANDBY);
+
+            status = true;
         }
+        else
+        {
+            operation.driverHandle = 0U;
 
-        Power_setConstraint(PowerLPF3_DISALLOW_STANDBY);
-
-        status = true;
+            HSMResourceXXF3_releaseLock();
+        }
     }
 
     return status;
@@ -923,10 +1326,30 @@ int_fast16_t HSMXXF3_submitToken(HSMXXF3_ReturnBehavior retBehavior,
     int_fast16_t result;
     HSMSALStatus_t status;
     uintptr_t key;
+    uint32_t comTokenWord0 = operation.commandToken.W[0];
 
-    if (HSMXXF3_isHSMInSleepMode)
+    if (HSMXXF3_sleepState != HSMXXF3_SLEEP_STATE_AWAKE)
     {
         return HSMXXF3_STATUS_IN_SLEEP_MODE;
+    }
+
+    if ((comTokenWord0 & (INPUT_TOKEN_OPCODE_M | INPUT_TOKEN_SUBCODE_M)) ==
+        (RNG_CONFIG_TOKEN_WORD0 & (INPUT_TOKEN_OPCODE_M | INPUT_TOKEN_SUBCODE_M)))
+    {
+        /* HSMXXF3 will DISALLOW any higher level SW stacks to submit operations
+         * that tampers with the RNG system.
+         * Mainly, This restriction applies to the TRNGXXF3HSM driver for two
+         * operations:
+         * 1. Switch NRBG entorpy source.
+         * 2. On-demand force re-seed of the DRNG engine.
+         *
+         * For the 1st usecase, countermeasures are implemented in the HSMXXF3
+         * module to automatically switch the NRBG entroy source when the
+         * default fails.
+         * For the 2nd usecase, this is handled automatically by both the HSM
+         * engine and the HSMXXF3 module.
+         */
+        return HSMXXF3_STATUS_ERROR;
     }
 
     /* Verify that the caller is the driver with the HSMXXF3_accessSemaphore */
@@ -1010,7 +1433,7 @@ static int_fast16_t HSMXXF3_submitResetToken(void)
     }
 
     /* Check the result to see if anything went wrong */
-    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & HSMXXF3_RETVAL_MASK) == 0)
+    if ((HWREG(HSMCRYPTO_BASE + HSMCRYPTO_O_MB1OUT) & OUTPUT_TOKEN_ERROR_M) == OUTPUT_TOKEN_ERROR_SUCCESS)
     {
         status = HSMXXF3_STATUS_SUCCESS;
     }
@@ -1159,7 +1582,25 @@ void HSMXXF3_updateInternalNRBGMode(void)
  */
 int32_t HSMXXF3_getResultCode(void)
 {
-    return Eip130Token_Result_Code(&operation.resultToken);
+    int_fast16_t status = HSMXXF3_STATUS_SUCCESS;
+    int32_t resultCode  = Eip130Token_Result_Code(&operation.resultToken);
+
+#if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
+    status = HSMXXF3_handleRngWarning();
+
+    if (status != HSMXXF3_STATUS_SUCCESS)
+    {
+        /* If handling the RNG warning fails it means that reseeding the DRBG
+         * failed HSMXXF3_RNG_CONFIG_MAX_RETRIES number of times with the
+         * currently selected NRBG mode AND then a final attempt to reseed using
+         * TRNG also failed.
+         * There is nothing we can do about that. Return a panic error.
+         */
+        resultCode = EIP130TOKEN_RESULT_PANIC_ERROR;
+    }
+#endif /* (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX) */
+
+    return resultCode;
 }
 
 /*

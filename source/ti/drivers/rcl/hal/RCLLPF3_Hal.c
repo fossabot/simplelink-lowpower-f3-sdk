@@ -139,6 +139,7 @@ void RCL_Hal_initFsm(void (*dispatchFsmCb)(void), void (*schedFsmCb)(void),
 {
     HwiP_Params hp;
     HwiP_Params_init(&hp);
+    /* TODO: See RCL-345 */
 #if (DeviceFamily_PARENT == DeviceFamily_PARENT_CC27XX)
     hp.priority = INT_PRI_LEVEL4;
 #else
@@ -161,9 +162,6 @@ void RCL_Hal_initFsm(void (*dispatchFsmCb)(void), void (*schedFsmCb)(void),
     halDispatchFsmCb = dispatchFsmCb;
     halSchedFsmCb = schedFsmCb;
     halCommandFsmCb = commandFsmCb;
-    /* TODO: See RCL-345 */
-
-    HWREG(EVTSVT_BASE + EVTSVT_O_CPUIRQ4SEL) = 0xE; /* LRFDIRQ2 */
 }
 
 

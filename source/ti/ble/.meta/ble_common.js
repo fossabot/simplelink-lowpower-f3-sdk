@@ -777,8 +777,17 @@ function getBondNVBaseAddress()
  *
  *  @returns String - Name of the LaunchPad
  */
+// Boards that share a device ID with another launchpad but need their own rfDesign name.
+const customBoardNames = ["CC2745R10_CS_EVM"];
+
 function getLaunchPadName()
 {
+  if (system.deviceData.board) {
+    const boardName = system.deviceData.board.name;
+    if (boardName && customBoardNames.includes(boardName)) {
+      return boardName;
+    }
+  }
   return deviceToBoard[system.deviceData.deviceId];
 }
 
@@ -1005,6 +1014,19 @@ function getMigrationMarkdown(currTarget)
  * @param inst  - Module instance
  * @returns     - Modes object from getModes
  */
+/**
+ * Configure FreeRTOS Timer Task priority to be maxPriorities - 1
+ * This ensures the timer task runs at high priority but lower than the BLE stack.
+ * BLE-LOKI-4122: Makes timer priority dynamic like ICALL_WORKER_THREAD_PRIORITY
+ *
+ * @param {object} FreeRTOS - FreeRTOS module instance from syscfg
+ */
+function configureTimerTaskPriority(FreeRTOS) {
+    if (FreeRTOS && FreeRTOS.maxPriorities) {
+        FreeRTOS.timerTaskPriority = FreeRTOS.maxPriorities - 1;
+    }
+}
+
 function getInstModes(inst)
 {
     return "deviceRole" in inst
@@ -1115,6 +1137,7 @@ exports = {
     isChannelSoundingSupported: isChannelSoundingSupported,
     getModes: getModes,
     getInstModes: getInstModes,
+    configureTimerTaskPriority: configureTimerTaskPriority,
     ranging_service_uuid: ranging_service_uuid,
     profiles_list: profiles_list
 };

@@ -191,8 +191,6 @@ static inline void TRNGXXF3HSM_reseedHSMPostProcessing(uintptr_t arg0)
     object->returnStatus = status;
 
     HSMXXF3_releaseLock();
-
-    Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
 }
 
 /*
@@ -201,8 +199,6 @@ static inline void TRNGXXF3HSM_reseedHSMPostProcessing(uintptr_t arg0)
 static inline void TRNGXXF3HSM_reseedHSMAsyncPostProcessing(uintptr_t arg0)
 {
     HSMXXF3_releaseLock();
-
-    Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
 }
 
 /*
@@ -313,8 +309,6 @@ static inline void TRNGXXF3HSM_switchNrbgPostProcessing(uintptr_t arg0)
     object->returnStatus = status;
 
     HSMXXF3_releaseLock();
-
-    Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
 }
 
 /*
@@ -427,8 +421,6 @@ static inline void TRNG_getRandomRawPostProcessing(uintptr_t arg0)
         object->returnStatus = status;
 
         HSMXXF3_releaseLock();
-
-        Power_releaseConstraint(PowerLPF3_DISALLOW_STANDBY);
 
         if (object->returnBehavior == TRNG_RETURN_BEHAVIOR_CALLBACK)
         {

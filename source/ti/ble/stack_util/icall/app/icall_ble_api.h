@@ -309,6 +309,8 @@ extern uint16 lastAppOpcodeSent;
 #define HCI_EXT_GetCoexStatisticsCmd(...)                          (icall_directAPI((uint32_t) IDX_HCI_EXT_GetCoexStatisticsCmd , ##__VA_ARGS__))
 #define HCI_EXT_SendPowerControlRequestCmd(...)                    (icall_directAPI((uint32_t) IDX_HCI_EXT_SendPowerControlRequestCmd , ##__VA_ARGS__))
 #define HCI_EXT_SetDefaultAntenna(...)                             (icall_directAPI((uint32_t) IDX_HCI_EXT_SetDefaultAntenna , ##__VA_ARGS__))
+#define HCI_EXT_SetPowerCtrlRangeCmd(...)                          (icall_directAPI((uint32_t) IDX_HCI_EXT_SetPowerCtrlRangeCmd , ##__VA_ARGS__))
+#define HCI_EXT_GetPowerCtrlRangeCmd(...)                          (icall_directAPI((uint32_t) IDX_HCI_EXT_GetPowerCtrlRangeCmd , ##__VA_ARGS__))
 #define HCI_EXT_RssiMon_RegCmd(...)                                (icall_directAPI((uint32_t) IDX_HCI_EXT_RssiMon_RegCmd , ##__VA_ARGS__))
 #define HCI_EXT_RssiMon_UnregCmd(...)                              (icall_directAPI((uint32_t) IDX_HCI_EXT_RssiMon_UnregCmd , ##__VA_ARGS__))
 #define HCI_EXT_RssiMon_SetConfigCmd(...)                          (icall_directAPI((uint32_t) IDX_HCI_EXT_RssiMon_SetConfigCmd , ##__VA_ARGS__))
@@ -377,6 +379,7 @@ extern uint16 lastAppOpcodeSent;
 #define GAPBondMgr_GenerateEccKeys(...)         (icall_directAPI((uint32_t) IDX_GAPBondMgr_GenerateEccKeys))
 #define GapBondMgr_readBondFromNV(...)          (icall_directAPI((uint32_t) IDX_GapBondMgr_readBondFromNV, ##__VA_ARGS__))
 #define GapBondMgr_writeBondToNv(...)           (icall_directAPI((uint32_t) IDX_GapBondMgr_writeBondToNv, ##__VA_ARGS__))
+#define GapBondMgr_writeBondToNvByIndex(...)    (icall_directAPI((uint32_t) IDX_GapBondMgr_writeBondToNvByIndex, ##__VA_ARGS__))
 #define GapBondMgr_GetPrevAuth(...)             (icall_directAPI((uint32_t) IDX_GapBondMgr_GetPrevAuth, ##__VA_ARGS__))
 #define GapBondMgr_StartEnc(...)                (icall_directAPI((uint32_t) IDX_GapBondMgr_StartEnc, ##__VA_ARGS__))
 

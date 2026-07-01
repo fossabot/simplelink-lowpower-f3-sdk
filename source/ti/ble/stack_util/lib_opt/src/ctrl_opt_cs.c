@@ -110,11 +110,6 @@ csStatus_e OPT_LL_CS_RemoveConfig(uint16_t connId, uint8_t configId)
     return LL_CS_RemoveConfig(connId, configId);
 }
 
-csStatus_e OPT_LL_CS_GetConfig(uint16_t connId, uint8_t configId, csConfigurationSet_t* pConfig)
-{
-    return LL_CS_GetConfig(connId, configId, pConfig);
-}
-
 csStatus_e OPT_LL_CS_SecurityEnable(uint16_t connId)
 {
     return LL_CS_SecurityEnable(connId);
@@ -303,6 +298,11 @@ void OPT_llCsPrecal_clear(void)
 uint8_t OPT_LL_CS_GetTswByACI(csACI_e ACI, uint8_t initTsw, uint8_t reflTsw)
 {
     return LL_CS_GetTswByACI(ACI, initTsw, reflTsw);
+}
+
+const csConfigurationSet_t* OPT_llCsDbGetConfiguration(uint16 connId, uint8 configId)
+{
+    return llCsDbGetConfiguration(connId, configId);
 }
 
 #endif /* defined(CHANNEL_SOUNDING) */

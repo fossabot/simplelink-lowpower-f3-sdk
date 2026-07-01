@@ -1203,7 +1203,7 @@ uint8_t rangingSubeventParser(RRSP_csSubEventResults_t* subeventResult, uint8_t 
     uint8_t status = SUCCESS;
 
     /** Parse subeventHeader **/
-    subEventAttr.freqCompenstation = subeventResult->frequencyCompensation;
+    subEventAttr.freqCompensation = subeventResult->frequencyCompensation;
     subEventAttr.numStepsReported = subeventResult->numStepsReported;
     // abort reason is the 0-3 bites of the rangingAbortReason
     subEventAttr.rangingAbortReason = subeventResult->abortReason & RRSP_ABORT_REASON_MASK;

@@ -343,6 +343,24 @@ csStatus_e llCsSetupRcl(uint16 connId, uint8_t configId);
 void llCsSetRclNsteps(uint8_t nSteps);
 
 /*******************************************************************************
+ * @fn          llCsSetRclPolicy
+ *
+ * @brief       Set the policy of the RCL based on the subevent counter.
+ *
+ *
+ * input parameters
+ *
+ * @param       None.
+ *
+ * output parameters
+ *
+ * @param       None.
+ *
+ * @return      None
+ */
+void llCsSetRclPolicy(void);
+
+/*******************************************************************************
  * @fn          llCsInitRclCmd
  *
  * @brief       Initialize CS RCL command

@@ -513,6 +513,10 @@ extern uint8 hciSmpTaskID;
 // Multiple Antennas Vendro Specific commands opcodes
 #define HCI_EXT_SET_DEFAULT_ANTENNA                         0xFC7D    //!< opcode of @ref HCI_EXT_SetDefaultAntennaCmd
 
+// Power Control Range Vendor Specific command opcodes
+#define HCI_EXT_SET_POWER_CTRL_RANGE                        0xFC7E    //!< opcode of @ref HCI_EXT_SetPowerCtrlRangeCmd
+#define HCI_EXT_GET_POWER_CTRL_RANGE                        0xFC7F    //!< opcode of @ref HCI_EXT_GetPowerCtrlRangeCmd
+
 /*
 ** HCI Event Codes
 */
@@ -673,6 +677,9 @@ extern uint8 hciSmpTaskID;
 #define HCI_EXT_RSSI_MON_RSSI_STATISTIC_EVENT              0x0438U   //!< event from @ref HCI_EXT_RssiMon_GetRssiStatCmd
 #define HCI_EXT_RSSI_MON_CB_EVENT                          0x0439U   //!< event from @ref HCI_EXT_RssiMon_ThresholdEvent
 
+// Power control range vendor specific events
+#define HCI_EXT_SET_POWER_CTRL_RANGE_EVENT                 0x043AU   //!< event from @ref HCI_EXT_SetPowerCtrlRangeCmd
+#define HCI_EXT_GET_POWER_CTRL_RANGE_EVENT                 0x043BU   //!< event from @ref HCI_EXT_GetPowerCtrlRangeCmd
 
 #define HCI_EXT_LL_TEST_MODE_EVENT                        0x0470    //!< LL Test Mode
 

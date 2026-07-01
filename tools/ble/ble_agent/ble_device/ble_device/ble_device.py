@@ -19,6 +19,7 @@ from construct import (
     Int8ul,
     Int16ul,
     Int32ul,
+    Float32l,
     this,
     Array,
     Byte,
@@ -2043,39 +2044,40 @@ class BleDeviceCs(BleDeviceBasic):
             data_struct = Struct(
                 "event" / Int16ul,
                 "status" / Int8ul,
-                "connHandle" / Int16ul,
+                "conn_handle" / Int16ul,
                 "distance" / Int32ul,
                 "quality" / Int32ul,
                 "confidence" / Int32ul,
+                "velocity" / Int32ul,
             )
 
         elif event_type == CsEventType.NWP_CS_APP_DISTANCE_EXTENDED_RESULTS:
-            # Assuming CS_MAX_ANT_PATHS = 4, CS_MAX_MODE_ZERO_PER_PROCEDURE = 8, adjust if needed
+            # Mirrors AppExtCtrlCsAppExtendedResultsEvent_t (PACKED_TYPEDEF_STRUCT).
+            # CS_RANGING_MAX_ANT_PATHS = 4.
             data_struct = Struct(
                 "event" / Int16ul,
                 "status" / Int8ul,
-                "connHandle" / Int16ul,
+                "conn_handle" / Int16ul,
                 "distance" / Int32ul,
                 "quality" / Int32ul,
                 "confidence" / Int32ul,
-                "numMpc" / Int16ul,
-                "distanceMusic" / Array(4, Int32ul),
-                "distanceNN" / Array(4, Int32ul),
-                "numMpcPaths" / Array(4, Int16ul),
-                "qualityPaths" / Array(4, Int32ul),
-                "confidencePaths" / Array(4, Int32ul),
-                "localRpl" / Array(32, Int8sl),
-                "remoteRpl" / Array(32, Int8sl),
-                "modeZeroStepsInit"
-                / (Byte[96 * 5]),  # 96 elements of 5 bytes each for initiator
-                "modeZeroStepsRef"
-                / (Byte[96 * 3]),  # 96 elements of 3 bytes each for reflector
-                "permutationIndexLocal" / Array(75, Int8ul),
-                "stepsDataLocal" / (Byte[300 * 4]),  # 300 elements of 4 bytes each
-                "permutationIndexRemote" / Array(75, Int8ul),
-                "stepsDataRemote" / (Byte[300 * 4]),  # 300 elements of 4 bytes each
-                "tSw" / Int8ul,
-                "stepsIdxToChnlMap" / (Byte[72])
+                "velocity" / Int32ul,
+                "distance_music" / Int32ul,
+                "distance_nn" / Int32ul,
+                "distance_ifft" / Int32ul,
+                "ext_confidence" / Int32ul,
+                "num_mpc" / Int16ul,
+                "quality_paths" / Array(4, Int32ul),
+                "tqi_score" / Array(4, Int32ul),
+                "dcand" / Int32ul,
+                "cf" / Int32ul,
+                "d_var" / Int32ul,
+                "class_label" / Int16ul,
+                "runtime_ms" / Int32ul,
+                "runtime_profile" / Array(10, Int32ul),
+                "peak_bin_ifft" / Int16ul,
+                "peak_count_ifft" / Int16ul,
+                "ifft_valid" / Int16ul,
             )
 
         elif event_type == CsEventType.NWP_CS_APP_RAS_SUBEVENT_RESULTS:

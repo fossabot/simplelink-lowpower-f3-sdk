@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, Texas Instruments Incorporated
+ * Copyright (c) 2023-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -165,6 +165,19 @@
 #endif
 
 /*!
+ *  @brief  HSM firmware version
+ *
+ *  Used to represent the three-component version number of the HSM firmware.
+ *  An instance of this struct is populated by #HSMXXF3_getFwVersion().
+ */
+typedef struct
+{
+    uint8_t patch; /*!< Patch version number */
+    uint8_t minor; /*!< Minor version number */
+    uint8_t major; /*!< Major version number */
+} HSMXXF3_SystemInfoVersion;
+
+/*!
  *  @brief  Enum for the NRBG engine type
  */
 typedef enum
@@ -317,6 +330,21 @@ int_fast16_t HSMXXF3_init(void);
  *  @retval false                                 ECDH and ECDSA DMA operations have to happen within the ECC operation.
  */
 bool HSMXXF3_isStandaloneDMASupportEnabled(void);
+
+/*!
+ *  @brief  Returns the HSM custom FW version.
+ *
+ *  The FW version is determined during #HSMXXF3_init(). Calling this
+ *  function does not directly communicate with the HSM.
+ *
+ *  @param  [out] version   Pointer to struct to receive the FW version.
+ *
+ *  @pre    #HSMXXF3_init()
+ *
+ *  @retval #HSMXXF3_STATUS_SUCCESS   FW version returned successfully.
+ *  @retval #HSMXXF3_STATUS_ERROR     HSM not yet initialized.
+ */
+int_fast16_t HSMXXF3_getFwVersion(HSMXXF3_SystemInfoVersion *version);
 
 /*!
  *  @brief  Provisions the HUK to the HSM
@@ -701,12 +729,22 @@ void HSMXXF3_constructCMACToken(AESCMACXXF3_Object *object, bool isFirst, bool i
 /*!
  *  @brief  Constructs an RNG configure token for CRNG/TRNG operations command token
  *
+ *  @warning Submitting tokens constructed by this function is currently not
+ *           supported. The #HSMXXF3_submitToken() function will unconditionally
+ *           return #HSMXXF3_STATUS_ERROR if using tokens constructed by this
+ *           function.
+ *
  *  @param  [in] object             The TRNGXXF3HSM_Object object that contains necessary data
  */
 void HSMXXF3_constructRNGSwitchNRBGWithDefaultsPhysicalToken(HSMXXF3_NRBGMode HSMXXF3_nrbgMode);
 
 /*!
  *  @brief  Constructs an RNG configure token tailored to reseed the DRBG engine command token
+ *
+ *  @warning Submitting tokens constructed by this function is currently not
+ *           supported. The #HSMXXF3_submitToken() function will unconditionally
+ *           return #HSMXXF3_STATUS_ERROR if using tokens constructed by this
+ *           function.
  *
  */
 void HSMXXF3_constructRNGReseedDRBGPhysicalToken(void);

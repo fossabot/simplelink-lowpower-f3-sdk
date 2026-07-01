@@ -17,26 +17,21 @@ users by packaging essential software components, such as:
 * ProprietaryRF 2.4 GHz stack
 * TI Drivers
 
-This is version 9.20.00.81 of the SimpleLink Low Power F3 SDK.
+This is version 9.20.01.21 of the SimpleLink Low Power F3 SDK.
 
 ## What's New
 
-  - Bluetooth 6.2 Qualified for CC23xx Devices
-  - Power Control with Channel Sounding
-  - Periodic Advertising with Response (PAwR) and Periodic Advertising
-    Sync Transfer (PAST)
-      - Certified at controller and host level
-      - Early evaluation at application level
-      - Supports scanner and advertiser
-  - Channel Sounding Connection Handover with RAS (early evaluation)
-  - Support for multi-step Over Air Download (OAD) for CC23xx devices -
-    offering reduced Flash footprint firmware
-  - Support for Bluetooth Low Energy (BLE) / Wi-Fi Coexistence (early
-    evaluation)
-  - Dynamic Multi-Protocol Manager (DMM) - Zigbee MAC + BLE on CC27xx
-  - New Device Support
-      - CC2755P20
-      - CC2340R5MODA
+  - Scheduler Optimization for Adv/Scan/Conn Airtime Utilization
+  - Support for New Channel Sounding CC2745R10-CS-EVM Device
+  - Channel Sounding Split Event Support
+  - Support for Common Serial Interface Supporting BLE, Thread and
+    Zigbee Stack
+
+**Advance Notice:** In an upcoming TI SimpleLink F3 SDK release (10.10)
+there will be changes in the NVOCMP module which may break backward
+compatibility. These changes may include folder location and module
+configuration options. Full details will be provided in the release
+notes of the 10.10 SDK.
 
 Refer to the Document Overview for
 the individual release notes and details for starting development with
@@ -60,7 +55,7 @@ it available as a Git repository to cater to various use cases:
 * **Simplified workflow for rebasing**: Git makes it simpler for you to rebase
   your changes to new releases.
 
-One temporary, notable difference in this LPF3 9.20.00.81 SDK GitHub
+One temporary, notable difference in this LPF3 9.20.01.21 SDK GitHub
 distribution when compared to the classic installer above, is the exclusion of
 the **tools/ble/ble_agent/ble_toolbox/** directory. This has been temporarily
 done as the ble_toolbox executable currently exceeds GitHub's file size limit.
@@ -131,8 +126,8 @@ Dependency download locations:
 
 Please consider creating a post on [TI's E2E forum](https://e2e.ti.com).
 
-[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.20.00.81
-[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.20.00.81
+[sdk release notes]: https://dev.ti.com/tirex/explore/node?node=A__ADMjnimJ4C5BfFnmM3X-jg__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.20.01.21
+[sdk docs]: https://dev.ti.com/tirex/explore/node?node=A__AHaph7YfvcrVy2cDlmb4sQ__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__9.20.01.21
 [sysconfig download]: https://www.ti.com/tool/SYSCONFIG
 [ticlang download]: https://www.ti.com/tool/download/ARM-CGT-CLANG
 [gcc download]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads

@@ -431,7 +431,7 @@
 // Max adv sets to store their scan report state in parallel
 #define EXT_SCAN_STATE_LIST_MAX_ENTRIES                     6
 
-#define AE_EXT_SCAN_DURATION_DISABLED                       0
+#define AE_EXT_SCAN_DURATION_INFINITE                       0
 #define AE_EXT_SCAN_MIN_DURATION                            1      // in 10ms units = 10ms
 #define AE_EXT_SCAN_MAX_DURATION                            0xFFFF // in 10ms units = 655.35s
 
@@ -1478,6 +1478,7 @@ struct sortedAdv_t
 {
   advSet_t    *AdvEntry;
   uint16       timeConsume;
+  uint8        consecutiveMisses;             // times ADV was skipped by connection collision
   uint32       timeScheduled;                 // last successful scheduled start time
   sortedAdv_t *next;
 };
@@ -1503,8 +1504,8 @@ typedef struct
   uint8        paramValid;                          // flag to indicate parameters are valid
   uint8        scanMode;                            // flag to indicate if currently scanning
   //
-  uint32       scanStartTime;                       // start time of scanner event
-  uint32       scanEndTime;                         // absolute deadline of the current scan window
+  uint32_t     scanStartTime;                       // absolute start time of the current scan window
+  uint32_t     scanEndTime;                         // absolute deadline of the current scan window
   uint32       scanPeriodLeft;                      // Period - Duration
   uint8        scanStartState;                      // flag to indicate start state
   uint8        timingFlag;                          // flag to indicate duration or period end
@@ -1760,7 +1761,7 @@ extern llStatus_t    llSetupExtAdvLegacy( advSet_t * );
 void                 llupdateAdvCmdForHDC( advSet_t *pAdvSet, aeLegacyRf_t *pRf );
 extern llStatus_t    llGetNextOrPreviousExtScanChannelIndex( uint8 );
 extern uint8         llGetFirstExtScanChannelIndex( void );
-extern llStatus_t    llSetupExtScan( void );
+extern llStatus_t    llSetupExtScan( uint32_t scanStartTime );
 extern void          llSetupExtInit( uint8 );
 extern void          llSetupExtData( advSet_t * );
 extern void          llSetupExtHdr( advSet_t *, uint8, uint16 );

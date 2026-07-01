@@ -105,6 +105,8 @@ extern hciStatus_t hci_ext_SendPowerControlRequestCmd(uint16_t connHandle, uint8
 extern hciStatus_t hci_le_SetTransmitPowerReportingEnableCmd(uint16_t connHandle, uint8_t localEnable, uint8_t remoteEnable);
 extern hciStatus_t hci_le_EnhancedReadTransmitPowerLevelCmd(uint16_t connHandle, uint8_t txPhy);
 extern hciStatus_t hci_le_ReadRemoteTransmitPowerLevelCmd(uint16_t connHandle, uint8_t txPhy);
+extern hciStatus_t hci_ext_SetPowerCtrlRangeCmd(int8_t minTxPower, int8_t maxTxPower);
+extern hciStatus_t hci_ext_GetPowerCtrlRangeCmd(int8_t* minTxPower, int8_t* maxTxPower);
 
 
 // Wrapper functions for the feature implementations
@@ -130,5 +132,7 @@ hciStatus_t OPT_hci_ext_SendPowerControlRequestCmd(uint16_t connHandle, uint8_t 
 hciStatus_t OPT_hci_le_SetTransmitPowerReportingEnableCmd(uint16_t connHandle, uint8_t localEnable, uint8_t remoteEnable);
 hciStatus_t OPT_hci_le_EnhancedReadTransmitPowerLevelCmd(uint16_t connHandle, uint8_t txPhy);
 hciStatus_t OPT_hci_le_ReadRemoteTransmitPowerLevelCmd(uint16_t connHandle, uint8_t txPhy);
+hciStatus_t OPT_hci_ext_SetPowerCtrlRangeCmd(int8_t minTxPower, int8_t maxTxPower);
+hciStatus_t OPT_hci_ext_GetPowerCtrlRangeCmd(int8_t* minTxPower, int8_t* maxTxPower);
 
 #endif /* CTRL_POWER_CONTROL_H_ */

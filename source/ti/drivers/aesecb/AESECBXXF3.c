@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, Texas Instruments Incorporated
+ * Copyright (c) 2021-2026, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -142,7 +142,11 @@ static int_fast16_t AESECBXXF3HSM_finalize(AESECB_Handle handle, AESECB_Operatio
 
 #if (ENABLE_KEY_STORAGE == 1)
 static void AESECBXXF3HSM_keyUsageFromOperationType(KeyStore_PSA_KeyUsage *usage, AESECB_OperationType operationType);
+static int_fast16_t AESECBXXF3HSM_freeAllAssets(AESECB_Handle handle);
 
+/*
+ *  ======== AESECBXXF3HSM_keyUsageFromOperationType ========
+ */
 static void AESECBXXF3HSM_keyUsageFromOperationType(KeyStore_PSA_KeyUsage *usage, AESECB_OperationType operationType)
 {
     if ((operationType == AESECB_OPERATION_TYPE_ENCRYPT) ||
@@ -155,6 +159,39 @@ static void AESECBXXF3HSM_keyUsageFromOperationType(KeyStore_PSA_KeyUsage *usage
     {
         *usage = KEYSTORE_PSA_KEY_USAGE_DECRYPT;
     }
+}
+
+/*
+ *  ======== AESECBXXF3HSM_freeAllAssets ========
+ */
+static int_fast16_t AESECBXXF3HSM_freeAllAssets(AESECB_Handle handle)
+{
+    AESECBXXF3_Object *object = (AESECBXXF3_Object *)handle->object;
+    int_fast16_t status       = AESECB_STATUS_SUCCESS;
+    KeyStore_PSA_KeyFileId keyID;
+
+    if ((object->common.key.encoding == CryptoKey_KEYSTORE_HSM) &&
+        (object->keyLocation == KEYSTORE_PSA_KEY_LOCATION_HSM_ASSET_STORE))
+    {
+        GET_KEY_ID(keyID, object->common.key.u.keyStore.keyID);
+
+        /* For keys with a persistence that does not designate them to remain in asset store,
+         * the following function will remove them. Otherwise, the key will remain in asset store
+         * for future usage.
+         */
+        status = KeyStore_PSA_assetPostProcessing(keyID);
+
+        if (status != KEYSTORE_PSA_STATUS_SUCCESS)
+        {
+            status = AESECB_STATUS_ERROR;
+        }
+        else
+        {
+            status = AESECB_STATUS_SUCCESS;
+        }
+    }
+
+    return status;
 }
 #endif
 
@@ -1012,6 +1049,12 @@ int_fast16_t AESECB_cancelOperation(AESECB_Handle handle)
         (void)HSMXXF3_cancelOperation();
 
         object->segmentedOperationInProgress = false;
+
+        /* Attempt to free all the assets the driver created. Whether or not
+         * this is successful, we should continue on to attempt cancellation of
+         * the operation.
+         */
+        (void)AESECBXXF3HSM_freeAllAssets(handle);
     }
 #endif
 
@@ -1083,6 +1126,14 @@ static inline void AESECBXXF3HSM_OneStepPostProcessing(uintptr_t arg0)
     /* Release the CommonResource semaphore. */
     CommonResourceXXF3_releaseLock();
 
+    /* Free all assets. This includes key-related asset and state-related asset
+     * (temporary asset).
+     */
+    if (AESECBXXF3HSM_freeAllAssets(handle) != AESECB_STATUS_SUCCESS)
+    {
+        status = AESECB_STATUS_ERROR;
+    }
+
     object->common.returnStatus = status;
 
     HSMXXF3_releaseLock();
@@ -1152,10 +1203,14 @@ static int_fast16_t AESECBXXF3HSM_processOneStep(AESECB_Handle handle)
 
         if (keyStoreStatus == KEYSTORE_PSA_STATUS_INVALID_KEY_ID)
         {
+            HSMXXF3_releaseLock();
+
             return AESECB_STATUS_KEYSTORE_INVALID_ID;
         }
         else if (keyStoreStatus != KEYSTORE_PSA_STATUS_SUCCESS)
         {
+            HSMXXF3_releaseLock();
+
             return AESECB_STATUS_KEYSTORE_GENERIC_ERROR;
         }
 

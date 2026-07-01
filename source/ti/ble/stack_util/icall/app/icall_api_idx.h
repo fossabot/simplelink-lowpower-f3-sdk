@@ -71,6 +71,7 @@
 #define IDX_GAPBondMgr_GenerateEccKeys                GAPBondMgr_GenerateEccKeys
 #define IDX_GapBondMgr_readBondFromNV                 GapBondMgr_readBondFromNV
 #define IDX_GapBondMgr_writeBondToNv                  GapBondMgr_writeBondToNv
+#define IDX_GapBondMgr_writeBondToNvByIndex           GapBondMgr_writeBondToNvByIndex
 #define IDX_GapBondMgr_GetPrevAuth                    GapBondMgr_GetPrevAuth
 #define IDX_GapBondMgr_StartEnc                       GapBondMgr_StartEnc
 
@@ -319,6 +320,8 @@
 #define IDX_HCI_EXT_SetQOSDefaultParameters              HCI_EXT_SetQOSDefaultParameters
 #define IDX_HCI_EXT_SendPowerControlRequestCmd           HCI_EXT_SendPowerControlRequestCmd
 #define IDX_HCI_EXT_SetDefaultAntenna                    HCI_EXT_SetDefaultAntenna
+#define IDX_HCI_EXT_SetPowerCtrlRangeCmd                 HCI_EXT_SetPowerCtrlRangeCmd
+#define IDX_HCI_EXT_GetPowerCtrlRangeCmd                 HCI_EXT_GetPowerCtrlRangeCmd
 #define IDX_HCI_EXT_RssiMon_RegCmd                       HCI_EXT_RssiMon_RegCmd
 #define IDX_HCI_EXT_RssiMon_UnregCmd                     HCI_EXT_RssiMon_UnregCmd
 #define IDX_HCI_EXT_RssiMon_SetConfigCmd                 HCI_EXT_RssiMon_SetConfigCmd

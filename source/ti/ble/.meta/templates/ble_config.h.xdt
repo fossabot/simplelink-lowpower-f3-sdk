@@ -273,7 +273,7 @@ extern uint8_t `ble["advSet"+i]["scanRes"+i].name`[`common.advDataTotalLength(sc
 // PADV Time Sync parameters
 % if(ble.padvTimeSync)
 %{
-#define APP_PADV_TIME_SYNC_TSA_NAME         "`ble.padvTimeSyncTsaName`"
+extern uint8_t padvTimeSyncTsaName[GAP_DEVICE_NAME_LEN];
 %}
 
 #endif /* TI_BLE_CONFIG_H */

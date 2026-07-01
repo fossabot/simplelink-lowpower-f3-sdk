@@ -54,6 +54,7 @@ Target Device: cc23xx
 #include "ti/ble/app_util/framework/bleapputil_api.h"
 #include "ti/ble/app_util/framework/bleapputil_timers.h"
 #include "ti/ble/profiles/ranging/ranging_profile_client.h"
+#include "ti/ble/stack_util/icall/app/icall_ble_api.h"
 #include "app_gatt_api.h"
 
 //*****************************************************************************
@@ -518,33 +519,26 @@ uint8_t RREQ_Enable(uint16_t connHandle, RREQEnableModeType_e enableMode)
 uint8_t RREQ_Disable(uint16_t connHandle)
 {
     uint8_t status = SUCCESS;
-    uint8_t registrationStatus = SUCCESS;
     uint8_t index = RREQ_INVALID_INDEX;
+    linkDBInfo_t linkInfo;
 
-    // Check connection handle and get index if exists
+    // Index must exist for this connection handle
     if (connHandle == LINKDB_CONNHANDLE_INVALID ||
         (index = rreq_getIndexByConnHandle(connHandle)) == RREQ_INVALID_INDEX)
     {
-        status = INVALIDPARAMETER;
+        return INVALIDPARAMETER;
     }
 
-    // Unregister On-Demand or Real-Time characteristics if connected and registered
-    if (status == SUCCESS)
+    if (linkDB_GetInfo(connHandle, &linkInfo) == SUCCESS)
     {
+        // Link is up - unregister notifications/indications before clearing
         if (rreq_checkRegistration(gRREQControlBlock.connInfo[index].subscribeBitMap, RAS_ON_DEMAND_UUID))
         {
-            registrationStatus = rreq_configureCharRegistration(index, RAS_ON_DEMAND_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
+            status = rreq_configureCharRegistration(index, RAS_ON_DEMAND_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
         }
         else if (rreq_checkRegistration(gRREQControlBlock.connInfo[index].subscribeBitMap, RAS_REAL_TIME_UUID))
         {
-            registrationStatus = rreq_configureCharRegistration(index, RAS_REAL_TIME_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
-        }
-
-        // If connected - take the status returned from @ref rreq_configureCharRegistration.
-        // If not connected - no need to unregister, success will be returned.
-        if (registrationStatus != bleNotConnected)
-        {
-            status = registrationStatus;
+            status = rreq_configureCharRegistration(index, RAS_REAL_TIME_UUID, RREQ_DISABLE_NOTIFY_INDICATE);
         }
     }
 
@@ -1443,9 +1437,9 @@ static bool rreq_checkRegistration(uint8_t subscribeBitMap, uint16_t uuid)
  */
 static bool rreq_checkConfigRegistration(uint8_t index, uint16_t uuid, RREQConfigSubType_e configSubType)
 {
-    if(index < RANGING_DB_CLIENT_MAX_NUM_PROC ||
-       uuid < RAS_REAL_TIME_UUID ||
-       uuid > RAS_DATA_OVERWRITTEN_UUID)
+    if(index < RANGING_DB_CLIENT_MAX_NUM_PROC &&
+       uuid >= RAS_REAL_TIME_UUID &&
+       uuid <= RAS_DATA_OVERWRITTEN_UUID)
     {
         if (configSubType == RREQ_PREFER_NOTIFY ||
             configSubType == RREQ_INDICATE)

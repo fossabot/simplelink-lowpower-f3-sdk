@@ -114,10 +114,11 @@ extern "C"
 // GAP OSAL Events
 #define GAP_OSAL_TIMER_INITIATING_TIMEOUT_EVT   0x0001
 #define GAP_END_ADVERTISING_EVT                 0x0002
-#define GAP_CHANGE_RESOLVABLE_PRIVATE_ADDR_EVT  0x0004
+#define GAP_CHANGE_NON_RESOLVABLE_PRIVATE_ADDR_EVT  0x0004
 #define GAP_CONN_PARAM_TIMEOUT_EVT              0x0008
 
 #define GAP_PRIVATE_ADDR_CHANGE_RESOLUTION      0xEA60 // Timer resolution is 1 minute
+#define GAP_PRIVATE_ADDR_INT_MAX                690 // Max GAP_PRIVATE_ADDR_INT in minutes. Mirrors MAX_RPA_TIMEOUT (41400 s)
 
 #define ADV_TOKEN_HDR                           2
 
@@ -267,6 +268,7 @@ extern uint8 gapProcessCommandStatusEvt( hciEvt_CommandStatus_t *pMsg );
 extern uint8 gapProcessConnEvt( uint16 connHandle, uint16 cmdOpcode, hciEvt_CommandStatus_t *pMsg );
 extern uint8 gapProcessHCICmdCompleteEvt( hciEvt_CmdComplete_t *pMsg );
 extern uint8 gapProcessOSALMsg( osal_event_hdr_t *pMsg );
+extern void gapGenerateNRPA( uint8 *pNrpa );
 uint8_t gapSafeToDealloc( uint8_t status, uint8_t* safeToDealloc );
 
 /*********************************************************************

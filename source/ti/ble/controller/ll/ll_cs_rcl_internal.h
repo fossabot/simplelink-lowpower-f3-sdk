@@ -278,8 +278,6 @@ bool llCsProcessResultsIsModeZeroValid(uint16 connId, const RCL_CmdBleCs_Subeven
  *
  * input parameters
  *
- * @param       connId - Connection Id
- * @param       configId - configuration Id
  * @param       pBuffer - Buffer with subEvent step results
  *
  * output parameters
@@ -288,7 +286,7 @@ bool llCsProcessResultsIsModeZeroValid(uint16 connId, const RCL_CmdBleCs_Subeven
  *
  * @return      CS_PROCEDURE_DONE if procedure is complete, CS_PROCEDURE_ACTIVE otherwise
  */
-uint8_t llCsRetrieveProcedureCompletionStatus(uint16 connId, uint8 configId, RCL_MultiBuffer* pBuffer);
+uint8_t llCsRetrieveProcedureCompletionStatus(RCL_MultiBuffer* pBuffer);
 
 /*******************************************************************************
  * @fn          llCsSetupRclRelativeOffset
@@ -301,7 +299,6 @@ uint8_t llCsRetrieveProcedureCompletionStatus(uint16 connId, uint8 configId, RCL
  * input parameters
  *
  * @param       connId - connection Id
- * @param       configId - configuration Id
  *
  * output parameters
  *
@@ -309,7 +306,7 @@ uint8_t llCsRetrieveProcedureCompletionStatus(uint16 connId, uint8 configId, RCL
  *
  * @return      Calculated relative offset in microseconds
  */
-uint32_t llCsSetupRclRelativeOffset(uint16 connId, uint8_t configId);
+uint32_t llCsSetupRclRelativeOffset(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsSetupRclAnchorPoint
@@ -322,7 +319,6 @@ uint32_t llCsSetupRclRelativeOffset(uint16 connId, uint8_t configId);
  * input parameters
  *
  * @param       connId - connection Id
- * @param       configId - configuration Id
  *
  * output parameters
  *
@@ -330,7 +326,7 @@ uint32_t llCsSetupRclRelativeOffset(uint16 connId, uint8_t configId);
  *
  * @return      Anchor point timestamp in microseconds
  */
-uint32_t llCsSetupRclAnchorPoint(uint16 connId, uint8_t configId);
+uint32_t llCsSetupRclAnchorPoint(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsSetupRclTimerDrift
@@ -343,7 +339,6 @@ uint32_t llCsSetupRclAnchorPoint(uint16 connId, uint8_t configId);
  * input parameters
  *
  * @param       connId - connection Id
- * @param       configId - configuration Id
  *
  * output parameters
  *
@@ -351,7 +346,7 @@ uint32_t llCsSetupRclAnchorPoint(uint16 connId, uint8_t configId);
  *
  * @return      Calculated timer drift in microseconds
  */
-uint32_t llCsSetupRclTimerDrift(uint16 connId, uint8_t configId);
+uint32_t llCsSetupRclTimerDrift(uint16 connId);
 
 /*******************************************************************************
  * @fn          llCsSetupRclRxWidening

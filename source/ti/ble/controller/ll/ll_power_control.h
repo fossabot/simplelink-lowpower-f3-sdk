@@ -116,6 +116,9 @@
 #define MAX_TXPOWER_REACHED             0x2U
 #define MIN_OR_MAX_CALC_LOCAL           0x3U
 
+// Sentinel for LL_EXT_PwrCtrl_SetRange to leave a bound unchanged
+#define PCL_RANGE_NO_CHANGE             ((int8_t)0x80)
+
 /*******************************************************************************
  * MACROS
  */
@@ -564,5 +567,52 @@ llStatus_t LL_EXT_PwrCtrl_SendPwrCtrlReqCmd( uint16_t connHandle,
                                              uint8_t  txPhy,
                                              int8_t   deltaPowerDb,
                                              uint8_t  enableApr );
+
+/*******************************************************************************
+ * @fn          LL_EXT_PwrCtrl_SetRange
+ *
+ * @brief       Set the user-defined TX power range for power control procedures.
+ *              Pass PCL_RANGE_NO_CHANGE for either parameter to leave
+ *              that bound unchanged.
+ *
+ * @Design      BLE_LOKI-4240
+ *
+ * input parameters
+ *
+ * @param       minDbm  - Minimum TX power in dBm. Must be within hardware range.
+ *                        Pass PCL_RANGE_NO_CHANGE to leave unchanged.
+ * @param       maxDbm  - Maximum TX power in dBm. Must be within hardware range.
+ *                        Pass PCL_RANGE_NO_CHANGE to leave unchanged.
+ *
+ * output parameters
+ *
+ * @param       None
+ *
+ * @return      LL_STATUS_SUCCESS
+ *              LL_STATUS_ERROR_BAD_PARAMETER - the requested range is out of hardware limits or min > max
+ *              LL_STATUS_ERROR_UNACCEPTABLE_CONN_PARAMETERS - An active connection TX power violates the new range.
+ */
+llStatus_t LL_EXT_PwrCtrl_SetRange( int8_t minDbm, int8_t maxDbm );
+
+/*******************************************************************************
+ * @fn          LL_EXT_PwrCtrl_GetRange
+ *
+ * @brief       Get the current user-defined TX power range limits.
+ *
+ * @Design      BLE_LOKI-4240
+ *
+ * input parameters
+ *
+ * @param       None
+ *
+ * output parameters
+ *
+ * @param       minDbm  - Pointer to receive the current min limit.
+ * @param       maxDbm  - Pointer to receive the current max limit.
+ *
+ * @return      LL_STATUS_SUCCESS
+ *              LL_STATUS_ERROR_BAD_PARAMETER - minDbm or maxDbm is NULL.
+ */
+llStatus_t LL_EXT_PwrCtrl_GetRange( int8_t *minDbm, int8_t *maxDbm );
 
 #endif // LL_POWER_CONTROL_H
