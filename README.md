@@ -1,4 +1,6 @@
 # SimpleLink™ Low Power F3 SDK
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frobszumski%2Fsimplelink-lowpower-f3-sdk.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Frobszumski%2Fsimplelink-lowpower-f3-sdk?ref=badge_shield)
+
 
 This repository redistributes TI's [SimpleLink Low Power F3 Software Development
 Kit](https://www.ti.com/tool/download/SIMPLELINK-LOWPOWER-F3-SDK) (LPF3 SDK), a
@@ -131,3 +133,7 @@ Please consider creating a post on [TI's E2E forum](https://e2e.ti.com).
 [sysconfig download]: https://www.ti.com/tool/SYSCONFIG
 [ticlang download]: https://www.ti.com/tool/download/ARM-CGT-CLANG
 [gcc download]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frobszumski%2Fsimplelink-lowpower-f3-sdk.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Frobszumski%2Fsimplelink-lowpower-f3-sdk?ref=badge_large)
